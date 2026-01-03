@@ -10,8 +10,8 @@
       </p>
     </div>
     <div class="user-section">
-      <!-- Branch Dropdown (if multiple branches) -->
-      <div class="branch-section" *ngIf="branches.length > 1">
+      <!-- Branch Dropdown (if multiple branches and Org Owner) -->
+      <div class="branch-section" *ngIf="branches.length > 1 && isOrgOwner">
         <div class="branch-dropdown" (click)="toggleBranchDropdown()">
           <ion-icon name="business-outline" class="branch-icon"></ion-icon>
           <span class="branch-name">{{ selectedBranch?.name || 'Select Branch' }}</span>
@@ -28,10 +28,10 @@
         </div>
       </div>
       
-      <!-- Branch Label (if single branch) -->
-      <div class="branch-label" *ngIf="branches.length === 1">
+      <!-- Branch Label (if single branch OR branch level user) -->
+      <div class="branch-label" *ngIf="(branches.length === 1 || isBranchUser) && selectedBranch">
         <ion-icon name="business-outline" class="branch-icon"></ion-icon>
-        <span class="branch-name">{{ selectedBranch?.name }}</span>
+        <span class="branch-name">{{ selectedBranch.name }}</span>
       </div>
 
       <div class="user-info">
@@ -49,19 +49,26 @@
   <!-- Navigation Menu -->
   <ion-toolbar class="nav-toolbar">
     <div class="nav-menu">
+      <!-- Dashboard - Show for all users -->
       <button 
+        *ngIf="isOrgOwner || isBranchUser"
         class="nav-item" 
         [class.active]="activeMenu === 'Dashboard'"
         (click)="setActiveMenu('Dashboard')">
         Dashboard
       </button>
+      
+      <!-- Organization Info - Only for Org Owner -->
       <button 
+        *ngIf="isOrgOwner"
         class="nav-item" 
         [class.active]="activeMenu === 'Info'"
         (click)="setActiveMenu('Info')">
         Organization Info
       </button>
-      <div class="nav-item-container">
+      
+      <!-- Users - Only for Org Owner -->
+      <div class="nav-item-container" *ngIf="isOrgOwner">
         <button 
           class="nav-item" 
           [class.active]="activeMenu === 'Users' || activeMenu === 'Add New User' || activeMenu === 'Approvals'"
@@ -73,6 +80,8 @@
           </ion-icon>
         </button>
       </div>
+      
+      <!-- Branches - Show for all, but different submenus based on role -->
       <div class="nav-item-container">
         <button 
           class="nav-item" 
@@ -80,6 +89,7 @@
           (click)="setActiveMenu('Branches')">
           Branches
           <ion-icon 
+            *ngIf="isOrgOwner"
             [name]="showBranchesSubmenu ? 'chevron-up-outline' : 'chevron-down-outline'" 
             class="submenu-icon">
           </ion-icon>
@@ -109,37 +119,54 @@
   <!-- Submenu for Branches -->
   <div class="submenu-container" *ngIf="showBranchesSubmenu">
     <div class="submenu">
+      <!-- Add new branch - Only for Org Owner -->
       <button 
+        *ngIf="isOrgOwner"
         class="submenu-item" 
         [class.active]="activeMenu === 'Add new branch'"
         (click)="selectSubmenu('Add new branch')">
         Add new branch
       </button>
+      
+      <!-- Dashboard - Show for all users -->
       <button 
+        *ngIf="isOrgOwner || isBranchUser"
         class="submenu-item" 
         [class.active]="activeMenu === 'Dashboard'"
         (click)="selectSubmenu('Dashboard')">
         Dashboard
       </button>
+      
+      <!-- Centers - Show for all users -->
       <button 
+        *ngIf="isOrgOwner || isBranchUser"
         class="submenu-item" 
         [class.active]="activeMenu === 'Centers'"
         (click)="selectSubmenu('Centers')">
         Centers
       </button>
+      
+      <!-- POCs - Show for all users -->
       <button 
+        *ngIf="isOrgOwner || isBranchUser"
         class="submenu-item" 
         [class.active]="activeMenu === 'POCs'"
         (click)="selectSubmenu('POCs')">
         POCs
       </button>
+      
+      <!-- Staff - Show for all users -->
       <button 
+        *ngIf="isOrgOwner || isBranchUser"
         class="submenu-item" 
         [class.active]="activeMenu === 'Staff'"
         (click)="selectSubmenu('Staff')">
         Staff
       </button>
+      
+      <!-- Members - Show for all users -->
       <button 
+        *ngIf="isOrgOwner || isBranchUser"
         class="submenu-item" 
         [class.active]="activeMenu === 'Members'"
         (click)="selectSubmenu('Members')">

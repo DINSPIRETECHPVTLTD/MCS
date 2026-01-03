@@ -19,6 +19,12 @@ export class HomePage implements OnInit {
   branches: Branch[] = [];
   selectedBranch: Branch | null = null;
   showBranchDropdown: boolean = false;
+  
+  // User role and level
+  userRole: string = '';
+  userLevel: string = '';
+  isOrgOwner: boolean = false;
+  isBranchUser: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -38,6 +44,19 @@ export class HomePage implements OnInit {
     // Get user info
     const userInfo = this.authService.getUserInfo();
     this.userEmail = userInfo?.email || '';
+    this.userRole = userInfo?.role || '';
+    this.userLevel = userInfo?.userType || ''; // UserType from API response
+    
+    // Determine user type based on UserType and Role
+    // UserType can be "Org" or "Branch", Role can be "Owner", "Branch User", "Staff", etc.
+    const userTypeLower = this.userLevel?.toLowerCase() || '';
+    const roleLower = this.userRole?.toLowerCase() || '';
+    
+    this.isOrgOwner = (userTypeLower === 'org' || userTypeLower === 'organization') && roleLower === 'owner';
+    this.isBranchUser = (userTypeLower === 'branch') && 
+                       (roleLower === 'branch user' || 
+                        roleLower === 'staff' ||
+                        roleLower === 'branchuser');
 
     // Try to get organization from login response first
     const orgFromLogin = this.authService.getOrganizationInfo();
@@ -98,16 +117,34 @@ export class HomePage implements OnInit {
     this.branchService.getBranches().subscribe({
       next: (branches) => {
         this.branches = branches;
-        if (branches.length === 1) {
-          this.selectedBranch = branches[0];
-        } else if (branches.length > 1) {
-          // Set first branch as default or get from localStorage
-          const savedBranchId = localStorage.getItem('selected_branch_id');
-          if (savedBranchId) {
-            const savedBranch = branches.find(b => b.id.toString() === savedBranchId);
-            this.selectedBranch = savedBranch || branches[0];
-          } else {
+        
+        // For branch level users, set their branch from user info
+        if (this.isBranchUser) {
+          const userInfo = this.authService.getUserInfo();
+          const userBranchId = userInfo?.branchId;
+          if (userBranchId) {
+            const userBranch = branches.find(b => b.id === userBranchId || b.id.toString() === userBranchId.toString());
+            if (userBranch) {
+              this.selectedBranch = userBranch;
+            } else if (branches.length > 0) {
+              this.selectedBranch = branches[0];
+            }
+          } else if (branches.length > 0) {
             this.selectedBranch = branches[0];
+          }
+        } else {
+          // For org level users
+          if (branches.length === 1) {
+            this.selectedBranch = branches[0];
+          } else if (branches.length > 1) {
+            // Set first branch as default or get from localStorage
+            const savedBranchId = localStorage.getItem('selected_branch_id');
+            if (savedBranchId) {
+              const savedBranch = branches.find(b => b.id.toString() === savedBranchId);
+              this.selectedBranch = savedBranch || branches[0];
+            } else {
+              this.selectedBranch = branches[0];
+            }
           }
         }
       },
@@ -150,11 +187,17 @@ export class HomePage implements OnInit {
   }
 
   setActiveMenu(menu: string): void {
-    if (menu === 'Users') {
+    if (menu === 'Users' && this.isOrgOwner) {
       this.showUsersSubmenu = !this.showUsersSubmenu;
       this.showBranchesSubmenu = false;
     } else if (menu === 'Branches') {
-      this.showBranchesSubmenu = !this.showBranchesSubmenu;
+      // For branch users, directly navigate to Dashboard
+      if (this.isBranchUser && !this.showBranchesSubmenu) {
+        this.activeMenu = 'Dashboard';
+        this.showBranchesSubmenu = true;
+      } else {
+        this.showBranchesSubmenu = !this.showBranchesSubmenu;
+      }
       this.showUsersSubmenu = false;
     } else {
       this.showUsersSubmenu = false;

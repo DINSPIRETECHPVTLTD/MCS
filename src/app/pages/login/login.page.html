@@ -15,8 +15,9 @@
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
         <ion-item>
-          <ion-label position="stacked">Email</ion-label>
           <ion-input
+            label="Email"
+            labelPlacement="stacked"
             type="email"
             formControlName="email"
             placeholder="Enter your email"
@@ -29,8 +30,9 @@
         </div>
 
         <ion-item>
-          <ion-label position="stacked">Password</ion-label>
           <ion-input
+            label="Password"
+            labelPlacement="stacked"
             [type]="showPassword ? 'text' : 'password'"
             formControlName="password"
             placeholder="Enter your password"

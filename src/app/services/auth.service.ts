@@ -12,9 +12,11 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token?: string;
-  accessToken?: string;
-  refreshToken?: string;
-  expiresIn?: number;
+  userType?: string;
+  userId?: number;
+  organizationId?: number;
+  branchId?: number;
+  role?: string;
   user?: {
     email?: string;
     username?: string;
@@ -65,20 +67,25 @@ export class AuthService {
       { headers }
     ).pipe(
       tap(response => {
-        // Store token if present
+        // Store token from AuthResponseDto
         if (response.token) {
           localStorage.setItem('auth_token', response.token);
-        } else if (response.accessToken) {
-          localStorage.setItem('auth_token', response.accessToken);
         }
-        // Store user info if present
-        if (response.user) {
-          localStorage.setItem('user_info', JSON.stringify(response.user));
-        }
-        // Store organization info if present in login response
-        if (response.organization) {
-          localStorage.setItem('organization_info', JSON.stringify(response.organization));
-        }
+        
+        // Build user info object from AuthResponseDto (flat structure)
+        const userInfo: any = {
+          // Map from PascalCase to camelCase for consistency
+          userType: response.userType || '',
+          role: response.role || '',
+          userId: response.userId || 0,
+          organizationId: response.organizationId || null,
+          branchId: response.branchId || null
+        };
+        
+        console.log('User info from login:', userInfo);
+        
+        // Store user info
+        localStorage.setItem('user_info', JSON.stringify(userInfo));
       })
     );
   }

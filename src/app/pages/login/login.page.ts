@@ -41,42 +41,56 @@ export class LoginPage implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    if (this.loginForm.invalid) {
-      this.showToast('Please fill in all required fields', 'danger');
-      return;
-    }
-
-    const loading = await this.loadingController.create({
-      message: 'Logging in...',
-      spinner: 'crescent'
-    });
-    await loading.present();
-
-    const credentials: LoginRequest = {
-      email: this.loginForm.value.email,
-      password: this.loginForm.value.password
-    };
-
-    this.authService.login(credentials).subscribe({
-      next: async (response) => {
-        await loading.dismiss();
-        // Store email if not in response
-        if (!response.user?.email && credentials.email) {
-          const userInfo = response.user || {};
-          userInfo.email = credentials.email;
-          localStorage.setItem('user_info', JSON.stringify(userInfo));
-        }
-        this.showToast('Login successful!', 'success');
-        // Navigate to home or dashboard
-        this.router.navigate(['/home']);
-      },
-      error: async (error) => {
-        await loading.dismiss();
-        const errorMessage = error.error?.message || error.message || 'Login failed. Please try again.';
-        this.showToast(errorMessage, 'danger');
-        console.error('Login error:', error);
+    try {
+      if (this.loginForm.invalid) {
+        this.showToast('Please fill in all required fields', 'danger');
+        return;
       }
-    });
+
+      const loading = await this.loadingController.create({
+        message: 'Logging in...',
+        spinner: 'crescent'
+      });
+      await loading.present();
+
+      const credentials: LoginRequest = {
+        email: this.loginForm.value.email,
+        password: this.loginForm.value.password
+      };
+
+      this.authService.login(credentials).subscribe({
+      next: async (response) => {
+        try {
+          await loading.dismiss();
+          // Store email in user info if not already present
+          const userInfo = this.authService.getUserInfo();
+          if (userInfo && !userInfo.email && credentials.email) {
+            userInfo.email = credentials.email;
+            localStorage.setItem('user_info', JSON.stringify(userInfo));
+          }
+          this.showToast('Login successful!', 'success');
+          // Navigate to home or dashboard
+          this.router.navigate(['/home']);
+        } catch (error) {
+          console.error('Error in login success handler:', error);
+          await loading.dismiss();
+        }
+      },
+        error: async (error) => {
+          try {
+            await loading.dismiss();
+            const errorMessage = error.error?.message || error.message || 'Login failed. Please try again.';
+            this.showToast(errorMessage, 'danger');
+            console.error('Login error:', error);
+          } catch (err) {
+            console.error('Error in login error handler:', err);
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error in onSubmit:', error);
+      // Silently handle extension-related errors
+    }
   }
 
   async showToast(message: string, color: string): Promise<void> {
