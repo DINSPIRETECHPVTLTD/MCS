@@ -1,0 +1,51 @@
+<app-header-menu 
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
+</app-header-menu>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="content-container">
+    <h1>Branch Dashboard</h1>
+    <p>Branch overview and statistics will be displayed here.</p>
+    
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="6" size-lg="4">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>Centers</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <h2>0</h2>
+              <p>Total Centers</p>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+        <ion-col size="12" size-md="6" size-lg="4">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>Staff</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <h2>0</h2>
+              <p>Total Staff</p>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+        <ion-col size="12" size-md="6" size-lg="4">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>Members</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <h2>0</h2>
+              <p>Total Members</p>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>
+

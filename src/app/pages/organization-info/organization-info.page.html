@@ -1,0 +1,51 @@
+<app-header-menu 
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
+</app-header-menu>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="content-container">
+    <h1>Organization Information</h1>
+    
+    <ion-card *ngIf="organization">
+      <ion-card-header>
+        <ion-card-title>{{ organization.name }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item *ngIf="organization.phone">
+            <ion-label>
+              <h2>Phone</h2>
+              <p>{{ organization.phone }}</p>
+            </ion-label>
+          </ion-item>
+          <ion-item *ngIf="organization.city">
+            <ion-label>
+              <h2>City</h2>
+              <p>{{ organization.city }}</p>
+            </ion-label>
+          </ion-item>
+          <ion-item *ngIf="organization.address">
+            <ion-label>
+              <h2>Address</h2>
+              <p>{{ organization.address }}</p>
+            </ion-label>
+          </ion-item>
+          <ion-item *ngIf="organization.email">
+            <ion-label>
+              <h2>Email</h2>
+              <p>{{ organization.email }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <div *ngIf="!organization" class="empty-state">
+      <ion-icon name="business-outline" size="large"></ion-icon>
+      <p>Loading organization information...</p>
+    </div>
+  </div>
+</ion-content>
+

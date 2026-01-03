@@ -166,9 +166,19 @@
         Add User
       </ion-button>
     </div>
-    <div *ngIf="users.length === 0" class="empty-state">
+    
+    <!-- Debug info -->
+    <div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-size: 12px;">
+      <p style="margin: 0;">Users count: {{ users.length }}</p>
+      <p style="margin: 4px 0 0 0;">Loading: {{ isLoading ? 'Yes' : 'No' }}</p>
+    </div>
+    
+    <div *ngIf="users.length === 0 && !isLoading" class="empty-state">
       <ion-icon name="people-outline" size="large"></ion-icon>
       <p>No users found</p>
+      <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
+        Click "Add User" to create a new user
+      </p>
     </div>
     <ion-list *ngIf="users.length > 0">
       <ion-item *ngFor="let user of users" class="user-item">

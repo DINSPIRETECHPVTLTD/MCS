@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoadingController, ToastController } from '@ionic/angular';
+import { LoadingController, ToastController, ViewWillEnter } from '@ionic/angular';
 import { UserService, User, CreateUserRequest } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { BranchService, Branch } from '../../services/branch.service';
@@ -11,13 +11,14 @@ import { BranchService, Branch } from '../../services/branch.service';
   templateUrl: './users.page.html',
   styleUrls: ['./users.page.scss'],
 })
-export class UsersPage implements OnInit {
+export class UsersPage implements OnInit, ViewWillEnter {
   users: User[] = [];
   userForm: FormGroup;
   showAddForm: boolean = false;
   isEditing: boolean = false;
   editingUserId: number | null = null;
   activeMenu: string = 'All Users';
+  isLoading: boolean = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -53,9 +54,17 @@ export class UsersPage implements OnInit {
       return;
     }
     
-    console.log('Loading users and setting organization ID');
-    this.loadUsers();
+    console.log('Setting organization ID');
     this.setOrganizationId();
+  }
+
+  ionViewWillEnter(): void {
+    console.log('UsersPage ionViewWillEnter called');
+    // Reload users when page becomes active (Ionic lifecycle hook)
+    if (this.authService.isAuthenticated()) {
+      console.log('Loading users on view enter');
+      this.loadUsers();
+    }
   }
 
   setOrganizationId(): void {
@@ -68,6 +77,7 @@ export class UsersPage implements OnInit {
   }
 
   async loadUsers(): Promise<void> {
+    this.isLoading = true;
     const loading = await this.loadingController.create({
       message: 'Loading users...',
       spinner: 'crescent'
@@ -77,11 +87,16 @@ export class UsersPage implements OnInit {
     this.userService.getUsers().subscribe({
       next: (users) => {
         loading.dismiss();
+        this.isLoading = false;
         this.users = users || [];
         console.log('Users loaded:', this.users.length);
+        if (this.users.length === 0) {
+          console.log('No users found - array is empty');
+        }
       },
       error: (error) => {
         loading.dismiss();
+        this.isLoading = false;
         this.users = []; // Ensure users array is initialized even on error
         console.error('Error loading users:', error);
         // Only show toast for actual errors, not 404s which might be expected

@@ -1,0 +1,40 @@
+<app-header-menu 
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
+</app-header-menu>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="content-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h1>Staff</h1>
+      <ion-button>
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Add Staff
+      </ion-button>
+    </div>
+    
+    <div *ngIf="staff.length === 0" class="empty-state">
+      <ion-icon name="people-outline" size="large"></ion-icon>
+      <p>No staff found</p>
+      <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
+        Click "Add Staff" to add a new staff member
+      </p>
+    </div>
+    
+    <ion-list *ngIf="staff.length > 0">
+      <ion-item *ngFor="let member of staff" class="staff-item">
+        <ion-avatar slot="start">
+          <ion-icon name="person-circle-outline"></ion-icon>
+        </ion-avatar>
+        <ion-label>
+          <h2>{{ member.name }}</h2>
+          <p *ngIf="member.phone">{{ member.phone }}</p>
+          <p *ngIf="member.email">{{ member.email }}</p>
+          <p *ngIf="member.role">{{ member.role }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+</ion-content>
+

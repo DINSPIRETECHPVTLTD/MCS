@@ -1,0 +1,37 @@
+.content-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  h1 {
+    color: var(--ion-color-primary);
+    margin-bottom: 16px;
+  }
+
+  p {
+    color: var(--ion-color-medium);
+    margin-bottom: 24px;
+  }
+}
+
+ion-card {
+  margin: 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 100%;
+
+  ion-card-content {
+    h2 {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--ion-color-primary);
+      margin: 0;
+    }
+
+    p {
+      margin: 8px 0 0 0;
+      color: var(--ion-color-medium);
+    }
+  }
+}
+

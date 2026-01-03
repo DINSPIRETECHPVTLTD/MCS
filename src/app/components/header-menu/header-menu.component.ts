@@ -211,10 +211,23 @@ export class HeaderMenuComponent implements OnInit {
         this.activeMenu = 'Dashboard';
         this.showBranchesSubmenu = true;
         this.menuChange.emit('Dashboard');
+        this.router.navigate(['/branch-dashboard']);
       } else {
         this.showBranchesSubmenu = !this.showBranchesSubmenu;
       }
       this.showUsersSubmenu = false;
+    } else if (menu === 'Info') {
+      this.showUsersSubmenu = false;
+      this.showBranchesSubmenu = false;
+      this.activeMenu = menu;
+      this.menuChange.emit(menu);
+      this.router.navigate(['/organization-info']);
+    } else if (menu === 'Dashboard') {
+      this.showUsersSubmenu = false;
+      this.showBranchesSubmenu = false;
+      this.activeMenu = menu;
+      this.menuChange.emit(menu);
+      this.router.navigate(['/home']);
     } else {
       this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
@@ -232,10 +245,22 @@ export class HeaderMenuComponent implements OnInit {
     // Navigate to respective pages
     if (submenu === 'All Users') {
       this.router.navigate(['/users']);
+    } else if (submenu === 'Approvals') {
+      this.router.navigate(['/approvals']);
+    } else if (submenu === 'Add new branch') {
+      this.router.navigate(['/add-branch']);
     } else if (submenu === 'Dashboard') {
-      this.router.navigate(['/home']);
+      // Dashboard from Branches submenu goes to branch dashboard
+      this.router.navigate(['/branch-dashboard']);
+    } else if (submenu === 'Centers') {
+      this.router.navigate(['/centers']);
+    } else if (submenu === 'POCs') {
+      this.router.navigate(['/pocs']);
+    } else if (submenu === 'Staff') {
+      this.router.navigate(['/staff']);
+    } else if (submenu === 'Members') {
+      this.router.navigate(['/members']);
     }
-    // TODO: Add navigation for other submenu items when pages are created
   }
 
   async logout(): Promise<void> {

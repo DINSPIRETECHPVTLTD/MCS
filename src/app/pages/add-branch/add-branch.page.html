@@ -1,0 +1,89 @@
+<app-header-menu 
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
+</app-header-menu>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="content-container">
+    <h1>Add New Branch</h1>
+    
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Branch Information</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <form [formGroup]="branchForm" (ngSubmit)="onSubmit()">
+          <ion-item>
+            <ion-input
+              label="Branch Name"
+              labelPlacement="stacked"
+              formControlName="name"
+              placeholder="Enter branch name"
+              required>
+            </ion-input>
+          </ion-item>
+          <div *ngIf="branchForm.get('name')?.invalid && branchForm.get('name')?.touched" class="error-message">
+            Branch name is required
+          </div>
+
+          <ion-item>
+            <ion-input
+              label="Address"
+              labelPlacement="stacked"
+              formControlName="address"
+              placeholder="Enter address">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="City"
+              labelPlacement="stacked"
+              formControlName="city"
+              placeholder="Enter city">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="State"
+              labelPlacement="stacked"
+              formControlName="state"
+              placeholder="Enter state">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="Phone"
+              labelPlacement="stacked"
+              type="tel"
+              formControlName="phone"
+              placeholder="Enter phone number">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="Email"
+              labelPlacement="stacked"
+              type="email"
+              formControlName="email"
+              placeholder="Enter email address">
+            </ion-input>
+          </ion-item>
+
+          <ion-button
+            expand="block"
+            type="submit"
+            [disabled]="branchForm.invalid"
+            class="ion-margin-top">
+            Create Branch
+          </ion-button>
+        </form>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>
+

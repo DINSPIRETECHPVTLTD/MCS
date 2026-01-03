@@ -1,0 +1,49 @@
+.content-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  h1 {
+    color: var(--ion-color-primary);
+    margin-bottom: 16px;
+  }
+}
+
+ion-card {
+  margin: 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+form {
+  ion-item {
+    --padding-start: 0;
+    --inner-padding-end: 0;
+    margin-bottom: 16px;
+    --border-radius: 8px;
+    --background: var(--ion-color-light);
+    border-radius: 8px;
+    margin-top: 8px;
+
+    ion-input {
+      --padding-start: 12px;
+    }
+  }
+
+  ion-button {
+    --border-radius: 8px;
+    margin-top: 24px;
+    height: 48px;
+    font-weight: 600;
+    text-transform: none;
+  }
+}
+
+.error-message {
+  color: var(--ion-color-danger);
+  font-size: 12px;
+  margin-top: -12px;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
