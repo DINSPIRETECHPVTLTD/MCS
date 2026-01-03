@@ -259,15 +259,28 @@ export class UsersPage implements OnInit {
   }
 
   async logout(): Promise<void> {
-    this.authService.logout();
-    const toast = await this.toastController.create({
-      message: 'Logged out successfully',
-      duration: 2000,
-      color: 'success',
-      position: 'top'
-    });
-    await toast.present();
-    this.router.navigate(['/login'], { replaceUrl: true });
+    try {
+      // Clear auth data first
+      this.authService.logout();
+      
+      // Navigate immediately without waiting
+      this.router.navigate(['/login'], { replaceUrl: true }).then(() => {
+        // Show toast after navigation completes
+        this.toastController.create({
+          message: 'Logged out successfully',
+          duration: 2000,
+          color: 'success',
+          position: 'top'
+        }).then(toast => toast.present());
+      }).catch(() => {
+        // Fallback: use window location if router fails
+        window.location.href = '/login';
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Force navigation using window location as fallback
+      window.location.href = '/login';
+    }
   }
 
   setOrganizationId(): void {
