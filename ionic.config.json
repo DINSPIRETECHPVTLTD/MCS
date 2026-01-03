@@ -1,0 +1,8 @@
+{
+  "name": "mcs-app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
+

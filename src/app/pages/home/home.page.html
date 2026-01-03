@@ -1,0 +1,86 @@
+<ion-header [translucent]="false">
+  <!-- Organization Header -->
+  <div class="org-header">
+    <div class="org-info">
+      <h2 class="org-name">{{ organization?.name || 'Navya Micro Credit Services' }}</h2>
+      <p class="org-details" *ngIf="organization">
+        <span *ngIf="organization.phone">{{ organization.phone }}</span>
+        <span *ngIf="organization.city && organization.phone"> • </span>
+        <span *ngIf="organization.city">{{ organization.city }}</span>
+      </p>
+    </div>
+    <div class="user-section">
+      <div class="user-info">
+        <ion-icon name="person-circle-outline" class="user-icon"></ion-icon>
+        <span class="user-email">{{ userEmail || 'owner@demo.com' }}</span>
+        <ion-icon name="chevron-down-outline" class="dropdown-icon"></ion-icon>
+      </div>
+      <ion-button fill="clear" class="logout-btn" (click)="logout()">
+        <ion-icon name="log-out-outline" slot="start"></ion-icon>
+        Log Out
+      </ion-button>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <ion-toolbar class="nav-toolbar">
+    <div class="nav-menu">
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Dashboard'"
+        (click)="setActiveMenu('Dashboard')">
+        Dashboard
+      </button>
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Info'"
+        (click)="setActiveMenu('Info')">
+        Organization Info
+      </button>
+      <div class="nav-item-container">
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'Users' || activeMenu === 'Add New User' || activeMenu === 'Approvals'"
+          (click)="setActiveMenu('Users')">
+          Users
+          <ion-icon 
+            [name]="showUsersSubmenu ? 'chevron-up-outline' : 'chevron-down-outline'" 
+            class="submenu-icon">
+          </ion-icon>
+        </button>
+      </div>
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Branches'"
+        (click)="setActiveMenu('Branches')">
+        Branches
+      </button>
+    </div>
+  </ion-toolbar>
+  
+  <!-- Submenu for Users -->
+  <div class="submenu-container" *ngIf="showUsersSubmenu">
+    <div class="submenu">
+      <button 
+        class="submenu-item" 
+        [class.active]="activeMenu === 'Add New User'"
+        (click)="selectSubmenu('Add New User')">
+        Add New User
+      </button>
+      <button 
+        class="submenu-item" 
+        [class.active]="activeMenu === 'Approvals'"
+        (click)="selectSubmenu('Approvals')">
+        Approvals
+      </button>
+    </div>
+  </div>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="content-container">
+    <h1>Welcome to {{ organization?.name || 'MCS' }}!</h1>
+    <p>You have successfully logged in.</p>
+    <p *ngIf="activeMenu">Current section: <strong>{{ activeMenu }}</strong></p>
+  </div>
+</ion-content>
