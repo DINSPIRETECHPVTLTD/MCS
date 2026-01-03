@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { UsersPageRoutingModule } from './users-routing.module';
 import { UsersPage } from './users.page';
+import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 
 @NgModule({
   imports: [
@@ -11,7 +12,8 @@ import { UsersPage } from './users.page';
     FormsModule,
     ReactiveFormsModule,
     IonicModule,
-    UsersPageRoutingModule
+    UsersPageRoutingModule,
+    HeaderMenuComponent
   ],
   declarations: [UsersPage]
 })
