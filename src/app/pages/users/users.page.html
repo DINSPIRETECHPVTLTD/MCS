@@ -54,7 +54,7 @@
         *ngIf="isOrgOwner || isBranchUser"
         class="nav-item" 
         [class.active]="activeMenu === 'Dashboard'"
-        (click)="setActiveMenu('Dashboard')">
+        (click)="selectSubmenu('Dashboard')">
         Dashboard
       </button>
       
@@ -177,9 +177,183 @@
 </ion-header>
 
 <ion-content [fullscreen]="true" class="ion-padding">
-  <div class="content-container">
-    <h1>Welcome to {{ organization?.name || 'MCS' }}!</h1>
-    <p>You have successfully logged in.</p>
-    <p *ngIf="activeMenu">Current section: <strong>{{ activeMenu }}</strong></p>
+  <!-- Add User Form -->
+  <div class="user-form-container" *ngIf="showAddForm">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>{{ isEditing ? 'Edit User' : 'Add New User' }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+          <!-- Name Fields -->
+          <ion-item>
+            <ion-input
+              label="First Name"
+              labelPlacement="stacked"
+              formControlName="firstName"
+              placeholder="Enter first name"
+              required>
+            </ion-input>
+          </ion-item>
+          <div *ngIf="userForm.get('firstName')?.invalid && userForm.get('firstName')?.touched" class="error-message">
+            First name is required
+          </div>
+
+          <ion-item>
+            <ion-input
+              label="Middle Name"
+              labelPlacement="stacked"
+              formControlName="middleName"
+              placeholder="Enter middle name">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="Last Name"
+              labelPlacement="stacked"
+              formControlName="lastName"
+              placeholder="Enter last name"
+              required>
+            </ion-input>
+          </ion-item>
+          <div *ngIf="userForm.get('lastName')?.invalid && userForm.get('lastName')?.touched" class="error-message">
+            Last name is required
+          </div>
+
+          <!-- Contact Fields -->
+          <ion-item>
+            <ion-input
+              label="Phone Number"
+              labelPlacement="stacked"
+              type="tel"
+              formControlName="phoneNumber"
+              placeholder="Enter phone number">
+            </ion-input>
+          </ion-item>
+          <div *ngIf="userForm.get('phoneNumber')?.invalid && userForm.get('phoneNumber')?.touched" class="error-message">
+            Please enter a valid 10-digit phone number
+          </div>
+
+          <ion-item>
+            <ion-input
+              label="Email"
+              labelPlacement="stacked"
+              type="email"
+              formControlName="email"
+              placeholder="Enter email address">
+            </ion-input>
+          </ion-item>
+          <div *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched" class="error-message">
+            Please enter a valid email address
+          </div>
+
+          <!-- Address Fields -->
+          <ion-item>
+            <ion-input
+              label="Address Line 1"
+              labelPlacement="stacked"
+              formControlName="address1"
+              placeholder="Enter address line 1">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="Address Line 2"
+              labelPlacement="stacked"
+              formControlName="address2"
+              placeholder="Enter address line 2">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="City"
+              labelPlacement="stacked"
+              formControlName="city"
+              placeholder="Enter city">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="State"
+              labelPlacement="stacked"
+              formControlName="state"
+              placeholder="Enter state">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="Pin Code"
+              labelPlacement="stacked"
+              type="tel"
+              formControlName="pinCode"
+              placeholder="Enter pin code">
+            </ion-input>
+          </ion-item>
+          <div *ngIf="userForm.get('pinCode')?.invalid && userForm.get('pinCode')?.touched" class="error-message">
+            Please enter a valid 6-digit pin code
+          </div>
+
+          <!-- Level and Role (Read-only, showing defaults) -->
+          <ion-item>
+            <ion-input
+              label="Level"
+              labelPlacement="stacked"
+              [value]="userForm.value.level"
+              readonly>
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="Role"
+              labelPlacement="stacked"
+              [value]="userForm.value.role"
+              readonly>
+            </ion-input>
+          </ion-item>
+
+          <ion-button
+            expand="block"
+            type="submit"
+            [disabled]="userForm.invalid"
+            class="ion-margin-top">
+            {{ isEditing ? 'Update User' : 'Create User' }}
+          </ion-button>
+        </form>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Users List -->
+  <div class="users-list-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h2>All Users</h2>
+      <ion-button (click)="toggleAddForm()" *ngIf="!showAddForm">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Add User
+      </ion-button>
+    </div>
+    <div *ngIf="users.length === 0" class="empty-state">
+      <ion-icon name="people-outline" size="large"></ion-icon>
+      <p>No users found</p>
+    </div>
+    <ion-list *ngIf="users.length > 0">
+      <ion-item *ngFor="let user of users" class="user-item">
+        <ion-avatar slot="start">
+          <ion-icon name="person-circle-outline"></ion-icon>
+        </ion-avatar>
+        <ion-label>
+          <h2>{{ user.firstName }} {{ user.middleName || '' }} {{ user.lastName }}</h2>
+          <p *ngIf="user.email">{{ user.email }}</p>
+          <p *ngIf="user.phoneNumber">{{ user.phoneNumber }}</p>
+          <p *ngIf="user.role">{{ user.role }} - {{ user.level }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
   </div>
 </ion-content>
