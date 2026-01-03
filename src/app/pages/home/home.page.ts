@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService, Organization } from '../../services/organization.service';
+import { BranchService, Branch } from '../../services/branch.service';
 
 @Component({
   selector: 'app-home',
@@ -14,10 +15,15 @@ export class HomePage implements OnInit {
   userEmail: string = '';
   activeMenu: string = 'Dashboard';
   showUsersSubmenu: boolean = false;
+  showBranchesSubmenu: boolean = false;
+  branches: Branch[] = [];
+  selectedBranch: Branch | null = null;
+  showBranchDropdown: boolean = false;
 
   constructor(
     private authService: AuthService,
     private organizationService: OrganizationService,
+    private branchService: BranchService,
     private router: Router,
     private toastController: ToastController,
     private loadingController: LoadingController
@@ -46,6 +52,9 @@ export class HomePage implements OnInit {
       // Fetch organization details from API
       this.loadOrganizationDetails();
     }
+
+    // Load branches
+    this.loadBranches();
   }
 
   async loadOrganizationDetails(): Promise<void> {
@@ -85,11 +94,71 @@ export class HomePage implements OnInit {
     });
   }
 
+  async loadBranches(): Promise<void> {
+    this.branchService.getBranches().subscribe({
+      next: (branches) => {
+        this.branches = branches;
+        if (branches.length === 1) {
+          this.selectedBranch = branches[0];
+        } else if (branches.length > 1) {
+          // Set first branch as default or get from localStorage
+          const savedBranchId = localStorage.getItem('selected_branch_id');
+          if (savedBranchId) {
+            const savedBranch = branches.find(b => b.id.toString() === savedBranchId);
+            this.selectedBranch = savedBranch || branches[0];
+          } else {
+            this.selectedBranch = branches[0];
+          }
+        }
+      },
+      error: (error) => {
+        // Try alternative endpoint
+        this.branchService.getBranchesList().subscribe({
+          next: (branches) => {
+            this.branches = branches;
+            if (branches.length === 1) {
+              this.selectedBranch = branches[0];
+            } else if (branches.length > 1) {
+              const savedBranchId = localStorage.getItem('selected_branch_id');
+              if (savedBranchId) {
+                const savedBranch = branches.find(b => b.id.toString() === savedBranchId);
+                this.selectedBranch = savedBranch || branches[0];
+              } else {
+                this.selectedBranch = branches[0];
+              }
+            }
+          },
+          error: (err) => {
+            console.error('Error loading branches:', err);
+            // Set default branch if API fails
+            this.branches = [];
+          }
+        });
+      }
+    });
+  }
+
+  toggleBranchDropdown(): void {
+    this.showBranchDropdown = !this.showBranchDropdown;
+  }
+
+  selectBranch(branch: Branch): void {
+    this.selectedBranch = branch;
+    this.showBranchDropdown = false;
+    localStorage.setItem('selected_branch_id', branch.id.toString());
+    // TODO: Reload data based on selected branch
+  }
+
   setActiveMenu(menu: string): void {
     if (menu === 'Users') {
       this.showUsersSubmenu = !this.showUsersSubmenu;
+      this.showBranchesSubmenu = false;
+    } else if (menu === 'Branches') {
+      this.showBranchesSubmenu = !this.showBranchesSubmenu;
+      this.showUsersSubmenu = false;
     } else {
       this.showUsersSubmenu = false;
+      this.showBranchesSubmenu = false;
       this.activeMenu = menu;
     }
     // TODO: Navigate to respective pages when created
@@ -97,6 +166,8 @@ export class HomePage implements OnInit {
 
   selectSubmenu(submenu: string): void {
     this.activeMenu = submenu;
+    this.showUsersSubmenu = false;
+    this.showBranchesSubmenu = false;
     // TODO: Navigate to respective pages when created
   }
 

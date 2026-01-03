@@ -10,6 +10,30 @@
       </p>
     </div>
     <div class="user-section">
+      <!-- Branch Dropdown (if multiple branches) -->
+      <div class="branch-section" *ngIf="branches.length > 1">
+        <div class="branch-dropdown" (click)="toggleBranchDropdown()">
+          <ion-icon name="business-outline" class="branch-icon"></ion-icon>
+          <span class="branch-name">{{ selectedBranch?.name || 'Select Branch' }}</span>
+          <ion-icon name="chevron-down-outline" class="dropdown-icon"></ion-icon>
+        </div>
+        <div class="branch-dropdown-menu" *ngIf="showBranchDropdown">
+          <button 
+            class="branch-item" 
+            *ngFor="let branch of branches"
+            [class.active]="selectedBranch?.id === branch.id"
+            (click)="selectBranch(branch)">
+            {{ branch.name }}
+          </button>
+        </div>
+      </div>
+      
+      <!-- Branch Label (if single branch) -->
+      <div class="branch-label" *ngIf="branches.length === 1">
+        <ion-icon name="business-outline" class="branch-icon"></ion-icon>
+        <span class="branch-name">{{ selectedBranch?.name }}</span>
+      </div>
+
       <div class="user-info">
         <ion-icon name="person-circle-outline" class="user-icon"></ion-icon>
         <span class="user-email">{{ userEmail || 'owner@demo.com' }}</span>
@@ -49,12 +73,18 @@
           </ion-icon>
         </button>
       </div>
-      <button 
-        class="nav-item" 
-        [class.active]="activeMenu === 'Branches'"
-        (click)="setActiveMenu('Branches')">
-        Branches
-      </button>
+      <div class="nav-item-container">
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'Branches' || activeMenu === 'Add new branch' || activeMenu === 'Dashboard' || activeMenu === 'Centers' || activeMenu === 'POCs' || activeMenu === 'Staff' || activeMenu === 'Members'"
+          (click)="setActiveMenu('Branches')">
+          Branches
+          <ion-icon 
+            [name]="showBranchesSubmenu ? 'chevron-up-outline' : 'chevron-down-outline'" 
+            class="submenu-icon">
+          </ion-icon>
+        </button>
+      </div>
     </div>
   </ion-toolbar>
   
@@ -72,6 +102,48 @@
         [class.active]="activeMenu === 'Approvals'"
         (click)="selectSubmenu('Approvals')">
         Approvals
+      </button>
+    </div>
+  </div>
+  
+  <!-- Submenu for Branches -->
+  <div class="submenu-container" *ngIf="showBranchesSubmenu">
+    <div class="submenu">
+      <button 
+        class="submenu-item" 
+        [class.active]="activeMenu === 'Add new branch'"
+        (click)="selectSubmenu('Add new branch')">
+        Add new branch
+      </button>
+      <button 
+        class="submenu-item" 
+        [class.active]="activeMenu === 'Dashboard'"
+        (click)="selectSubmenu('Dashboard')">
+        Dashboard
+      </button>
+      <button 
+        class="submenu-item" 
+        [class.active]="activeMenu === 'Centers'"
+        (click)="selectSubmenu('Centers')">
+        Centers
+      </button>
+      <button 
+        class="submenu-item" 
+        [class.active]="activeMenu === 'POCs'"
+        (click)="selectSubmenu('POCs')">
+        POCs
+      </button>
+      <button 
+        class="submenu-item" 
+        [class.active]="activeMenu === 'Staff'"
+        (click)="selectSubmenu('Staff')">
+        Staff
+      </button>
+      <button 
+        class="submenu-item" 
+        [class.active]="activeMenu === 'Members'"
+        (click)="selectSubmenu('Members')">
+        Members
       </button>
     </div>
   </div>
