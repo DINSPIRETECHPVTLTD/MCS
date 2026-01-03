@@ -61,19 +61,43 @@ export class LoginPage implements OnInit {
       this.authService.login(credentials).subscribe({
       next: async (response) => {
         try {
-          await loading.dismiss();
           // Store email in user info if not already present
           const userInfo = this.authService.getUserInfo();
           if (userInfo && !userInfo.email && credentials.email) {
             userInfo.email = credentials.email;
             localStorage.setItem('user_info', JSON.stringify(userInfo));
           }
-          this.showToast('Login successful!', 'success');
-          // Navigate to home or dashboard
-          this.router.navigate(['/home']);
+          
+          // Dismiss loading first
+          await loading.dismiss();
+          
+          // Navigate immediately using router
+          this.router.navigate(['/home'], { replaceUrl: true }).then(
+            (success) => {
+              if (success) {
+                console.log('Navigation successful');
+                // Show toast after navigation
+                setTimeout(() => {
+                  this.showToast('Login successful!', 'success');
+                }, 300);
+              } else {
+                console.log('Navigation returned false, using fallback');
+                window.location.href = '/home';
+              }
+            },
+            (error) => {
+              console.error('Navigation error:', error);
+              // Fallback: use window location if router fails
+              window.location.href = '/home';
+            }
+          );
         } catch (error) {
           console.error('Error in login success handler:', error);
           await loading.dismiss();
+          // Still try to navigate even if there's an error
+          this.router.navigate(['/home'], { replaceUrl: true }).catch(() => {
+            window.location.href = '/home';
+          });
         }
       },
         error: async (error) => {
