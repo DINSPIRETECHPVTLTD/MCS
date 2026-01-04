@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ViewWillEnter } from '@ionic/angular';
+import { ViewWillEnter, LoadingController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService, Organization } from '../../services/organization.service';
 import { BranchService, Branch } from '../../services/branch.service';
@@ -17,7 +17,8 @@ export class HomePage implements OnInit, ViewWillEnter {
   constructor(
     private authService: AuthService,
     private organizationService: OrganizationService,
-    private router: Router
+    private router: Router,
+    private loadingController: LoadingController
   ) { }
 
   ngOnInit(): void {
@@ -44,35 +45,29 @@ export class HomePage implements OnInit, ViewWillEnter {
         ...orgFromLogin
       } as Organization;
     } else {
+      const organizationId = this.authService.getOrganizationId();
       // Fetch organization details from API
-      this.loadOrganizationDetails();
+      this.loadOrganizationDetails(organizationId || 5);
     }
   }
 
-  async loadOrganizationDetails(): Promise<void> {
+  async loadOrganizationDetails(organizationId: number): Promise<void> {
+    const loading = await this.loadingController.create({
+      message: 'Loading organization details...',
+      spinner: 'crescent'
+    });
+    await loading.present();
+
     // Try primary endpoint first
-    this.organizationService.getOrganizationDetails().subscribe({
-      next: (org) => {
+    this.organizationService.getOrganization(organizationId).subscribe({
+      next: (org: Organization) => {
+        loading.dismiss();
         this.organization = org;
         localStorage.setItem('organization_info', JSON.stringify(org));
       },
-      error: (error) => {
-        // Try alternative endpoint
-        this.organizationService.getOrganizationInfo().subscribe({
-          next: (org) => {
-            this.organization = org;
-            localStorage.setItem('organization_info', JSON.stringify(org));
-          },
-          error: (err) => {
-            console.error('Error loading organization:', err);
-            // Set default values if API fails
-            this.organization = {
-              name: 'Navya Micro Credit Services',
-              phone: '+91 9898123123',
-              city: 'Hyderabad'
-            } as Organization;
-          }
-        });
+      error: (error: any) => {
+        loading.dismiss();
+        console.error('Error loading organization:', error);
       }
     });
   }

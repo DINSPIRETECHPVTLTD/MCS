@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter } from '@ionic/angular';
 import { UserService, User, CreateUserRequest } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
+import { UserContextService } from '../../services/user-context.service';
 import { BranchService, Branch } from '../../services/branch.service';
 
 @Component({
@@ -24,6 +25,7 @@ export class UsersPage implements OnInit, ViewWillEnter {
     private formBuilder: FormBuilder,
     private userService: UserService,
     private authService: AuthService,
+    private userContext: UserContextService,
     private router: Router,
     private loadingController: LoadingController,
     private toastController: ToastController
@@ -68,10 +70,11 @@ export class UsersPage implements OnInit, ViewWillEnter {
   }
 
   setOrganizationId(): void {
-    const userInfo = this.authService.getUserInfo();
-    if (userInfo?.organizationId) {
+    // Use UserContext service to get organization ID
+    const organizationId = this.userContext.organizationId;
+    if (organizationId) {
       this.userForm.patchValue({
-        organizationId: userInfo.organizationId
+        organizationId: organizationId
       });
     }
   }

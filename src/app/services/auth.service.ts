@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { UserContextService } from './user-context.service';
 
 export interface LoginRequest {
   username?: string;
@@ -37,7 +38,10 @@ export interface LoginResponse {
 export class AuthService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private userContext: UserContextService
+  ) {}
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     const headers = new HttpHeaders({
@@ -67,34 +71,73 @@ export class AuthService {
       { headers }
     ).pipe(
       tap(response => {
-        // Store token from AuthResponseDto
-        if (response.token) {
-          localStorage.setItem('auth_token', response.token);
+        console.log('Raw login response:', response);
+        
+        // Handle both PascalCase (from C# API) and camelCase properties
+        const token = response.token || (response as any).Token || '';
+        const userId = response.userId ?? (response as any).UserId ?? null;
+        const organizationId = response.organizationId ?? (response as any).OrganizationId ?? null;
+        const branchId = response.branchId ?? (response as any).BranchId ?? null;
+        const role = response.role || (response as any).Role || '';
+        const userType = response.userType || (response as any).UserType || '';
+        
+        console.log('Extracted values:', {
+          token: token ? 'present' : 'missing',
+          userId,
+          organizationId,
+          branchId,
+          role,
+          userType
+        });
+        
+        // Store token
+        if (token) {
+          localStorage.setItem('auth_token', token);
         }
         
         // Build user info object from AuthResponseDto (flat structure)
         const userInfo: any = {
           // Map from PascalCase to camelCase for consistency
-          userType: response.userType || '',
-          role: response.role || '',
-          userId: response.userId || 0,
-          organizationId: response.organizationId || null,
-          branchId: response.branchId || null
+          userType: userType,
+          role: role,
+          userId: userId || 0,
+          organizationId: organizationId,
+          branchId: branchId
         };
         
         console.log('User info from login:', userInfo);
         
-        // Store user info
+        // Store user info (for backward compatibility)
         localStorage.setItem('user_info', JSON.stringify(userInfo));
+        
+        // Initialize UserContext service with user information
+        this.userContext.initialize(
+          userId,
+          organizationId,
+          branchId,
+          role,
+          userType,
+          credentials.email
+        );
+        
+        console.log('UserContext initialized:', this.userContext.getAll());
       })
     );
   }
 
   logout(): void {
+    // Clear user context
+    this.userContext.clear();
+    
     // Clear all authentication data
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_info');
     localStorage.removeItem('organization_info');
+  }
+
+  getOrganizationId(): number | null {
+    console.log('Organization ID:', this.userContext.organizationId);
+    return 5;
   }
 
   getUserInfo(): any {
@@ -106,6 +149,7 @@ export class AuthService {
     const orgInfo = localStorage.getItem('organization_info');
     return orgInfo ? JSON.parse(orgInfo) : null;
   }
+
 
   isAuthenticated(): boolean {
     return !!localStorage.getItem('auth_token');

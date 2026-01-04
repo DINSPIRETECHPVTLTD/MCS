@@ -25,7 +25,7 @@ export class OrganizationService {
     private authService: AuthService
   ) {}
 
-  getOrganizationDetails(): Observable<Organization> {
+  getOrganization(organizationId: number): Observable<Organization> {
     const token = this.authService.getToken();
     let headers = new HttpHeaders({
       'Content-Type': 'application/json'
@@ -36,21 +36,8 @@ export class OrganizationService {
     }
 
     // Try common organization endpoints
-    return this.http.get<Organization>(`${this.apiUrl}/Organization`, { headers });
+    return this.http.get<Organization>(`${this.apiUrl}/Organizations/${organizationId}`, { headers });
   }
 
-  // Alternative endpoint if the above doesn't work
-  getOrganizationInfo(): Observable<Organization> {
-    const token = this.authService.getToken();
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-    
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    return this.http.get<Organization>(`${this.apiUrl}/Organization/Info`, { headers });
-  }
 }
 

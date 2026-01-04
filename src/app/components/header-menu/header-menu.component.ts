@@ -1,9 +1,10 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { IonicModule } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
+import { UserContextService } from '../../services/user-context.service';
 import { OrganizationService, Organization } from '../../services/organization.service';
 import { BranchService, Branch } from '../../services/branch.service';
 
@@ -35,12 +36,14 @@ export class HeaderMenuComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
+    private userContext: UserContextService,
     private organizationService: OrganizationService,
     private branchService: BranchService,
     private router: Router,
     private toastController: ToastController,
     private loadingController: LoadingController,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) { }
 
   ngOnInit(): void {
@@ -60,21 +63,14 @@ export class HeaderMenuComponent implements OnInit {
   }
 
   initializeHeader(): void {
-    // Get user info
-    const userInfo = this.authService.getUserInfo();
-    this.userEmail = userInfo?.email || '';
-    this.userRole = userInfo?.role || '';
-    this.userLevel = userInfo?.userType || '';
+    // Get user info from UserContext service
+    this.userEmail = this.userContext.email;
+    this.userRole = this.userContext.role;
+    this.userLevel = this.userContext.level;
     
-    // Determine user type based on UserType and Role
-    const userTypeLower = this.userLevel?.toLowerCase() || '';
-    const roleLower = this.userRole?.toLowerCase() || '';
-    
-    this.isOrgOwner = (userTypeLower === 'org' || userTypeLower === 'organization') && roleLower === 'owner';
-    this.isBranchUser = (userTypeLower === 'branch') && 
-                       (roleLower === 'branch user' || 
-                        roleLower === 'staff' ||
-                        roleLower === 'branchuser');
+    // Use helper methods from UserContext service
+    this.isOrgOwner = this.userContext.isOrgOwner();
+    this.isBranchUser = this.userContext.isBranchUser();
 
     // Try to get organization from login response first
     const orgFromLogin = this.authService.getOrganizationInfo();
@@ -100,33 +96,16 @@ export class HeaderMenuComponent implements OnInit {
       spinner: 'crescent'
     });
     await loading.present();
-
+    const organizationId = this.userContext.organizationId;
     // Try primary endpoint first
-    this.organizationService.getOrganizationDetails().subscribe({
-      next: (org) => {
+    this.organizationService.getOrganization(organizationId || 0).subscribe({
+      next: (org: Organization) => {
         loading.dismiss();
         this.organization = org;
         localStorage.setItem('organization_info', JSON.stringify(org));
       },
-      error: (error) => {
-        // Try alternative endpoint
-        this.organizationService.getOrganizationInfo().subscribe({
-          next: (org) => {
-            loading.dismiss();
-            this.organization = org;
-            localStorage.setItem('organization_info', JSON.stringify(org));
-          },
-          error: (err) => {
-            loading.dismiss();
-            console.error('Error loading organization:', err);
-            // Set default values if API fails
-            this.organization = {
-              name: 'Navya Micro Credit Services',
-              phone: '+91 9898123123',
-              city: 'Hyderabad'
-            } as Organization;
-          }
-        });
+      error: (error: any) => {
+        console.error('Error loading organization:', error);
       }
     });
   }
@@ -136,10 +115,9 @@ export class HeaderMenuComponent implements OnInit {
       next: (branches) => {
         this.branches = branches;
         
-        // For branch level users, set their branch from user info
+        // For branch level users, set their branch from user context
         if (this.isBranchUser) {
-          const userInfo = this.authService.getUserInfo();
-          const userBranchId = userInfo?.branchId;
+          const userBranchId = this.userContext.branchId;
           if (userBranchId) {
             const userBranch = branches.find(b => b.id === userBranchId || b.id.toString() === userBranchId.toString());
             if (userBranch) {
@@ -212,14 +190,10 @@ export class HeaderMenuComponent implements OnInit {
         this.activeMenu = 'Dashboard';
         this.showBranchesSubmenu = true;
         this.menuChange.emit('Dashboard');
-      this.router.navigateByUrl('/branch-dashboard', { skipLocationChange: false }).then((success) => {
-        if (!success) {
-          window.location.href = '/branch-dashboard';
-        }
-      }).catch(err => {
-        console.error('Navigation error:', err);
-        window.location.href = '/branch-dashboard';
-      });
+        // Use setTimeout to ensure navigation happens after DOM updates
+        setTimeout(() => {
+          this.navigateToRoute('/branch-dashboard');
+        }, 0);
       } else {
         this.showBranchesSubmenu = !this.showBranchesSubmenu;
       }
@@ -229,33 +203,53 @@ export class HeaderMenuComponent implements OnInit {
       this.showBranchesSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
-      this.router.navigateByUrl('/organization-info', { skipLocationChange: false }).then((success) => {
-        if (!success) {
-          window.location.href = '/organization-info';
-        }
-      }).catch(err => {
-        console.error('Navigation error:', err);
-        window.location.href = '/organization-info';
-      });
+      setTimeout(() => {
+        this.navigateToRoute('/organization-info');
+      }, 0);
     } else if (menu === 'Dashboard') {
       this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
-      this.router.navigateByUrl('/home', { skipLocationChange: false }).then((success) => {
-        if (!success) {
-          window.location.href = '/home';
-        }
-      }).catch(err => {
-        console.error('Navigation error:', err);
-        window.location.href = '/home';
-      });
+      setTimeout(() => {
+        this.navigateToRoute('/home');
+      }, 0);
     } else {
       this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
     }
+  }
+
+  private navigateToRoute(route: string): void {
+    // Blur any focused element to prevent aria-hidden accessibility issues
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Use NgZone to ensure navigation happens within Angular's zone
+    this.ngZone.run(() => {
+      this.router.navigateByUrl(route, { skipLocationChange: false }).then((success) => {
+        if (success) {
+          console.log('Navigated to:', route);
+          // Force change detection after navigation
+          this.ngZone.run(() => {
+            setTimeout(() => {
+              this.cdr.detectChanges();
+            }, 100);
+          });
+        } else {
+          console.error('Navigation failed for:', route);
+          // Fallback: try using window.location for hard navigation
+          window.location.href = route;
+        }
+      }).catch(err => {
+        console.error('Navigation error:', err);
+        // Fallback: try using window.location for hard navigation
+        window.location.href = route;
+      });
+    });
   }
 
   selectSubmenu(submenu: string): void {
@@ -287,26 +281,10 @@ export class HeaderMenuComponent implements OnInit {
     }
     
     if (route) {
-      // Store route in const for proper type narrowing
-      const targetRoute = route;
-      // Use navigateByUrl for more reliable navigation with lazy-loaded modules
-      this.router.navigateByUrl(targetRoute, { skipLocationChange: false }).then((success) => {
-        if (success) {
-          console.log('Navigated to:', targetRoute);
-          // Force change detection after navigation
-          setTimeout(() => {
-            this.cdr.detectChanges();
-          }, 100);
-        } else {
-          console.error('Navigation failed for:', targetRoute);
-          // Fallback: try using window.location for hard navigation
-          window.location.href = targetRoute;
-        }
-      }).catch(err => {
-        console.error('Navigation error:', err);
-        // Fallback: try using window.location for hard navigation
-        window.location.href = targetRoute;
-      });
+      // Use setTimeout to ensure navigation happens after DOM updates
+      setTimeout(() => {
+        this.navigateToRoute(route!);
+      }, 0);
     }
   }
 

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
+import { UserContextService } from '../../services/user-context.service';
 import { OrganizationService, Organization } from '../../services/organization.service';
 import { BranchService, Branch } from '../../services/branch.service';
 
@@ -16,6 +17,7 @@ export class OrganizationInfoPage implements OnInit, ViewWillEnter {
 
   constructor(
     private authService: AuthService,
+    private userContext: UserContextService,
     private organizationService: OrganizationService,
     private router: Router
   ) { }
@@ -35,29 +37,34 @@ export class OrganizationInfoPage implements OnInit, ViewWillEnter {
   }
 
   async loadOrganizationDetails(): Promise<void> {
-    // Try primary endpoint first
-    this.organizationService.getOrganizationDetails().subscribe({
-      next: (org) => {
+    // Get organization ID from UserContext service
+    const organizationId = this.userContext.organizationId;
+    
+    if (!organizationId) {
+      console.error('Organization ID not found in user context');
+      // Set default values if organization ID is not available
+      this.organization = {
+        name: 'Navya Micro Credit Services',
+        phone: '+91 9898123123',
+        city: 'Hyderabad'
+      } as Organization;
+      return;
+    }
+
+    // Use the organization service to get organization details
+    this.organizationService.getOrganization(organizationId).subscribe({
+      next: (org: Organization) => {
         this.organization = org;
         localStorage.setItem('organization_info', JSON.stringify(org));
       },
-      error: (error) => {
-        // Try alternative endpoint
-        this.organizationService.getOrganizationInfo().subscribe({
-          next: (org) => {
-            this.organization = org;
-            localStorage.setItem('organization_info', JSON.stringify(org));
-          },
-          error: (err) => {
-            console.error('Error loading organization:', err);
-            // Set default values if API fails
-            this.organization = {
-              name: 'Navya Micro Credit Services',
-              phone: '+91 9898123123',
-              city: 'Hyderabad'
-            } as Organization;
-          }
-        });
+      error: (error: any) => {
+        console.error('Error loading organization:', error);
+        // Set default values if API fails
+        this.organization = {
+          name: 'Navya Micro Credit Services',
+          phone: '+91 9898123123',
+          city: 'Hyderabad'
+        } as Organization;
       }
     });
   }
