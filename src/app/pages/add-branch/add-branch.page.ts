@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoadingController, ToastController } from '@ionic/angular';
+import { LoadingController, ToastController, ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { BranchService, Branch } from '../../services/branch.service';
 
@@ -10,7 +10,7 @@ import { BranchService, Branch } from '../../services/branch.service';
   templateUrl: './add-branch.page.html',
   styleUrls: ['./add-branch.page.scss']
 })
-export class AddBranchPage implements OnInit {
+export class AddBranchPage implements OnInit, ViewWillEnter {
   branchForm: FormGroup;
   activeMenu: string = 'Add new branch';
 
@@ -33,6 +33,14 @@ export class AddBranchPage implements OnInit {
   }
 
   ngOnInit(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+  }
+
+  ionViewWillEnter(): void {
+    // Reload data when page becomes active
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;

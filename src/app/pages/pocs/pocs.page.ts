@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { BranchService, Branch } from '../../services/branch.service';
 
@@ -8,7 +9,7 @@ import { BranchService, Branch } from '../../services/branch.service';
   templateUrl: './pocs.page.html',
   styleUrls: ['./pocs.page.scss']
 })
-export class PocsPage implements OnInit {
+export class PocsPage implements OnInit, ViewWillEnter {
   activeMenu: string = 'POCs';
   pocs: any[] = [];
 
@@ -22,6 +23,15 @@ export class PocsPage implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+  }
+
+  ionViewWillEnter(): void {
+    // Reload data when page becomes active
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    // TODO: Load POCs data here when API is ready
   }
 
   onMenuChange(menu: string): void {

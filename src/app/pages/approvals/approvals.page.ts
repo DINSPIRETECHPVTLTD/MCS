@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { BranchService, Branch } from '../../services/branch.service';
 
@@ -8,7 +9,7 @@ import { BranchService, Branch } from '../../services/branch.service';
   templateUrl: './approvals.page.html',
   styleUrls: ['./approvals.page.scss']
 })
-export class ApprovalsPage implements OnInit {
+export class ApprovalsPage implements OnInit, ViewWillEnter {
   activeMenu: string = 'Approvals';
 
   constructor(
@@ -17,6 +18,14 @@ export class ApprovalsPage implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+  }
+
+  ionViewWillEnter(): void {
+    // Reload data when page becomes active
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;

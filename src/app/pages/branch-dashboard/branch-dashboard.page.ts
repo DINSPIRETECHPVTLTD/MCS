@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { BranchService, Branch } from '../../services/branch.service';
 
@@ -8,7 +9,7 @@ import { BranchService, Branch } from '../../services/branch.service';
   templateUrl: './branch-dashboard.page.html',
   styleUrls: ['./branch-dashboard.page.scss']
 })
-export class BranchDashboardPage implements OnInit {
+export class BranchDashboardPage implements OnInit, ViewWillEnter {
   activeMenu: string = 'Dashboard';
 
   constructor(
@@ -17,6 +18,14 @@ export class BranchDashboardPage implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+  }
+
+  ionViewWillEnter(): void {
+    // Reload data when page becomes active
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
