@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ToastController, LoadingController } from '@ionic/angular';
@@ -39,7 +39,8 @@ export class HeaderMenuComponent implements OnInit {
     private branchService: BranchService,
     private router: Router,
     private toastController: ToastController,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -211,7 +212,14 @@ export class HeaderMenuComponent implements OnInit {
         this.activeMenu = 'Dashboard';
         this.showBranchesSubmenu = true;
         this.menuChange.emit('Dashboard');
-        this.router.navigate(['/branch-dashboard']);
+      this.router.navigateByUrl('/branch-dashboard', { skipLocationChange: false }).then((success) => {
+        if (!success) {
+          window.location.href = '/branch-dashboard';
+        }
+      }).catch(err => {
+        console.error('Navigation error:', err);
+        window.location.href = '/branch-dashboard';
+      });
       } else {
         this.showBranchesSubmenu = !this.showBranchesSubmenu;
       }
@@ -221,13 +229,27 @@ export class HeaderMenuComponent implements OnInit {
       this.showBranchesSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
-      this.router.navigate(['/organization-info']);
+      this.router.navigateByUrl('/organization-info', { skipLocationChange: false }).then((success) => {
+        if (!success) {
+          window.location.href = '/organization-info';
+        }
+      }).catch(err => {
+        console.error('Navigation error:', err);
+        window.location.href = '/organization-info';
+      });
     } else if (menu === 'Dashboard') {
       this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
-      this.router.navigate(['/home']);
+      this.router.navigateByUrl('/home', { skipLocationChange: false }).then((success) => {
+        if (!success) {
+          window.location.href = '/home';
+        }
+      }).catch(err => {
+        console.error('Navigation error:', err);
+        window.location.href = '/home';
+      });
     } else {
       this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
@@ -242,24 +264,49 @@ export class HeaderMenuComponent implements OnInit {
     this.showBranchesSubmenu = false;
     this.menuChange.emit(submenu);
     
-    // Navigate to respective pages
+    // Navigate to respective pages with proper error handling
+    let route: string | null = null;
+    
     if (submenu === 'All Users') {
-      this.router.navigate(['/users']);
+      route = '/users';
     } else if (submenu === 'Approvals') {
-      this.router.navigate(['/approvals']);
+      route = '/approvals';
     } else if (submenu === 'Add new branch') {
-      this.router.navigate(['/add-branch']);
+      route = '/add-branch';
     } else if (submenu === 'Dashboard') {
       // Dashboard from Branches submenu goes to branch dashboard
-      this.router.navigate(['/branch-dashboard']);
+      route = '/branch-dashboard';
     } else if (submenu === 'Centers') {
-      this.router.navigate(['/centers']);
+      route = '/centers';
     } else if (submenu === 'POCs') {
-      this.router.navigate(['/pocs']);
+      route = '/pocs';
     } else if (submenu === 'Staff') {
-      this.router.navigate(['/staff']);
+      route = '/staff';
     } else if (submenu === 'Members') {
-      this.router.navigate(['/members']);
+      route = '/members';
+    }
+    
+    if (route) {
+      // Store route in const for proper type narrowing
+      const targetRoute = route;
+      // Use navigateByUrl for more reliable navigation with lazy-loaded modules
+      this.router.navigateByUrl(targetRoute, { skipLocationChange: false }).then((success) => {
+        if (success) {
+          console.log('Navigated to:', targetRoute);
+          // Force change detection after navigation
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          }, 100);
+        } else {
+          console.error('Navigation failed for:', targetRoute);
+          // Fallback: try using window.location for hard navigation
+          window.location.href = targetRoute;
+        }
+      }).catch(err => {
+        console.error('Navigation error:', err);
+        // Fallback: try using window.location for hard navigation
+        window.location.href = targetRoute;
+      });
     }
   }
 

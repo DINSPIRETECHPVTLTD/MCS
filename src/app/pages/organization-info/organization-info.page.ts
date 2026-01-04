@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService, Organization } from '../../services/organization.service';
 import { BranchService, Branch } from '../../services/branch.service';
@@ -9,7 +10,7 @@ import { BranchService, Branch } from '../../services/branch.service';
   templateUrl: './organization-info.page.html',
   styleUrls: ['./organization-info.page.scss']
 })
-export class OrganizationInfoPage implements OnInit {
+export class OrganizationInfoPage implements OnInit, ViewWillEnter {
   organization: Organization | null = null;
   activeMenu: string = 'Info';
 
@@ -24,8 +25,13 @@ export class OrganizationInfoPage implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+  }
 
-    this.loadOrganizationDetails();
+  ionViewWillEnter(): void {
+    // Reload data when page becomes active
+    if (this.authService.isAuthenticated()) {
+      this.loadOrganizationDetails();
+    }
   }
 
   async loadOrganizationDetails(): Promise<void> {
