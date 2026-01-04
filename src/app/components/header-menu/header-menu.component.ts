@@ -230,7 +230,10 @@ export class HeaderMenuComponent implements OnInit {
     
     // Use NgZone to ensure navigation happens within Angular's zone
     this.ngZone.run(() => {
-      this.router.navigateByUrl(route, { skipLocationChange: false }).then((success) => {
+      this.router.navigateByUrl(route, { 
+        skipLocationChange: false,
+        replaceUrl: true  // Replace the current page instead of stacking
+      }).then((success) => {
         if (success) {
           console.log('Navigated to:', route);
           // Force change detection after navigation
