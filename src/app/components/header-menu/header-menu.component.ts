@@ -55,7 +55,7 @@ export class HeaderMenuComponent implements OnInit {
     }
     
     // Show Branches submenu if active menu is related to Branches
-    if (this.activeMenu === 'Branches' || this.activeMenu === 'Add new branch' || 
+    if (this.activeMenu === 'Branches' || this.activeMenu === 'All Branches' || 
         this.activeMenu === 'Centers' || this.activeMenu === 'POCs' || 
         this.activeMenu === 'Staff' || this.activeMenu === 'Members') {
       this.showBranchesSubmenu = true;
@@ -186,7 +186,16 @@ export class HeaderMenuComponent implements OnInit {
       this.showUsersSubmenu = !this.showUsersSubmenu;
       this.showBranchesSubmenu = false;
     } else if (menu === 'Branches') {
-      if (this.isBranchUser && !this.showBranchesSubmenu) {
+      if (this.isOrgOwner) {
+        // For Org Owner, show All Branches page
+        this.showUsersSubmenu = false;
+        this.showBranchesSubmenu = false;
+        this.activeMenu = 'All Branches';
+        this.menuChange.emit('All Branches');
+        setTimeout(() => {
+          this.navigateToRoute('/branches');
+        }, 0);
+      } else if (this.isBranchUser && !this.showBranchesSubmenu) {
         this.activeMenu = 'Dashboard';
         this.showBranchesSubmenu = true;
         this.menuChange.emit('Dashboard');
@@ -268,8 +277,8 @@ export class HeaderMenuComponent implements OnInit {
       route = '/users';
     } else if (submenu === 'Approvals') {
       route = '/approvals';
-    } else if (submenu === 'Add new branch') {
-      route = '/add-branch';
+    } else if (submenu === 'All Branches') {
+      route = '/branches';
     } else if (submenu === 'Dashboard') {
       // Dashboard from Branches submenu goes to branch dashboard
       route = '/branch-dashboard';

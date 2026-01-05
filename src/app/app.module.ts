@@ -15,7 +15,9 @@ import {
   chevronDownOutline, 
   chevronUpOutline, 
   logOutOutline, 
-  lockClosedOutline 
+  lockClosedOutline,
+  closeOutline,
+  checkmarkOutline
 } from 'ionicons/icons';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -33,7 +35,9 @@ addIcons({
   'chevron-down-outline': chevronDownOutline,
   'chevron-up-outline': chevronUpOutline,
   'log-out-outline': logOutOutline,
-  'lock-closed-outline': lockClosedOutline
+  'lock-closed-outline': lockClosedOutline,
+  'close-outline': closeOutline,
+  'checkmark-outline': checkmarkOutline
 });
 
 @NgModule({

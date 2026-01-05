@@ -119,13 +119,13 @@
   <!-- Submenu for Branches -->
   <div class="submenu-container" *ngIf="showBranchesSubmenu">
     <div class="submenu">
-      <!-- Add new branch - Only for Org Owner -->
+      <!-- All Branches - Only for Org Owner -->
       <button 
         *ngIf="isOrgOwner"
         class="submenu-item" 
-        [class.active]="activeMenu === 'Add new branch'"
-        (click)="selectSubmenu('Add new branch')">
-        Add new branch
+        [class.active]="activeMenu === 'All Branches'"
+        (click)="selectSubmenu('All Branches')">
+        All Branches
       </button>
       
       <!-- Dashboard - Show for all users -->

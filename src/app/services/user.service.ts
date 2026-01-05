@@ -69,11 +69,10 @@ export class UserService {
     let headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
-    
+    console.log('user', JSON.stringify(user));
     if (token) {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
-
     return this.http.post<User>(`${this.apiUrl}/Users`, user, { headers });
   }
 }

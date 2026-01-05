@@ -2,9 +2,9 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-import { StaffPageRoutingModule } from './staff-routing.module';
-import { StaffPage } from './staff.page';
-import { AddStaffModalComponent } from './add-staff-modal.component';
+import { BranchesPageRoutingModule } from './branches-routing.module';
+import { BranchesPage } from './branches.page';
+import { AddBranchModalComponent } from './add-branch-modal.component';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 
 @NgModule({
@@ -13,10 +13,10 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     FormsModule,
     ReactiveFormsModule,
     IonicModule,
-    StaffPageRoutingModule,
+    BranchesPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [StaffPage, AddStaffModalComponent]
+  declarations: [BranchesPage, AddBranchModalComponent]
 })
-export class StaffPageModule {}
+export class BranchesPageModule {}
 

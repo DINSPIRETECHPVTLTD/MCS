@@ -5,33 +5,39 @@
 </app-header-menu>
 
 <ion-content [fullscreen]="true" class="ion-padding">
-  <div class="content-container">
+  <!-- Staff List -->
+  <div class="staff-list-container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h1>Staff</h1>
-      <ion-button>
+      <h2>All Staff</h2>
+      <ion-button (click)="toggleAddForm()">
         <ion-icon name="add-outline" slot="start"></ion-icon>
         Add Staff
       </ion-button>
     </div>
     
-    <div *ngIf="staff.length === 0" class="empty-state">
+    <!-- Debug info -->
+    <div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-size: 12px;">
+      <p style="margin: 0;">Staff count: {{ staff.length }}</p>
+      <p style="margin: 4px 0 0 0;">Loading: {{ isLoading ? 'Yes' : 'No' }}</p>
+    </div>
+    
+    <div *ngIf="staff.length === 0 && !isLoading" class="empty-state">
       <ion-icon name="people-outline" size="large"></ion-icon>
       <p>No staff found</p>
       <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
-        Click "Add Staff" to add a new staff member
+        Click "Add Staff" to create a new staff member
       </p>
     </div>
-    
     <ion-list *ngIf="staff.length > 0">
       <ion-item *ngFor="let member of staff" class="staff-item">
         <ion-avatar slot="start">
           <ion-icon name="person-circle-outline"></ion-icon>
         </ion-avatar>
         <ion-label>
-          <h2>{{ member.name }}</h2>
-          <p *ngIf="member.phone">{{ member.phone }}</p>
+          <h2>{{ member.firstName }} {{ member.middleName || '' }} {{ member.lastName }}</h2>
           <p *ngIf="member.email">{{ member.email }}</p>
-          <p *ngIf="member.role">{{ member.role }}</p>
+          <p *ngIf="member.phoneNumber">{{ member.phoneNumber }}</p>
+          <p *ngIf="member.role">{{ member.role }} - {{ member.level }}</p>
         </ion-label>
       </ion-item>
     </ion-list>

@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoadingController, ToastController, ViewWillEnter } from '@ionic/angular';
+import { LoadingController, ToastController, ViewWillEnter, ModalController } from '@ionic/angular';
 import { UserService, User, CreateUserRequest } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { BranchService, Branch } from '../../services/branch.service';
+import { AddUserModalComponent } from './add-user-modal.component';
 
 @Component({
   selector: 'app-users',
@@ -28,7 +29,8 @@ export class UsersPage implements OnInit, ViewWillEnter {
     private userContext: UserContextService,
     private router: Router,
     private loadingController: LoadingController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private modalController: ModalController
   ) {
     this.userForm = this.formBuilder.group({
       firstName: ['', [Validators.required]],
@@ -112,11 +114,41 @@ export class UsersPage implements OnInit, ViewWillEnter {
     });
   }
 
-  toggleAddForm(): void {
-    this.showAddForm = !this.showAddForm;
-    if (!this.showAddForm) {
+  async toggleAddForm(): Promise<void> {
+    if (this.showAddForm) {
+      // Close modal if already open
+      const modal = await this.modalController.getTop();
+      if (modal) {
+        await this.modalController.dismiss();
+      }
+      this.showAddForm = false;
       this.resetForm();
+    } else {
+      // Open modal
+      this.showAddForm = true;
+      await this.openAddUserModal();
     }
+  }
+
+  async openAddUserModal(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: AddUserModalComponent,
+      componentProps: {
+        isEditing: this.isEditing,
+        editingUserId: this.editingUserId
+      },
+      cssClass: 'add-user-modal'
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onWillDismiss();
+    if (data && data.success) {
+      // Refresh users list after successful save
+      this.loadUsers();
+    }
+    this.showAddForm = false;
+    this.resetForm();
   }
 
   resetForm(): void {
@@ -129,51 +161,6 @@ export class UsersPage implements OnInit, ViewWillEnter {
     this.editingUserId = null;
   }
 
-  async onSubmit(): Promise<void> {
-    if (this.userForm.invalid) {
-      this.showToast('Please fill in all required fields', 'danger');
-      return;
-    }
-
-    const loading = await this.loadingController.create({
-      message: this.isEditing ? 'Updating user...' : 'Creating user...',
-      spinner: 'crescent'
-    });
-    await loading.present();
-
-    const userData: CreateUserRequest = {
-      firstName: this.userForm.value.firstName,
-      middleName: this.userForm.value.middleName || '',
-      lastName: this.userForm.value.lastName,
-      phoneNumber: this.userForm.value.phoneNumber || '',
-      address1: this.userForm.value.address1 || '',
-      address2: this.userForm.value.address2 || '',
-      city: this.userForm.value.city || '',
-      state: this.userForm.value.state || '',
-      pinCode: this.userForm.value.pinCode || '',
-      email: this.userForm.value.email || '',
-      level: this.userForm.value.level,
-      role: this.userForm.value.role,
-      organizationId: this.userForm.value.organizationId,
-      branchId: null
-    };
-
-    this.userService.createUser(userData).subscribe({
-      next: async (user) => {
-        await loading.dismiss();
-        this.showToast(this.isEditing ? 'User updated successfully!' : 'User created successfully!', 'success');
-        this.resetForm();
-        this.showAddForm = false;
-        this.loadUsers();
-      },
-      error: async (error) => {
-        await loading.dismiss();
-        const errorMessage = error.error?.message || error.message || 'Failed to create user. Please try again.';
-        this.showToast(errorMessage, 'danger');
-        console.error('Error creating user:', error);
-      }
-    });
-  }
 
   async showToast(message: string, color: string): Promise<void> {
     const toast = await this.toastController.create({

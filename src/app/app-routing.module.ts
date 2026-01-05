@@ -32,6 +32,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/add-branch/add-branch.module').then(m => m.AddBranchPageModule)
   },
   {
+    path: 'branches',
+    loadChildren: () => import('./pages/branches/branches.module').then(m => m.BranchesPageModule)
+  },
+  {
     path: 'branch-dashboard',
     loadChildren: () => import('./pages/branch-dashboard/branch-dashboard.module').then(m => m.BranchDashboardPageModule)
   },

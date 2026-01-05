@@ -1,0 +1,166 @@
+<ion-header [translucent]="false">
+  <ion-toolbar>
+    <ion-title>{{ isEditing ? 'Edit Staff' : 'Add New Staff' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <form [formGroup]="staffForm" (ngSubmit)="onSubmit()">
+    <!-- Email and Password Fields (at top) -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('email')">
+      <ion-label position="stacked">Email</ion-label>
+      <ion-input
+        formControlName="email"
+        placeholder="Enter email address"
+        type="email">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('email') }}</ion-note>
+    </ion-item>
+
+    <ion-item [class.ion-invalid]="isFieldInvalid('password')">
+      <ion-label position="stacked">Password <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="password"
+        placeholder="Enter password"
+        type="password">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('password') }}</ion-note>
+    </ion-item>
+
+    <!-- Name Fields -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('firstName')">
+      <ion-label position="stacked">First Name <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="firstName"
+        placeholder="Enter first name"
+        type="text">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Middle Name</ion-label>
+      <ion-input
+        formControlName="middleName"
+        placeholder="Enter middle name"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
+      <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="lastName"
+        placeholder="Enter last name"
+        type="text">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('lastName') }}</ion-note>
+    </ion-item>
+
+    <!-- Contact Fields -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('phoneNumber')">
+      <ion-label position="stacked">Phone Number</ion-label>
+      <ion-input
+        formControlName="phoneNumber"
+        placeholder="Enter 10-digit phone number"
+        type="tel"
+        maxlength="10">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
+    </ion-item>
+
+    <!-- Address Fields -->
+    <ion-item>
+      <ion-label position="stacked">Address Line 1</ion-label>
+      <ion-input
+        formControlName="address1"
+        placeholder="Enter address line 1"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Address Line 2</ion-label>
+      <ion-input
+        formControlName="address2"
+        placeholder="Enter address line 2"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">City</ion-label>
+      <ion-input
+        formControlName="city"
+        placeholder="Enter city"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">State</ion-label>
+      <ion-input
+        formControlName="state"
+        placeholder="Enter state"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item [class.ion-invalid]="isFieldInvalid('pinCode')">
+      <ion-label position="stacked">Pin Code</ion-label>
+      <ion-input
+        formControlName="pinCode"
+        placeholder="Enter 6-digit pin code"
+        type="tel"
+        maxlength="6">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('pinCode') }}</ion-note>
+    </ion-item>
+
+    <!-- Level and Role -->
+    <ion-item>
+      <ion-label position="stacked">Level</ion-label>
+      <ion-input
+        [value]="staffForm.value.level"
+        readonly>
+      </ion-input>
+    </ion-item>
+
+    <ion-item [class.ion-invalid]="isFieldInvalid('role')">
+      <ion-label position="stacked">Role <span class="required">*</span></ion-label>
+      <ion-select formControlName="role" placeholder="Select role">
+        <ion-select-option *ngFor="let role of roleOptions" [value]="role">
+          {{ role }}
+        </ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('role') }}</ion-note>
+    </ion-item>
+
+    <!-- Action Buttons -->
+    <div class="ion-margin-top">
+      <ion-button
+        expand="block"
+        type="submit"
+        [disabled]="staffForm.invalid && submitted"
+        class="save-button">
+        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+        {{ isEditing ? 'Update Staff' : 'Save Staff' }}
+      </ion-button>
+      
+      <ion-button
+        expand="block"
+        fill="outline"
+        type="button"
+        (click)="closeModal()"
+        class="ion-margin-top">
+        Cancel
+      </ion-button>
+    </div>
+  </form>
+</ion-content>
+

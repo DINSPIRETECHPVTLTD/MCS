@@ -51,5 +51,29 @@ export class BranchService {
 
     return this.http.get<Branch[]>(`${this.apiUrl}/Branch/List`, { headers });
   }
+
+  createBranch(branch: CreateBranchRequest): Observable<Branch> {
+    const token = this.authService.getToken();
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+    
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    return this.http.post<Branch>(`${this.apiUrl}/Branches`, branch, { headers });
+  }
+}
+
+export interface CreateBranchRequest {
+  name: string;
+  code?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  phone?: string;
+  email?: string;
+  organizationId?: number;
 }
 
