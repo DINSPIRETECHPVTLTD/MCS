@@ -160,7 +160,7 @@ export class UserContextService {
   isOrgOwner(): boolean {
     const levelLower = this._level?.toLowerCase() || '';
     const roleLower = this._role?.toLowerCase() || '';
-    return (levelLower === 'org') && roleLower === 'owner';
+    return (levelLower === 'organization') && roleLower === 'owner';
   }
 
   /**

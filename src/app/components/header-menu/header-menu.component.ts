@@ -71,6 +71,11 @@ export class HeaderMenuComponent implements OnInit {
     // Use helper methods from UserContext service
     this.isOrgOwner = this.userContext.isOrgOwner();
     this.isBranchUser = this.userContext.isBranchUser();
+    console.log('User Context:', this.userContext);
+    console.log('User Role:', this.userRole);
+    console.log('User Level:', this.userLevel);
+    console.log('Is Org Owner:', this.isOrgOwner);
+    console.log('Is Branch User:', this.isBranchUser);
 
     // Try to get organization from login response first
     const orgFromLogin = this.authService.getOrganizationInfo();
