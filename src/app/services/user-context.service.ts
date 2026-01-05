@@ -96,11 +96,16 @@ export class UserContextService {
           organizationId: this._organizationId,
           branchId: this._branchId,
           role: this._role,
-          level: this._level
+          level: this._level,
+          email: this._email
         });
       } catch (error) {
         console.error('Error loading user context from storage:', error);
+        // Clear corrupted data
+        localStorage.removeItem('user_context');
       }
+    } else {
+      console.log('No user context found in storage');
     }
   }
 
@@ -116,7 +121,12 @@ export class UserContextService {
       level: this._level,
       email: this._email
     };
-    localStorage.setItem('user_context', JSON.stringify(data));
+    try {
+      localStorage.setItem('user_context', JSON.stringify(data));
+      console.log('UserContext saved to storage:', data);
+    } catch (error) {
+      console.error('Error saving user context to storage:', error);
+    }
   }
 
   // Getters
@@ -150,7 +160,7 @@ export class UserContextService {
   isOrgOwner(): boolean {
     const levelLower = this._level?.toLowerCase() || '';
     const roleLower = this._role?.toLowerCase() || '';
-    return (levelLower === 'org' || levelLower === 'organization') && roleLower === 'owner';
+    return (levelLower === 'org') && roleLower === 'owner';
   }
 
   /**
@@ -160,9 +170,8 @@ export class UserContextService {
     const levelLower = this._level?.toLowerCase() || '';
     const roleLower = this._role?.toLowerCase() || '';
     return (levelLower === 'branch') &&
-           (roleLower === 'branch user' ||
-            roleLower === 'staff' ||
-            roleLower === 'branchuser');
+           (roleLower === 'staff' ||
+            roleLower === 'branchadmin' );
   }
 
   /**
@@ -184,6 +193,21 @@ export class UserContextService {
       level: this._level,
       email: this._email
     };
+  }
+
+  /**
+   * Debug method to check UserContext state
+   */
+  debug(): void {
+    console.log('=== UserContext Debug ===');
+    console.log('Current state:', this.getAll());
+    console.log('Is Org Owner:', this.isOrgOwner());
+    console.log('Is Branch User:', this.isBranchUser());
+    const stored = localStorage.getItem('user_context');
+    console.log('Stored in localStorage:', stored ? JSON.parse(stored) : 'null');
+    const userInfo = localStorage.getItem('user_info');
+    console.log('user_info in localStorage:', userInfo ? JSON.parse(userInfo) : 'null');
+    console.log('========================');
   }
 }
 

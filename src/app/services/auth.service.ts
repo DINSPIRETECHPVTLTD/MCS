@@ -136,8 +136,20 @@ export class AuthService {
   }
 
   getOrganizationId(): number | null {
-    console.log('Organization ID:', this.userContext.organizationId);
-    return 5;
+    return this.userContext.organizationId;
+  }
+
+  getBranchId(): number | null {
+    return this.userContext.branchId;
+  }
+  getRole(): string {
+    return this.userContext.role;
+  }
+  getLevel(): string {
+    return this.userContext.level;
+  }
+  getEmail(): string {
+    return this.userContext.email;
   }
 
   getUserInfo(): any {
