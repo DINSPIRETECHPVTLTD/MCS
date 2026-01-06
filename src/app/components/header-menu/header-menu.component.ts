@@ -192,26 +192,10 @@ export class HeaderMenuComponent implements OnInit {
       this.showBranchesSubmenu = false;
     } else if (menu === 'Branches') {
       if (this.isOrgOwner) {
-        // For Org Owner, show All Branches page
+        // For Org Owner, toggle submenu
         this.showUsersSubmenu = false;
-        this.showBranchesSubmenu = false;
-        this.activeMenu = 'All Branches';
-        this.menuChange.emit('All Branches');
-        setTimeout(() => {
-          this.navigateToRoute('/branches');
-        }, 0);
-      } else if (this.isBranchUser && !this.showBranchesSubmenu) {
-        this.activeMenu = 'Dashboard';
-        this.showBranchesSubmenu = true;
-        this.menuChange.emit('Dashboard');
-        // Use setTimeout to ensure navigation happens after DOM updates
-        setTimeout(() => {
-          this.navigateToRoute('/branch-dashboard');
-        }, 0);
-      } else {
         this.showBranchesSubmenu = !this.showBranchesSubmenu;
       }
-      this.showUsersSubmenu = false;
     } else if (menu === 'Info') {
       this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
@@ -225,14 +209,26 @@ export class HeaderMenuComponent implements OnInit {
       this.showBranchesSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
+      // For branch users, navigate to branch dashboard; for org owners, navigate to home
       setTimeout(() => {
-        this.navigateToRoute('/home');
+        if (this.isBranchUser) {
+          this.navigateToRoute('/branch-dashboard');
+        } else {
+          this.navigateToRoute('/home');
+        }
       }, 0);
     } else {
+      // Handle other menu items (Centers, POCs, Staff, Members)
       this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
+      // Navigate directly for branch users
+      if (this.isBranchUser) {
+        setTimeout(() => {
+          this.selectSubmenu(menu);
+        }, 0);
+      }
     }
   }
 

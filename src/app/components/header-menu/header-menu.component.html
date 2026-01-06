@@ -46,12 +46,11 @@
     </div>
   </div>
 
-  <!-- Navigation Menu -->
-  <ion-toolbar class="nav-toolbar">
+  <!-- Navigation Menu for Org Owner -->
+  <ion-toolbar class="nav-toolbar" *ngIf="isOrgOwner">
     <div class="nav-menu">
       <!-- Dashboard - Show for all users -->
       <button 
-        *ngIf="isOrgOwner || isBranchUser"
         class="nav-item" 
         [class.active]="activeMenu === 'Dashboard'"
         (click)="setActiveMenu('Dashboard')">
@@ -60,7 +59,6 @@
       
       <!-- Organization Info - Only for Org Owner -->
       <button 
-        *ngIf="isOrgOwner"
         class="nav-item" 
         [class.active]="activeMenu === 'Info'"
         (click)="setActiveMenu('Info')">
@@ -68,7 +66,7 @@
       </button>
       
       <!-- Users - Only for Org Owner -->
-      <div class="nav-item-container" *ngIf="isOrgOwner">
+      <div class="nav-item-container">
         <button 
           class="nav-item" 
           [class.active]="activeMenu === 'Users' || activeMenu === 'All Users' || activeMenu === 'Approvals'"
@@ -81,15 +79,14 @@
         </button>
       </div>
       
-      <!-- Branches - Show for all, but different submenus based on role -->
+      <!-- Branches - Show for Org Owner -->
       <div class="nav-item-container">
         <button 
           class="nav-item" 
-          [class.active]="activeMenu === 'Branches' || activeMenu === 'Add new branch' || activeMenu === 'Dashboard' || activeMenu === 'Centers' || activeMenu === 'POCs' || activeMenu === 'Staff' || activeMenu === 'Members'"
+          [class.active]="activeMenu === 'Branches' || activeMenu === 'All Branches' || activeMenu === 'Dashboard' || activeMenu === 'Centers' || activeMenu === 'POCs' || activeMenu === 'Staff' || activeMenu === 'Members'"
           (click)="setActiveMenu('Branches')">
           Branches
           <ion-icon 
-            *ngIf="isOrgOwner"
             [name]="showBranchesSubmenu ? 'chevron-up-outline' : 'chevron-down-outline'" 
             class="submenu-icon">
           </ion-icon>
@@ -97,9 +94,54 @@
       </div>
     </div>
   </ion-toolbar>
+
+  <!-- Navigation Menu for Branch User (submenu items as main menu) -->
+  <ion-toolbar class="nav-toolbar" *ngIf="isBranchUser">
+    <div class="nav-menu">
+      <!-- Dashboard -->
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Dashboard'"
+        (click)="setActiveMenu('Dashboard')">
+        Dashboard
+      </button>
+      
+      <!-- Centers -->
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Centers'"
+        (click)="setActiveMenu('Centers')">
+        Centers
+      </button>
+      
+      <!-- POCs -->
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'POCs'"
+        (click)="setActiveMenu('POCs')">
+        POCs
+      </button>
+      
+      <!-- Staff -->
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Staff'"
+        (click)="setActiveMenu('Staff')">
+        Staff
+      </button>
+      
+      <!-- Members -->
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Members'"
+        (click)="setActiveMenu('Members')">
+        Members
+      </button>
+    </div>
+  </ion-toolbar>
   
-  <!-- Submenu for Users -->
-  <div class="submenu-container" *ngIf="showUsersSubmenu">
+  <!-- Submenu for Users (Org Owner only) -->
+  <div class="submenu-container" *ngIf="showUsersSubmenu && isOrgOwner">
     <div class="submenu">
       <button 
         class="submenu-item" 
@@ -116,12 +158,11 @@
     </div>
   </div>
   
-  <!-- Submenu for Branches -->
-  <div class="submenu-container" *ngIf="showBranchesSubmenu">
+  <!-- Submenu for Branches (Org Owner only) -->
+  <div class="submenu-container" *ngIf="showBranchesSubmenu && isOrgOwner">
     <div class="submenu">
       <!-- All Branches - Only for Org Owner -->
       <button 
-        *ngIf="isOrgOwner"
         class="submenu-item" 
         [class.active]="activeMenu === 'All Branches'"
         (click)="selectSubmenu('All Branches')">
@@ -130,7 +171,6 @@
       
       <!-- Dashboard - Show for all users -->
       <button 
-        *ngIf="isOrgOwner || isBranchUser"
         class="submenu-item" 
         [class.active]="activeMenu === 'Dashboard'"
         (click)="selectSubmenu('Dashboard')">
@@ -139,7 +179,6 @@
       
       <!-- Centers - Show for all users -->
       <button 
-        *ngIf="isOrgOwner || isBranchUser"
         class="submenu-item" 
         [class.active]="activeMenu === 'Centers'"
         (click)="selectSubmenu('Centers')">
@@ -148,7 +187,6 @@
       
       <!-- POCs - Show for all users -->
       <button 
-        *ngIf="isOrgOwner || isBranchUser"
         class="submenu-item" 
         [class.active]="activeMenu === 'POCs'"
         (click)="selectSubmenu('POCs')">
@@ -157,7 +195,6 @@
       
       <!-- Staff - Show for all users -->
       <button 
-        *ngIf="isOrgOwner || isBranchUser"
         class="submenu-item" 
         [class.active]="activeMenu === 'Staff'"
         (click)="selectSubmenu('Staff')">
@@ -166,7 +203,6 @@
       
       <!-- Members - Show for all users -->
       <button 
-        *ngIf="isOrgOwner || isBranchUser"
         class="submenu-item" 
         [class.active]="activeMenu === 'Members'"
         (click)="selectSubmenu('Members')">
