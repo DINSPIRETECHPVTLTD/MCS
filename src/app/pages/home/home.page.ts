@@ -46,8 +46,12 @@ export class HomePage implements OnInit, ViewWillEnter {
       } as Organization;
     } else {
       const organizationId = this.authService.getOrganizationId();
-      // Fetch organization details from API
-      this.loadOrganizationDetails(organizationId || 5);
+      if (organizationId) {
+        // Fetch organization details from API
+        this.loadOrganizationDetails(organizationId);
+      } else {
+        console.warn('Organization ID not available from UserContext');
+      }
     }
   }
 
