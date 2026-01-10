@@ -18,6 +18,8 @@ export class UsersPage implements OnInit, ViewWillEnter {
   rowData: User[] = []; // <-- added
   columnDefs: ColDef[] = [];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
+  pagination: boolean = true;
+  paginationPageSize: number = 10;
   userForm: FormGroup;
   showAddForm: boolean = false;
   isEditing: boolean = false;
@@ -106,8 +108,17 @@ export class UsersPage implements OnInit, ViewWillEnter {
         loading.dismiss();
         this.isLoading = false;
         this.users = users || [];
-        this.rowData = this.users; // <-- assign rowData
+        this.rowData = [...this.users]; // Create new array reference for change detection
         console.log('Users loaded:', this.users);
+        console.log('RowData set:', this.rowData);
+
+        // Update grid if it's already initialized
+        if (this.gridApi) {
+          this.gridApi.setGridOption('rowData', this.rowData);
+          setTimeout(() => {
+            this.gridApi?.sizeColumnsToFit();
+          }, 100);
+        }
 
         if (this.users.length === 0) {
           console.log('No users found - array is empty');
@@ -197,9 +208,13 @@ export class UsersPage implements OnInit, ViewWillEnter {
 
   onGridReady(params: GridReadyEvent) {
     this.gridApi = params.api;
-    if (this.rowData && this.rowData.length) {
+    // Set rowData if it's already loaded
+    if (this.rowData && this.rowData.length > 0) {
       this.gridApi.setGridOption('rowData', this.rowData);
     }
-    this.gridApi.sizeColumnsToFit();
+    // Auto-size columns to fit
+    setTimeout(() => {
+      this.gridApi?.sizeColumnsToFit();
+    }, 100);
   }
 }
