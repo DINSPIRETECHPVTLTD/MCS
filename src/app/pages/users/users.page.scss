@@ -114,6 +114,17 @@ form {
   }
 }
 
+.users-grid {
+  width: 100%;
+  
+  ag-grid-angular {
+    display: block;
+    width: 100%;
+    height: 60vh;
+    min-height: 400px;
+  }
+}
+
 // Responsive design
 @media (max-width: 768px) {
   .user-form-container {
@@ -122,5 +133,10 @@ form {
 
   form ion-item {
     margin-bottom: 12px;
+  }
+
+  .users-grid ag-grid-angular {
+    height: 50vh;
+    min-height: 300px;
   }
 }

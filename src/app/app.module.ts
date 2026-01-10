@@ -22,6 +22,7 @@ import {
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 
 // Register all icons used in the app
 addIcons({
@@ -39,6 +40,8 @@ addIcons({
   'close-outline': closeOutline,
   'checkmark-outline': checkmarkOutline
 });
+
+ModuleRegistry.registerModules([ AllCommunityModule ]);
 
 @NgModule({
   declarations: [AppComponent],

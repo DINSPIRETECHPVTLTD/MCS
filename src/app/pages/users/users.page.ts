@@ -5,16 +5,21 @@ import { LoadingController, ToastController, ViewWillEnter, ModalController } fr
 import { UserService, User, CreateUserRequest } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
-import { BranchService, Branch } from '../../services/branch.service';
+import { Branch } from '../../services/branch.service';
 import { AddUserModalComponent } from './add-user-modal.component';
+import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 
 @Component({
   selector: 'app-users',
   templateUrl: './users.page.html',
-  styleUrls: ['./users.page.scss'],
 })
 export class UsersPage implements OnInit, ViewWillEnter {
   users: User[] = [];
+  rowData: User[] = []; // <-- added
+  columnDefs: ColDef[] = [];
+  defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
+  pagination: boolean = true;
+  paginationPageSize: number = 10;
   userForm: FormGroup;
   showAddForm: boolean = false;
   isEditing: boolean = false;
@@ -22,7 +27,9 @@ export class UsersPage implements OnInit, ViewWillEnter {
   activeMenu: string = 'All Users';
   isLoading: boolean = false;
 
-  constructor(
+  private gridApi?: GridApi;
+
+  public constructor(
     private formBuilder: FormBuilder,
     private userService: UserService,
     private authService: AuthService,
@@ -60,6 +67,13 @@ export class UsersPage implements OnInit, ViewWillEnter {
     
     console.log('Setting organization ID');
     this.setOrganizationId();
+    // set up grid columns
+    this.columnDefs = [
+
+      { headerName: 'First Name', field: 'firstName', flex: 1 },
+      { headerName: 'Last Name', field: 'lastName', flex: 1 },
+      { headerName: 'Email', field: 'email', flex: 1.5 },
+    ];
   }
 
   ionViewWillEnter(): void {
@@ -94,7 +108,18 @@ export class UsersPage implements OnInit, ViewWillEnter {
         loading.dismiss();
         this.isLoading = false;
         this.users = users || [];
-        console.log('Users loaded:', this.users.length);
+        this.rowData = [...this.users]; // Create new array reference for change detection
+        console.log('Users loaded:', this.users);
+        console.log('RowData set:', this.rowData);
+
+        // Update grid if it's already initialized
+        if (this.gridApi) {
+          this.gridApi.setGridOption('rowData', this.rowData);
+          setTimeout(() => {
+            this.gridApi?.sizeColumnsToFit();
+          }, 100);
+        }
+
         if (this.users.length === 0) {
           console.log('No users found - array is empty');
         }
@@ -102,9 +127,9 @@ export class UsersPage implements OnInit, ViewWillEnter {
       error: (error) => {
         loading.dismiss();
         this.isLoading = false;
-        this.users = []; // Ensure users array is initialized even on error
+        this.users = [];
+        this.rowData = []; // <-- clear rowData on error
         console.error('Error loading users:', error);
-        // Only show toast for actual errors, not 404s which might be expected
         if (error.status !== 404) {
           this.showToast('Error loading users: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
         } else {
@@ -179,5 +204,17 @@ export class UsersPage implements OnInit, ViewWillEnter {
   onBranchChange(branch: Branch): void {
     // Handle branch change if needed
     console.log('Branch changed to:', branch);
+  }
+
+  onGridReady(params: GridReadyEvent) {
+    this.gridApi = params.api;
+    // Set rowData if it's already loaded
+    if (this.rowData && this.rowData.length > 0) {
+      this.gridApi.setGridOption('rowData', this.rowData);
+    }
+    // Auto-size columns to fit
+    setTimeout(() => {
+      this.gridApi?.sizeColumnsToFit();
+    }, 100);
   }
 }

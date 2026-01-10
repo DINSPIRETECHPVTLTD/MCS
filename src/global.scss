@@ -5,3 +5,7 @@
  * the entire app and not just one component.
  */
 
+/* AG Grid styles - using legacy CSS theme approach */
+@import 'ag-grid-community/styles/ag-grid.css';
+@import 'ag-grid-community/styles/ag-theme-alpine.css';
+
