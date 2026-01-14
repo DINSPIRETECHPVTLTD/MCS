@@ -5,8 +5,10 @@ import { ToastController, LoadingController } from '@ionic/angular';
 import { IonicModule } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
-import { OrganizationService, Organization } from '../../services/organization.service';
-import { BranchService, Branch } from '../../services/branch.service';
+import { OrganizationService } from '../../services/organization.service';
+import { BranchService } from '../../services/branch.service';
+import { Organization } from '../../models/organization.models';
+import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-header-menu',
@@ -21,7 +23,7 @@ export class HeaderMenuComponent implements OnInit {
   @Output() branchChange = new EventEmitter<Branch>();
 
   organization: Organization | null = null;
-  userEmail: string = '';
+  userDisplayName: string = '';
   showUsersSubmenu: boolean = false;
   showBranchesSubmenu: boolean = false;
   branches: Branch[] = [];
@@ -64,7 +66,9 @@ export class HeaderMenuComponent implements OnInit {
 
   initializeHeader(): void {
     // Get user info from UserContext service
-    this.userEmail = this.userContext.email;
+    const firstName = this.userContext.firstName || '';
+    const lastName = this.userContext.lastName || '';
+    this.userDisplayName = `${firstName} ${lastName}`.trim() || this.userContext.email || 'User';
     this.userRole = this.userContext.role;
     this.userLevel = this.userContext.level;
     
@@ -82,7 +86,7 @@ export class HeaderMenuComponent implements OnInit {
     if (orgFromLogin && orgFromLogin.name) {
       this.organization = {
         name: orgFromLogin.name,
-        phone: orgFromLogin.phone,
+        phone: orgFromLogin.phoneNumber,
         city: orgFromLogin.city,
         ...orgFromLogin
       } as Organization;
@@ -116,55 +120,30 @@ export class HeaderMenuComponent implements OnInit {
   }
 
   async loadBranches(): Promise<void> {
+    // First, try to get branches from login response
+    const branchesFromLogin = this.authService.getBranchesFromLogin();
+    
+    if (branchesFromLogin && branchesFromLogin.length > 0) {
+      // Use branches from login response
+      this.branches = branchesFromLogin;
+      this.setSelectedBranch(branchesFromLogin);
+      console.log('Loaded branches from login response:', branchesFromLogin.length);
+      return;
+    }
+    
+    // Fallback: Fetch branches from API if not available from login
+    console.log('Branches not available from login, fetching from API...');
     this.branchService.getBranches().subscribe({
       next: (branches) => {
         this.branches = branches;
-        
-        // For branch level users, set their branch from user context
-        if (this.isBranchUser) {
-          const userBranchId = this.userContext.branchId;
-          if (userBranchId) {
-            const userBranch = branches.find(b => b.id === userBranchId || b.id.toString() === userBranchId.toString());
-            if (userBranch) {
-              this.selectedBranch = userBranch;
-            } else if (branches.length > 0) {
-              this.selectedBranch = branches[0];
-            }
-          } else if (branches.length > 0) {
-            this.selectedBranch = branches[0];
-          }
-        } else {
-          // For org level users
-          if (branches.length === 1) {
-            this.selectedBranch = branches[0];
-          } else if (branches.length > 1) {
-            // Set first branch as default or get from localStorage
-            const savedBranchId = localStorage.getItem('selected_branch_id');
-            if (savedBranchId) {
-              const savedBranch = branches.find(b => b.id.toString() === savedBranchId);
-              this.selectedBranch = savedBranch || branches[0];
-            } else {
-              this.selectedBranch = branches[0];
-            }
-          }
-        }
+        this.setSelectedBranch(branches);
       },
       error: (error) => {
         // Try alternative endpoint
         this.branchService.getBranchesList().subscribe({
           next: (branches) => {
             this.branches = branches;
-            if (branches.length === 1) {
-              this.selectedBranch = branches[0];
-            } else if (branches.length > 1) {
-              const savedBranchId = localStorage.getItem('selected_branch_id');
-              if (savedBranchId) {
-                const savedBranch = branches.find(b => b.id.toString() === savedBranchId);
-                this.selectedBranch = savedBranch || branches[0];
-              } else {
-                this.selectedBranch = branches[0];
-              }
-            }
+            this.setSelectedBranch(branches);
           },
           error: (err) => {
             console.error('Error loading branches:', err);
@@ -173,6 +152,37 @@ export class HeaderMenuComponent implements OnInit {
         });
       }
     });
+  }
+
+  private setSelectedBranch(branches: Branch[]): void {
+    // For branch level users, set their branch from user context
+    if (this.isBranchUser) {
+      const userBranchId = this.userContext.branchId;
+      if (userBranchId) {
+        const userBranch = branches.find(b => b.id === userBranchId || b.id.toString() === userBranchId.toString());
+        if (userBranch) {
+          this.selectedBranch = userBranch;
+        } else if (branches.length > 0) {
+          this.selectedBranch = branches[0];
+        }
+      } else if (branches.length > 0) {
+        this.selectedBranch = branches[0];
+      }
+    } else {
+      // For org level users
+      if (branches.length === 1) {
+        this.selectedBranch = branches[0];
+      } else if (branches.length > 1) {
+        // Set first branch as default or get from localStorage
+        const savedBranchId = localStorage.getItem('selected_branch_id');
+        if (savedBranchId) {
+          const savedBranch = branches.find(b => b.id.toString() === savedBranchId);
+          this.selectedBranch = savedBranch || branches[0];
+        } else {
+          this.selectedBranch = branches[0];
+        }
+      }
+    }
   }
 
   toggleBranchDropdown(): void {

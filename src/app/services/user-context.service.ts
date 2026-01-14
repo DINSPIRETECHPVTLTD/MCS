@@ -21,6 +21,9 @@ export class UserContextService {
   
   // Additional user info
   private _email: string = '';
+  private _userName: string = '';
+  private _firstName: string = '';
+  private _lastName: string = '';
 
   constructor() {
     // Load from localStorage on service initialization
@@ -36,7 +39,10 @@ export class UserContextService {
     branchId: number | null,
     role: string,
     level: string,
-    email?: string
+    email?: string,
+    firstName?: string,
+    lastName?: string,
+    userName?: string
   ): void {
     // Only set values if they are not null/undefined/0 (for IDs, 0 might be valid)
     // But for organizationId, if it's 0, we should treat it as null
@@ -46,6 +52,9 @@ export class UserContextService {
     this._role = role || '';
     this._level = level || '';
     this._email = email || '';
+    this._firstName = firstName || '';
+    this._lastName = lastName || '';
+    this._userName = userName || '';
     
     console.log('UserContext.initialize called with:', {
       userId: this._userId,
@@ -53,7 +62,10 @@ export class UserContextService {
       branchId: this._branchId,
       role: this._role,
       level: this._level,
-      email: this._email
+      email: this._email,
+      firstName: this._firstName,
+      lastName: this._lastName,
+      userName: this._userName
     });
     
     // Persist to localStorage
@@ -70,6 +82,9 @@ export class UserContextService {
     this._role = '';
     this._level = '';
     this._email = '';
+    this._firstName = '';
+    this._lastName = '';
+    this._userName = '';
     
     // Clear from localStorage
     localStorage.removeItem('user_context');
@@ -90,6 +105,9 @@ export class UserContextService {
         this._role = data.role || '';
         this._level = data.level || '';
         this._email = data.email || '';
+        this._firstName = data.firstName || '';
+        this._lastName = data.lastName || '';
+        this._userName = data.userName || '';
         
         console.log('UserContext loaded from storage:', {
           userId: this._userId,
@@ -97,7 +115,10 @@ export class UserContextService {
           branchId: this._branchId,
           role: this._role,
           level: this._level,
-          email: this._email
+          email: this._email,
+          firstName: this._firstName,
+          lastName: this._lastName,
+          userName: this._userName
         });
       } catch (error) {
         console.error('Error loading user context from storage:', error);
@@ -119,7 +140,10 @@ export class UserContextService {
       branchId: this._branchId,
       role: this._role,
       level: this._level,
-      email: this._email
+      email: this._email,
+      firstName: this._firstName,
+      lastName: this._lastName,
+      userName: this._userName
     };
     try {
       localStorage.setItem('user_context', JSON.stringify(data));
@@ -154,6 +178,18 @@ export class UserContextService {
     return this._email;
   }
 
+  get userName(): string {
+    return this._userName;
+  }
+
+  get firstName(): string {
+    return this._firstName;
+  }
+
+  get lastName(): string {
+    return this._lastName;
+  }
+
   /**
    * Check if user is organization level owner
    */
@@ -184,6 +220,9 @@ export class UserContextService {
     role: string;
     level: string;
     email: string;
+    firstName: string;
+    lastName: string;
+    userName: string;
   } {
     return {
       userId: this._userId,
@@ -191,7 +230,10 @@ export class UserContextService {
       branchId: this._branchId,
       role: this._role,
       level: this._level,
-      email: this._email
+      email: this._email,
+      firstName: this._firstName,
+      lastName: this._lastName,
+      userName: this._userName
     };
   }
 

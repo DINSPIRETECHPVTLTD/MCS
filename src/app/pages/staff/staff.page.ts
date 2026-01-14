@@ -4,8 +4,10 @@ import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter, ModalController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
-import { UserService, User } from '../../services/user.service';
-import { BranchService, Branch } from '../../services/branch.service';
+import { UserService } from '../../services/user.service';
+import { BranchService } from '../../services/branch.service';
+import { User } from '../../models/user.models';
+import { Branch } from '../../models/branch.models';
 import { AddStaffModalComponent } from './add-staff-modal.component';
 
 @Component({
@@ -59,7 +61,19 @@ export class StaffPage implements OnInit, ViewWillEnter {
     // Try to get from localStorage first (set by header menu)
     const savedBranchId = localStorage.getItem('selected_branch_id');
     if (savedBranchId) {
-      // Load branches and find the selected one
+      // First try to get branches from login response
+      const branchesFromLogin = this.authService.getBranchesFromLogin();
+      
+      if (branchesFromLogin && branchesFromLogin.length > 0) {
+        const branch = branchesFromLogin.find(b => b.id.toString() === savedBranchId);
+        if (branch) {
+          this.selectedBranch = branch;
+          this.loadStaff(); // Reload staff for the selected branch
+          return;
+        }
+      }
+      
+      // Fallback: Load branches from API
       this.branchService.getBranches().subscribe({
         next: (branches) => {
           const branch = branches.find(b => b.id.toString() === savedBranchId);

@@ -4,7 +4,8 @@ import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter, ModalController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
-import { BranchService, Branch } from '../../services/branch.service';
+import { BranchService } from '../../services/branch.service';
+import { Branch } from '../../models/branch.models';
 import { AddBranchModalComponent } from './add-branch-modal.component';
 
 @Component({
@@ -62,6 +63,18 @@ export class BranchesPage implements OnInit, ViewWillEnter {
   }
 
   async loadBranches(): Promise<void> {
+    // First, try to get branches from login response
+    const branchesFromLogin = this.authService.getBranchesFromLogin();
+    
+    if (branchesFromLogin && branchesFromLogin.length > 0) {
+      // Use branches from login response (no loading needed)
+      this.branches = branchesFromLogin;
+      this.isLoading = false;
+      console.log('Loaded branches from login response:', branchesFromLogin.length);
+      return;
+    }
+    
+    // Fallback: Fetch branches from API if not available from login
     this.isLoading = true;
     const loading = await this.loadingController.create({
       message: 'Loading branches...',
@@ -74,7 +87,7 @@ export class BranchesPage implements OnInit, ViewWillEnter {
         loading.dismiss();
         this.isLoading = false;
         this.branches = branches || [];
-        console.log('Branches loaded:', this.branches.length);
+        console.log('Branches loaded from API:', this.branches.length);
         if (this.branches.length === 0) {
           console.log('No branches found - array is empty');
         }
