@@ -7,6 +7,7 @@ import { UserContextService } from '../../services/user-context.service';
 import { BranchService } from '../../services/branch.service';
 import { Branch } from '../../models/branch.models';
 import { AddBranchModalComponent } from './add-branch-modal.component';
+import { ColDef } from 'ag-grid-community';
 
 @Component({
   selector: 'app-branches',
@@ -21,6 +22,23 @@ export class BranchesPage implements OnInit, ViewWillEnter {
   editingBranchId: number | null = null;
   activeMenu: string = 'All Branches';
   isLoading: boolean = false;
+
+  // AG Grid configuration
+  rowData: Branch[] = [];
+  columnDefs: ColDef[] = [
+    { field: 'id', headerName: 'ID', width: 80, sortable: true, filter: true },
+    { field: 'name', headerName: 'Name', sortable: true, filter: true, flex: 1 },
+    { field: 'code', headerName: 'Code', sortable: true, filter: true, width: 120 },
+    { field: 'city', headerName: 'City', sortable: true, filter: true, width: 150 },
+    { field: 'address', headerName: 'Address', sortable: true, filter: true, flex: 1 }
+  ];
+  defaultColDef: ColDef = { 
+    resizable: true, 
+    sortable: true, 
+    filter: true 
+  };
+  pagination: boolean = true;
+  paginationPageSize: number = 10;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -69,6 +87,7 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     if (branchesFromLogin && branchesFromLogin.length > 0) {
       // Use branches from login response (no loading needed)
       this.branches = branchesFromLogin;
+      this.rowData = branchesFromLogin;
       this.isLoading = false;
       console.log('Loaded branches from login response:', branchesFromLogin.length);
       return;
@@ -87,6 +106,7 @@ export class BranchesPage implements OnInit, ViewWillEnter {
         loading.dismiss();
         this.isLoading = false;
         this.branches = branches || [];
+        this.rowData = branches || [];
         console.log('Branches loaded from API:', this.branches.length);
         if (this.branches.length === 0) {
           console.log('No branches found - array is empty');
@@ -99,12 +119,14 @@ export class BranchesPage implements OnInit, ViewWillEnter {
             loading.dismiss();
             this.isLoading = false;
             this.branches = branches || [];
+            this.rowData = branches || [];
             console.log('Branches loaded from alternative endpoint:', this.branches.length);
           },
           error: (err) => {
             loading.dismiss();
             this.isLoading = false;
             this.branches = [];
+            this.rowData = [];
             console.error('Error loading branches:', err);
             if (err.status !== 404) {
               this.showToast('Error loading branches: ' + (err.error?.message || err.message || 'Unknown error'), 'danger');

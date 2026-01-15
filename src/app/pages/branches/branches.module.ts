@@ -6,6 +6,7 @@ import { BranchesPageRoutingModule } from './branches-routing.module';
 import { BranchesPage } from './branches.page';
 import { AddBranchModalComponent } from './add-branch-modal.component';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
+import { AgGridModule } from 'ag-grid-angular';
 
 @NgModule({
   imports: [
@@ -14,7 +15,8 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     ReactiveFormsModule,
     IonicModule,
     BranchesPageRoutingModule,
-    HeaderMenuComponent
+    HeaderMenuComponent,
+    AgGridModule
   ],
   declarations: [BranchesPage, AddBranchModalComponent]
 })
