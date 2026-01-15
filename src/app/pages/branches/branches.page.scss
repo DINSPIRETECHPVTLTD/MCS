@@ -62,3 +62,43 @@
   }
 }
 
+// AG Grid column borders
+::ng-deep {
+  .branches-grid {
+    // Header cells with borders
+    .ag-header-cell {
+      border-right: 1px solid #d0d0d0 !important;
+      border-bottom: 1px solid #d0d0d0 !important;
+      
+      &:first-child {
+        border-left: 1px solid #d0d0d0 !important;
+      }
+    }
+
+    // Data cells with borders
+    .ag-cell {
+      border-right: 1px solid #d0d0d0 !important;
+      border-bottom: 1px solid #d0d0d0 !important;
+      
+      &:first-child {
+        border-left: 1px solid #d0d0d0 !important;
+      }
+    }
+
+    // Top border for header row
+    .ag-header-row {
+      border-top: 1px solid #d0d0d0 !important;
+    }
+
+    // Top border for data rows
+    .ag-row {
+      border-top: 1px solid #d0d0d0 !important;
+    }
+
+    // Ensure the grid itself has borders
+    .ag-root-wrapper {
+      border: 1px solid #d0d0d0 !important;
+    }
+  }
+}
+
