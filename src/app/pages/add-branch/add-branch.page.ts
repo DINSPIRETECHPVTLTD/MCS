@@ -3,7 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService, Branch } from '../../services/branch.service';
+import { BranchService } from '../../services/branch.service';
+import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-add-branch',

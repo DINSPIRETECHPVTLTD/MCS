@@ -1,7 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
-import { BranchService, CreateBranchRequest } from '../../services/branch.service';
+import { BranchService } from '../../services/branch.service';
+import { CreateBranchRequest } from '../../models/branch.models';
 import { UserContextService } from '../../services/user-context.service';
 
 @Component({

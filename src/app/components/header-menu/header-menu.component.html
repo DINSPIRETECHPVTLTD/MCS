@@ -36,7 +36,7 @@
 
       <div class="user-info">
         <ion-icon name="person-circle-outline" class="user-icon"></ion-icon>
-        <span class="user-email">{{ userEmail || 'owner@demo.com' }}</span>
+        <span class="user-email">{{ userDisplayName || 'User' }}</span>
         <ion-icon name="chevron-down-outline" class="dropdown-icon"></ion-icon>
       </div>
       <ion-button fill="clear" class="logout-btn" (click)="logout()">

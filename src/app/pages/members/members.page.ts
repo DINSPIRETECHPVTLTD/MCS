@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService, Branch } from '../../services/branch.service';
+import { BranchService } from '../../services/branch.service';
+import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-members',

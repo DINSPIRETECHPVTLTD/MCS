@@ -1,7 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
-import { UserService, CreateUserRequest } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { CreateUserRequest } from '../../models/user.models';
 import { UserContextService } from '../../services/user-context.service';
 
 @Component({

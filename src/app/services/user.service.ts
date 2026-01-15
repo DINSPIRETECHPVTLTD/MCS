@@ -3,42 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
-
-export interface User {
-  id?: number;
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  phoneNumber?: string;
-  address1?: string;
-  address2?: string;
-  city?: string;
-  state?: string;
-  pinCode?: string;
-  email?: string;
-  level?: string;
-  role?: string;
-  organizationId?: number;
-  branchId?: number | null;
-  [key: string]: any;
-}
-
-export interface CreateUserRequest {
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  phoneNumber?: string;
-  address1?: string;
-  address2?: string;
-  city?: string;
-  state?: string;
-  pinCode?: string;
-  email?: string;
-  level: string;
-  role: string;
-  organizationId: number;
-  branchId?: number | null;
-}
+import { User, CreateUserRequest } from '../models/user.models';
 
 @Injectable({
   providedIn: 'root'

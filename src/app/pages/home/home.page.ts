@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter, LoadingController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { OrganizationService, Organization } from '../../services/organization.service';
-import { BranchService, Branch } from '../../services/branch.service';
+import { OrganizationService } from '../../services/organization.service';
+import { BranchService } from '../../services/branch.service';
+import { Organization } from '../../models/organization.models';
+import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-home',
@@ -40,7 +42,7 @@ export class HomePage implements OnInit, ViewWillEnter {
     if (orgFromLogin && orgFromLogin.name) {
       this.organization = {
         name: orgFromLogin.name,
-        phone: orgFromLogin.phone,
+        phone: orgFromLogin.phoneNumber,
         city: orgFromLogin.city,
         ...orgFromLogin
       } as Organization;

@@ -2,10 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter, ModalController } from '@ionic/angular';
-import { UserService, User, CreateUserRequest } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
-import { Branch } from '../../services/branch.service';
+import { User, CreateUserRequest } from '../../models/user.models';
+import { Branch } from '../../models/branch.models';
 import { AddUserModalComponent } from './add-user-modal.component';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 

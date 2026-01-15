@@ -3,15 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
-
-export interface Branch {
-  id: number;
-  name: string;
-  code?: string;
-  address?: string;
-  city?: string;
-  [key: string]: any;
-}
+import { Branch, CreateBranchRequest } from '../models/branch.models';
 
 @Injectable({
   providedIn: 'root'
@@ -64,16 +56,5 @@ export class BranchService {
 
     return this.http.post<Branch>(`${this.apiUrl}/Branches`, branch, { headers });
   }
-}
-
-export interface CreateBranchRequest {
-  name: string;
-  code?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  phone?: string;
-  email?: string;
-  organizationId?: number;
 }
 
