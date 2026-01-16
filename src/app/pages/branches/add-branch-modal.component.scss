@@ -23,6 +23,11 @@ form {
       --padding-start: 12px;
     }
 
+    ion-textarea {
+      --padding-start: 12px;
+      min-height: 50px;
+    }
+
     &.ion-invalid {
       --border-color: var(--ion-color-danger);
     }
