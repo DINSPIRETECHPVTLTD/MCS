@@ -25,7 +25,7 @@ export class AddUserModalComponent implements OnInit {
     private toastController: ToastController
   ) {
     this.userForm = this.formBuilder.group({
-      email: ['', [Validators.email]],
+      email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       firstName: ['', [Validators.required]],
       middleName: [''],
@@ -36,8 +36,8 @@ export class AddUserModalComponent implements OnInit {
       city: [''],
       state: [''],
       pinCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
-      level: ['Org'],
-      role: ['Owner'],
+      level: ['', [Validators.required]],
+      role: ['', [Validators.required]],
       organizationId: [0]
     });
   }
