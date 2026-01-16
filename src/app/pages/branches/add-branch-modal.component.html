@@ -16,8 +16,10 @@
       <ion-label position="stacked">Branch Name <span class="required">*</span></ion-label>
       <ion-input
         formControlName="name"
-        placeholder="Enter branch name"
-        type="text">
+        placeholder="Enter Branch Name"
+        type="text"
+        maxlength="100"
+        (ionInput)="onBranchNameInput($event)">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('name') }}</ion-note>
     </ion-item>

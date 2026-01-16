@@ -26,7 +26,11 @@ export class AddBranchModalComponent implements OnInit {
     private toastController: ToastController
   ) {
     this.branchForm = this.formBuilder.group({
-      name: ['', [Validators.required]],
+      name: ['', [
+        Validators.required,
+        Validators.maxLength(100),
+        Validators.pattern(/^[a-zA-Z0-9\s]*$/)
+      ]],
       code: [''],
       address: [''],
       city: [''],
@@ -116,13 +120,22 @@ export class AddBranchModalComponent implements OnInit {
       if (field.errors?.['required']) {
         return `${this.getFieldLabel(fieldName)} is required`;
       }
-      if (field.errors?.['email']) {
-        return 'Please enter a valid email address';
+      if (field.errors?.['maxlength']) {
+        if (fieldName === 'name') {
+          return 'Branch name must not exceed 100 characters';
+        }
+        return `${this.getFieldLabel(fieldName)} is too long`;
       }
       if (field.errors?.['pattern']) {
+        if (fieldName === 'name') {
+          return 'Branch name must contain only letters, numbers, and spaces (no special characters)';
+        }
         if (fieldName === 'phone') {
           return 'Please enter a valid 10-digit phone number';
         }
+      }
+      if (field.errors?.['email']) {
+        return 'Please enter a valid email address';
       }
     }
     return '';
@@ -144,6 +157,20 @@ export class AddBranchModalComponent implements OnInit {
   isFieldInvalid(fieldName: string): boolean {
     const field = this.branchForm.get(fieldName);
     return !!(field && field.invalid && (field.touched || this.submitted));
+  }
+
+  onBranchNameInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    // Remove any special characters, keep only alphanumeric and spaces
+    const filteredValue = value.replace(/[^a-zA-Z0-9\s]/g, '');
+    
+    if (value !== filteredValue) {
+      // Update the form control with filtered value
+      this.branchForm.patchValue({ name: filteredValue }, { emitEvent: false });
+      // Update the input value directly
+      input.value = filteredValue;
+    }
   }
 }
 
