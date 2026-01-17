@@ -66,8 +66,6 @@ export class UserService {
 
   createUser(user: CreateUserRequest): Observable<User> {
     const token = this.authService.getToken();
-    console.log('Creating user with data:', user);
-    console.log('Using token:', token);
     let headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -75,7 +73,6 @@ export class UserService {
     if (token) {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
-    console.log(this.apiUrl + '/Users');
     return this.http.post<User>(`${this.apiUrl}/Users`, user, { headers });
   }
 }

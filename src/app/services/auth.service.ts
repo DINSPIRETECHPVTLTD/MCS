@@ -93,7 +93,6 @@ export class AuthService {
         // Store token
         if (token) {
           localStorage.setItem('auth_token', token);
-          console.log('Auth token stored successfully');
         }
         
         // Build user info object from AuthResponseDto (flat structure)
