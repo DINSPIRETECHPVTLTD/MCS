@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://localhost:7091/api'
+  apiUrl: 'https://mcs.api.dinspire.in/api'
 };
 
