@@ -9,11 +9,11 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="ion-padding">
+<ion-content class="ion-padding">
   <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
     <!-- Email and Password Fields (at top) -->
     <ion-item [class.ion-invalid]="isFieldInvalid('email')">
-      <ion-label position="stacked">Email</ion-label>
+      <ion-label position="stacked">Email <span class="required">*</span></ion-label>
       <ion-input
         formControlName="email"
         placeholder="Enter email address"
@@ -64,7 +64,7 @@
 
     <!-- Contact Fields -->
     <ion-item [class.ion-invalid]="isFieldInvalid('phoneNumber')">
-      <ion-label position="stacked">Phone Number</ion-label>
+      <ion-label position="stacked">Phone Number <span class="required">*</span></ion-label>
       <ion-input
         formControlName="phoneNumber"
         placeholder="Enter 10-digit phone number"
@@ -124,23 +124,35 @@
 
     <!-- Level and Role (Read-only) -->
     <ion-item>
-      <ion-label position="stacked">Level</ion-label>
+      <ion-label position="stacked">Level <span class="required">*</span></ion-label>
       <ion-input
-        [value]="userForm.value.level"
+        formControlName="level"
+        placeholder="Enter user level"
+        type="text"
         readonly>
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('level') }}</ion-note>
     </ion-item>
 
     <ion-item>
-      <ion-label position="stacked">Role</ion-label>
+      <ion-label position="stacked">Role <span class="required">*</span></ion-label>
       <ion-input
-        [value]="userForm.value.role"
-        readonly>
+        formControlName="role"
+        placeholder="Enter user role"
+        type="text">
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('role') }}</ion-note>
     </ion-item>
 
     <!-- Action Buttons -->
     <div class="ion-margin-top">
+      <ion-button
+        expand="block"
+        (click)="userForm.reset()"
+        class="cancel-button">
+        Clear
+      </ion-button>
+
       <ion-button
         expand="block"
         type="submit"
@@ -148,16 +160,7 @@
         class="save-button">
         <ion-icon name="checkmark-outline" slot="start"></ion-icon>
         {{ isEditing ? 'Update User' : 'Save User' }}
-      </ion-button>
-      
-      <ion-button
-        expand="block"
-        fill="outline"
-        type="button"
-        (click)="closeModal()"
-        class="ion-margin-top">
-        Cancel
-      </ion-button>
+      </ion-button> 
     </div>
   </form>
 </ion-content>
