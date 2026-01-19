@@ -30,9 +30,9 @@ export class AddStaffModalComponent implements OnInit {
     this.staffForm = this.formBuilder.group({
       email: ['', [Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      firstName: ['', [Validators.required]],
-      middleName: [''],
-      lastName: ['', [Validators.required]],
+      firstName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
+      middleName: ['', [Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
+      lastName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/)]],
       address1: [''],
       address2: [''],
@@ -44,6 +44,36 @@ export class AddStaffModalComponent implements OnInit {
       organizationId: [0],
       branchId: [null]
     });
+  }
+
+  onFirstNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.staffForm.get('firstName');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onMiddleNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.staffForm.get('middleName');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onLastNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.staffForm.get('lastName');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
   }
 
   ngOnInit(): void {

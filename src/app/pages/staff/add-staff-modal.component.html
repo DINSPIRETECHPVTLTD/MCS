@@ -38,18 +38,30 @@
       <ion-input
         formControlName="firstName"
         placeholder="Enter first name"
-        type="text">
+        type="text"
+        maxlength="100"
+        (ionInput)="onFirstNameInput($event)">
       </ion-input>
-      <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
+      <ion-note slot="error">
+        <div *ngIf="staffForm.get('firstName')?.errors?.['required']">First name is required</div>
+        <div *ngIf="staffForm.get('firstName')?.errors?.['maxlength']">First name must be at most 100 characters</div>
+        <div *ngIf="staffForm.get('firstName')?.errors?.['pattern']">First name must be alphanumeric</div>
+      </ion-note>
     </ion-item>
 
-    <ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('middleName')">
       <ion-label position="stacked">Middle Name</ion-label>
       <ion-input
         formControlName="middleName"
         placeholder="Enter middle name"
-        type="text">
+        type="text"
+        maxlength="100"
+        (ionInput)="onMiddleNameInput($event)">
       </ion-input>
+      <ion-note slot="error">
+        <div *ngIf="staffForm.get('middleName')?.errors?.['maxlength']">Middle name must be at most 100 characters</div>
+        <div *ngIf="staffForm.get('middleName')?.errors?.['pattern']">Middle name must be alphanumeric</div>
+      </ion-note>
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
@@ -57,9 +69,15 @@
       <ion-input
         formControlName="lastName"
         placeholder="Enter last name"
-        type="text">
+        type="text"
+        maxlength="100"
+        (ionInput)="onLastNameInput($event)">
       </ion-input>
-      <ion-note slot="error">{{ getFieldError('lastName') }}</ion-note>
+      <ion-note slot="error">
+        <div *ngIf="staffForm.get('lastName')?.errors?.['required']">Last name is required</div>
+        <div *ngIf="staffForm.get('lastName')?.errors?.['maxlength']">Last name must be at most 100 characters</div>
+        <div *ngIf="staffForm.get('lastName')?.errors?.['pattern']">Last name must be alphanumeric</div>
+      </ion-note>
     </ion-item>
 
     <!-- Contact Fields -->
