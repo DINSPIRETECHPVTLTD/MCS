@@ -24,6 +24,23 @@ form {
       --padding-start: 12px;
     }
 
+    .native-select-wrapper {
+      .native-select {
+        display: block;
+        width: 100%;
+        height: 44px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--ion-color-medium-tint, #dcdcdc);
+        background: var(--ion-color-light);
+        font-size: 14px;
+        color: var(--ion-color-step-950, #000);
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+      }
+    }
+
     &.ion-invalid {
       --border-color: var(--ion-color-danger);
     }

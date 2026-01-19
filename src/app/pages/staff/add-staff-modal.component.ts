@@ -17,7 +17,6 @@ export class AddStaffModalComponent implements OnInit {
   
   staffForm: FormGroup;
   submitted: boolean = false;
-  roleOptions: string[] = ['BranchAdmin', 'Staff'];
 
   constructor(
     private formBuilder: FormBuilder,
@@ -28,22 +27,38 @@ export class AddStaffModalComponent implements OnInit {
     private toastController: ToastController
   ) {
     this.staffForm = this.formBuilder.group({
-      email: ['', [Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      email: ['', [Validators.email, Validators.maxLength(100)]],
+      password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(12)]],
       firstName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       middleName: ['', [Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       lastName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-      address1: [''],
-      address2: [''],
-      city: [''],
-      state: [''],
-      pinCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
-      level: ['branch'], // Fixed to 'branch'
-      role: ['Staff', [Validators.required]], // Default to 'Staff', options: 'BranchAdmin' or 'Staff'
+      address1: ['', [Validators.maxLength(100)]],
+      address2: ['', [Validators.maxLength(100)]],
+      city: ['', [Validators.maxLength(100)]],
+      state: ['', [Validators.maxLength(100)]],
+      pinCode: ['', [Validators.pattern(/^[0-9]{6}$/), Validators.maxLength(6)]],
       organizationId: [0],
       branchId: [null]
     });
+  }
+
+  onEmailInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const truncated = (raw || '').slice(0, 100);
+    const control = this.staffForm.get('email');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onAddressInput(event: any, fieldName: string): void {
+    const raw = event?.detail?.value ?? '';
+    const truncated = (raw || '').slice(0, 100);
+    const control = this.staffForm.get(fieldName);
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
   }
 
   onFirstNameInput(event: any): void {
@@ -71,6 +86,35 @@ export class AddStaffModalComponent implements OnInit {
     const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
     const truncated = sanitized.slice(0, 100);
     const control = this.staffForm.get('lastName');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onPhoneInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^0-9]/g, '');
+    const truncated = sanitized.slice(0, 10);
+    const control = this.staffForm.get('phoneNumber');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onPasswordInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const truncated = (raw || '').slice(0, 12);
+    const control = this.staffForm.get('password');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onPinInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^0-9]/g, '');
+    const truncated = sanitized.slice(0, 6);
+    const control = this.staffForm.get('pinCode');
     if (control && control.value !== truncated) {
       control.setValue(truncated);
     }
@@ -127,8 +171,7 @@ export class AddStaffModalComponent implements OnInit {
       pinCode: this.staffForm.value.pinCode?.trim() || '',
       email: this.staffForm.value.email?.trim() || '',
       password: this.staffForm.value.password,
-      level: 'branch', // Fixed to 'branch'
-      role: this.staffForm.value.role, // 'BranchAdmin' or 'Staff'
+
       organizationId: this.staffForm.value.organizationId,
       branchId: this.staffForm.value.branchId
     };
@@ -174,6 +217,12 @@ export class AddStaffModalComponent implements OnInit {
       }
       if (field.errors?.['email']) {
         return 'Please enter a valid email address';
+      }
+      if (field.errors?.['maxlength']) {
+        if (fieldName === 'email') {
+          return 'Email must be at most 100 characters';
+        }
+        return `${this.getFieldLabel(fieldName)} must be at most ${field.errors['maxlength'].requiredLength} characters`;
       }
       if (field.errors?.['pattern']) {
         if (fieldName === 'phoneNumber') {

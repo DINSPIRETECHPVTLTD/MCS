@@ -17,7 +17,9 @@
       <ion-input
         formControlName="email"
         placeholder="Enter email address"
-        type="email">
+        type="email"
+        maxlength="100"
+        (ionInput)="onEmailInput($event)">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('email') }}</ion-note>
     </ion-item>
@@ -27,7 +29,9 @@
       <ion-input
         formControlName="password"
         placeholder="Enter password"
-        type="password">
+        type="password"
+        maxlength="12"
+        (ionInput)="onPasswordInput($event)">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('password') }}</ion-note>
     </ion-item>
@@ -87,7 +91,8 @@
         formControlName="phoneNumber"
         placeholder="Enter 10-digit phone number"
         type="tel"
-        maxlength="10">
+        maxlength="10"
+        (ionInput)="onPhoneInput($event)">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
     </ion-item>
@@ -98,8 +103,11 @@
       <ion-input
         formControlName="address1"
         placeholder="Enter address line 1"
-        type="text">
+        type="text"
+        maxlength="100"
+        (ionInput)="onAddressInput($event, 'address1')">
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('address1') }}</ion-note>
     </ion-item>
 
     <ion-item>
@@ -107,8 +115,11 @@
       <ion-input
         formControlName="address2"
         placeholder="Enter address line 2"
-        type="text">
+        type="text"
+        maxlength="100"
+        (ionInput)="onAddressInput($event, 'address2')">
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('address2') }}</ion-note>
     </ion-item>
 
     <ion-item>
@@ -116,8 +127,11 @@
       <ion-input
         formControlName="city"
         placeholder="Enter city"
-        type="text">
+        type="text"
+        maxlength="100"
+        (ionInput)="onAddressInput($event, 'city')">
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('city') }}</ion-note>
     </ion-item>
 
     <ion-item>
@@ -125,8 +139,11 @@
       <ion-input
         formControlName="state"
         placeholder="Enter state"
-        type="text">
+        type="text"
+        maxlength="100"
+        (ionInput)="onAddressInput($event, 'state')">
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('state') }}</ion-note>
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('pinCode')">
@@ -135,50 +152,10 @@
         formControlName="pinCode"
         placeholder="Enter 6-digit pin code"
         type="tel"
-        maxlength="6">
+        maxlength="6"
+        (ionInput)="onPinInput($event)">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('pinCode') }}</ion-note>
     </ion-item>
-
-    <!-- Level and Role -->
-    <ion-item>
-      <ion-label position="stacked">Level</ion-label>
-      <ion-input
-        [value]="staffForm.value.level"
-        readonly>
-      </ion-input>
-    </ion-item>
-
-    <ion-item [class.ion-invalid]="isFieldInvalid('role')">
-      <ion-label position="stacked">Role <span class="required">*</span></ion-label>
-      <ion-select formControlName="role" placeholder="Select role">
-        <ion-select-option *ngFor="let role of roleOptions" [value]="role">
-          {{ role }}
-        </ion-select-option>
-      </ion-select>
-      <ion-note slot="error">{{ getFieldError('role') }}</ion-note>
-    </ion-item>
-
-    <!-- Action Buttons -->
-    <div class="ion-margin-top">
-      <ion-button
-        expand="block"
-        type="submit"
-        [disabled]="staffForm.invalid && submitted"
-        class="save-button">
-        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-        {{ isEditing ? 'Update Staff' : 'Save Staff' }}
-      </ion-button>
-      
-      <ion-button
-        expand="block"
-        fill="outline"
-        type="button"
-        (click)="closeModal()"
-        class="ion-margin-top">
-        Cancel
-      </ion-button>
-    </div>
-  </form>
+  </form>    
 </ion-content>
-
