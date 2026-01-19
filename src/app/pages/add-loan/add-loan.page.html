@@ -1,0 +1,154 @@
+<app-header-menu 
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
+</app-header-menu>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="content-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h1>Add Loan</h1>
+    </div>
+    
+    <!-- Step 1: Search Member -->
+    <ion-card class="step-card">
+      <ion-card-header (click)="toggleStep(1)" class="step-header">
+        <div class="step-header-content">
+          <ion-card-title>
+            <ion-icon [name]="step1Expanded ? 'chevron-down-outline' : 'chevron-forward-outline'" class="step-icon"></ion-icon>
+            Step 1: Search Member
+          </ion-card-title>
+          <ion-badge *ngIf="selectedMember" color="success">Member Selected</ion-badge>
+        </div>
+      </ion-card-header>
+      <ion-card-content *ngIf="step1Expanded">
+        <div class="search-section">
+          <div class="search-input-group">
+            <ion-input
+              [(ngModel)]="searchTerm"
+              placeholder="Search by First Name, Last Name, Middle Name, or Member ID"
+              (keypress)="onSearchKeyPress($event)"
+              class="search-input">
+            </ion-input>
+            <ion-button 
+              (click)="searchMembers()" 
+              [disabled]="isSearching || !searchTerm || searchTerm.trim() === ''"
+              class="search-button">
+              <ion-icon name="search-outline" slot="start"></ion-icon>
+              Search
+            </ion-button>
+          </div>
+          
+          <!-- AG Grid for search results -->
+          <div *ngIf="rowData.length > 0" class="grid-container">
+            <ag-grid-angular
+              class="ag-theme-alpine"
+              style="width: 100%; height: 400px;"
+              [rowData]="rowData"
+              [columnDefs]="columnDefs"
+              [defaultColDef]="defaultColDef"
+              [pagination]="pagination"
+              [paginationPageSize]="paginationPageSize"
+              [rowSelection]="rowSelection"
+              (gridReady)="onGridReady($event)"
+              (selectionChanged)="onSelectionChanged()">
+            </ag-grid-angular>
+          </div>
+          
+          <div *ngIf="rowData.length === 0 && !isSearching" class="empty-state">
+            <ion-icon name="search-outline" size="large"></ion-icon>
+            <p>Enter search criteria and click Search to find members</p>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Selected Member Details -->
+    <ion-card *ngIf="selectedMember" class="member-details-card">
+      <ion-card-header>
+        <ion-card-title>Selected Member Details</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="member-details-grid">
+          <div class="detail-item">
+            <label>Member ID:</label>
+            <span>{{ selectedMember.memberId || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>First Name:</label>
+            <span>{{ selectedMember.firstName || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Middle Name:</label>
+            <span>{{ selectedMember.middleName || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Last Name:</label>
+            <span>{{ selectedMember.lastName || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Age:</label>
+            <span>{{ selectedMember.age || 'N/A' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedMember.phone">
+            <label>Phone:</label>
+            <span>{{ selectedMember.phone }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedMember.email">
+            <label>Email:</label>
+            <span>{{ selectedMember.email }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedMember.address">
+            <label>Address:</label>
+            <span>{{ selectedMember.address }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedMember.city">
+            <label>City:</label>
+            <span>{{ selectedMember.city }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedMember.dateOfBirth">
+            <label>Date of Birth:</label>
+            <span>{{ selectedMember.dateOfBirth }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedMember.gender">
+            <label>Gender:</label>
+            <span>{{ selectedMember.gender }}</span>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Step 2: Loan Details -->
+    <ion-card class="step-card">
+      <ion-card-header (click)="toggleStep(2)" class="step-header">
+        <div class="step-header-content">
+          <ion-card-title>
+            <ion-icon [name]="step2Expanded ? 'chevron-down-outline' : 'chevron-forward-outline'" class="step-icon"></ion-icon>
+            Step 2: Loan Details
+          </ion-card-title>
+          <ion-badge *ngIf="!selectedMember" color="warning">Select Member First</ion-badge>
+        </div>
+      </ion-card-header>
+      <ion-card-content *ngIf="step2Expanded">
+        <p>Loan details form will be implemented here.</p>
+        <!-- TODO: Add loan details form fields -->
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Step 3: Review & Submit -->
+    <ion-card class="step-card">
+      <ion-card-header (click)="toggleStep(3)" class="step-header">
+        <div class="step-header-content">
+          <ion-card-title>
+            <ion-icon [name]="step3Expanded ? 'chevron-down-outline' : 'chevron-forward-outline'" class="step-icon"></ion-icon>
+            Step 3: Review & Submit
+          </ion-card-title>
+        </div>
+      </ion-card-header>
+      <ion-card-content *ngIf="step3Expanded">
+        <p>Review and submit form will be implemented here.</p>
+        <!-- TODO: Add review and submit section -->
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

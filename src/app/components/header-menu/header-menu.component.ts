@@ -26,6 +26,7 @@ export class HeaderMenuComponent implements OnInit {
   userDisplayName: string = '';
   showUsersSubmenu: boolean = false;
   showBranchesSubmenu: boolean = false;
+  showLoanSubmenu: boolean = false;
   branches: Branch[] = [];
   selectedBranch: Branch | null = null;
   showBranchDropdown: boolean = false;
@@ -59,8 +60,17 @@ export class HeaderMenuComponent implements OnInit {
     // Show Branches submenu if active menu is related to Branches
     if (this.activeMenu === 'Branches' || this.activeMenu === 'All Branches' || 
         this.activeMenu === 'Centers' || this.activeMenu === 'POCs' || 
-        this.activeMenu === 'Staff' || this.activeMenu === 'Members') {
+        this.activeMenu === 'Staff' || this.activeMenu === 'Members' ||
+        this.activeMenu === 'Loan' || this.activeMenu === 'Add Loan' || 
+        this.activeMenu === 'Manage Loan' || this.activeMenu === 'Preclose Loan' ||
+        this.activeMenu === 'Recovery Posting') {
       this.showBranchesSubmenu = true;
+    }
+    
+    // Show Loan submenu if active menu is related to Loan
+    if (this.activeMenu === 'Loan' || this.activeMenu === 'Add Loan' || 
+        this.activeMenu === 'Manage Loan' || this.activeMenu === 'Preclose Loan') {
+      this.showLoanSubmenu = true;
     }
   }
 
@@ -200,11 +210,25 @@ export class HeaderMenuComponent implements OnInit {
     if (menu === 'Users' && this.isOrgOwner) {
       this.showUsersSubmenu = !this.showUsersSubmenu;
       this.showBranchesSubmenu = false;
+      this.showLoanSubmenu = false;
     } else if (menu === 'Branches') {
       if (this.isOrgOwner) {
         // For Org Owner, toggle submenu
         this.showUsersSubmenu = false;
         this.showBranchesSubmenu = !this.showBranchesSubmenu;
+        this.showLoanSubmenu = false;
+      }
+    } else if (menu === 'Loan') {
+      // Toggle Loan submenu
+      this.showUsersSubmenu = false;
+      this.showLoanSubmenu = !this.showLoanSubmenu;
+      if (this.isOrgOwner) {
+        // Keep Branches submenu open for Org Owner
+        this.showBranchesSubmenu = true;
+      } else if (this.isBranchUser) {
+        // For Branch Users, just toggle the submenu, don't navigate
+        this.activeMenu = 'Loan';
+        this.menuChange.emit('Loan');
       }
     } else if (menu === 'Info') {
       this.showUsersSubmenu = false;
@@ -217,6 +241,7 @@ export class HeaderMenuComponent implements OnInit {
     } else if (menu === 'Dashboard') {
       this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
+      this.showLoanSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
       // For branch users, navigate to branch dashboard; for org owners, navigate to home
@@ -227,10 +252,20 @@ export class HeaderMenuComponent implements OnInit {
           this.navigateToRoute('/home');
         }
       }, 0);
+    } else if (menu === 'Recovery Posting') {
+      this.showUsersSubmenu = false;
+      this.showBranchesSubmenu = false;
+      this.showLoanSubmenu = false;
+      this.activeMenu = menu;
+      this.menuChange.emit(menu);
+      setTimeout(() => {
+        this.selectSubmenu(menu);
+      }, 0);
     } else {
       // Handle other menu items (Centers, POCs, Staff, Members)
       this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
+      this.showLoanSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
       // Navigate directly for branch users
@@ -275,10 +310,20 @@ export class HeaderMenuComponent implements OnInit {
     });
   }
 
+  toggleLoanSubmenu(): void {
+    this.showLoanSubmenu = !this.showLoanSubmenu;
+  }
+
   selectSubmenu(submenu: string): void {
     this.activeMenu = submenu;
     this.showUsersSubmenu = false;
-    this.showBranchesSubmenu = false;
+    this.showLoanSubmenu = false;
+    // Keep Branches submenu open for Org Owner when selecting Loan submenu items
+    if (this.isOrgOwner && (submenu === 'Add Loan' || submenu === 'Manage Loan' || submenu === 'Preclose Loan')) {
+      this.showBranchesSubmenu = true;
+    } else {
+      this.showBranchesSubmenu = false;
+    }
     this.menuChange.emit(submenu);
     
     // Navigate to respective pages with proper error handling
@@ -301,6 +346,14 @@ export class HeaderMenuComponent implements OnInit {
       route = '/staff';
     } else if (submenu === 'Members') {
       route = '/members';
+    } else if (submenu === 'Add Loan') {
+      route = '/add-loan';
+    } else if (submenu === 'Manage Loan') {
+      route = '/manage-loan';
+    } else if (submenu === 'Preclose Loan') {
+      route = '/preclose-loan';
+    } else if (submenu === 'Recovery Posting') {
+      route = '/recovery-posting';
     }
     
     if (route) {

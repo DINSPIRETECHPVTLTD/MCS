@@ -1,0 +1,145 @@
+.content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.step-card {
+  margin: 16px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.step-header {
+  cursor: pointer;
+  padding: 16px;
+  background: var(--ion-color-light);
+  border-bottom: 2px solid var(--ion-color-primary);
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: var(--ion-color-light-shade);
+  }
+}
+
+.step-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.step-icon {
+  margin-right: 8px;
+  transition: transform 0.3s ease;
+}
+
+.step-card ion-card-title {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.search-section {
+  padding: 16px 0;
+}
+
+.search-input-group {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  border: 1px solid var(--ion-color-medium);
+  border-radius: 8px;
+}
+
+.search-button {
+  --padding-start: 20px;
+  --padding-end: 20px;
+  height: 40px;
+}
+
+.grid-container {
+  margin-top: 20px;
+  border: 1px solid var(--ion-color-medium);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ion-color-medium);
+  
+  ion-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    color: var(--ion-color-medium);
+  }
+  
+  p {
+    margin: 8px 0;
+    font-size: 14px;
+  }
+}
+
+.member-details-card {
+  margin: 16px 0;
+  background: var(--ion-color-success-tint);
+  border-left: 4px solid var(--ion-color-success);
+}
+
+.member-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  
+  label {
+    font-weight: 600;
+    color: var(--ion-color-dark);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  span {
+    font-size: 14px;
+    color: var(--ion-color-dark-shade);
+  }
+}
+
+// AG Grid theme adjustments
+::ng-deep .ag-theme-alpine {
+  --ag-font-family: inherit;
+  --ag-font-size: 14px;
+  
+  .ag-header-cell {
+    font-weight: 600;
+  }
+  
+  .ag-row-selected {
+    background-color: var(--ion-color-primary-tint) !important;
+  }
+}

@@ -1,0 +1,133 @@
+<app-header-menu 
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
+</app-header-menu>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="content-container">
+    <div class="page-header">
+      <h1>Recovery Posting</h1>
+      <div class="date-display">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span>{{ todayDate }}</span>
+      </div>
+    </div>
+    
+    <!-- Filter Section -->
+    <ion-card class="filter-card">
+      <ion-card-content>
+        <div class="filter-section">
+          <!-- Posting Status -->
+          <div class="filter-group">
+            <label class="filter-label">Posting Status:</label>
+            <div class="radio-group">
+              <ion-radio-group [(ngModel)]="postingStatus" (ionChange)="onPostingStatusChange()">
+                <ion-item>
+                  <ion-radio value="pending" slot="start"></ion-radio>
+                  <ion-label>Posting Pending</ion-label>
+                </ion-item>
+                <ion-item>
+                  <ion-radio value="completed" slot="start"></ion-radio>
+                  <ion-label>Posting Completed</ion-label>
+                </ion-item>
+              </ion-radio-group>
+            </div>
+          </div>
+
+          <!-- Payment Type -->
+          <div class="filter-group">
+            <label class="filter-label">Payment Type:</label>
+            <div class="radio-group">
+              <ion-radio-group [(ngModel)]="paymentType" (ionChange)="onPaymentTypeChange()">
+                <ion-item>
+                  <ion-radio value="daily" slot="start"></ion-radio>
+                  <ion-label>Daily</ion-label>
+                </ion-item>
+                <ion-item>
+                  <ion-radio value="weekly" slot="start"></ion-radio>
+                  <ion-label>Weekly</ion-label>
+                </ion-item>
+                <ion-item>
+                  <ion-radio value="monthly" slot="start"></ion-radio>
+                  <ion-label>Monthly</ion-label>
+                </ion-item>
+              </ion-radio-group>
+            </div>
+          </div>
+
+          <!-- Select Center -->
+          <div class="filter-group">
+            <label class="filter-label">Select Center:</label>
+            <ion-select 
+              [(ngModel)]="selectedCenter" 
+              (ionChange)="onCenterChange()"
+              placeholder="Select Center"
+              interface="popover">
+              <ion-select-option *ngFor="let center of centers" [value]="center.id">
+                {{ center.code }} - {{ center.name }}
+              </ion-select-option>
+            </ion-select>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="filter-group action-buttons">
+            <ion-button color="primary" (click)="postSelected()">
+              <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+              POST
+            </ion-button>
+            <ion-button color="medium" (click)="close()">
+              <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+              CLOSE
+            </ion-button>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="select-actions">
+        <ion-checkbox 
+          [(ngModel)]="selectAllChecked" 
+          (ionChange)="selectAllChecked ? selectAll() : deselectAll()">
+        </ion-checkbox>
+        <label>Select All</label>
+        <ion-button fill="outline" size="small" (click)="deselectAll()">
+          Deselect All
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- AG Grid -->
+    <div class="grid-container">
+      <div *ngIf="isLoading" class="loading-state">
+        <ion-spinner></ion-spinner>
+        <p>Loading recovery posting data...</p>
+      </div>
+      
+      <div *ngIf="!isLoading && rowData.length === 0" class="empty-state">
+        <ion-icon name="document-text-outline" size="large"></ion-icon>
+        <p>No recovery posting data found</p>
+        <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
+          Adjust filters or check back later
+        </p>
+      </div>
+      
+      <div *ngIf="!isLoading && rowData.length > 0" class="grid-wrapper">
+        <ag-grid-angular
+          class="ag-theme-alpine"
+          style="width: 100%; height: 60vh;"
+          [rowData]="rowData"
+          [columnDefs]="columnDefs"
+          [defaultColDef]="defaultColDef"
+          [pagination]="pagination"
+          [paginationPageSize]="paginationPageSize"
+          [rowSelection]="rowSelection"
+          (gridReady)="onGridReady($event)"
+          (selectionChanged)="onSelectionChanged()">
+        </ag-grid-angular>
+      </div>
+    </div>
+  </div>
+</ion-content>
