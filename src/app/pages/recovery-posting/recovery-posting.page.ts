@@ -37,12 +37,12 @@ export class RecoveryPostingPage implements OnInit, ViewWillEnter {
   activeMenu: string = 'Recovery Posting';
   
   // Filters
-  postingStatus: 'pending' | 'completed' = 'pending';
   paymentType: 'daily' | 'weekly' | 'monthly' = 'weekly';
   selectedCenter: string = '';
   centers: any[] = [];
   
   // Date
+  selectedDate: string = '';
   todayDate: string = '';
   
   // Grid data
@@ -77,6 +77,12 @@ export class RecoveryPostingPage implements OnInit, ViewWillEnter {
       month: 'long', 
       day: 'numeric' 
     });
+    
+    // Set selected date to today by default (YYYY-MM-DD format for ion-datetime)
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    this.selectedDate = `${year}-${month}-${day}`;
   }
 
   ngOnInit(): void {
@@ -207,17 +213,312 @@ export class RecoveryPostingPage implements OnInit, ViewWillEnter {
   async loadData(): Promise<void> {
     this.isLoading = true;
     // TODO: Load data from API based on filters
-    // For now, using sample data
-    this.rowData = [];
+    // For now, using static sample data
+    this.rowData = [
+      {
+        loanId: 'L06831',
+        loanType: '40 Weeks',
+        loanCycle: 7,
+        memberCode: 'MMM0053',
+        memberName: 'Gotru Lakshmi',
+        loanAmount: 40000.00,
+        currentEMI: 36,
+        principalDue: 1000.00,
+        interestDue: 140.00,
+        savingsDue: 140.00,
+        totalDue: 1280.00,
+        paidAmount: 1280.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06777',
+        loanType: '40 Weeks',
+        loanCycle: 7,
+        memberCode: 'MMM0084',
+        memberName: 'Boggavarapu Venkata Lakshmi',
+        loanAmount: 40000.00,
+        currentEMI: 38,
+        principalDue: 1000.00,
+        interestDue: 140.00,
+        savingsDue: 140.00,
+        totalDue: 1280.00,
+        paidAmount: 1280.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06745',
+        loanType: '40 Weeks',
+        loanCycle: 5,
+        memberCode: 'MMM0123',
+        memberName: 'Konda Surya Kumari',
+        loanAmount: 30000.00,
+        currentEMI: 22,
+        principalDue: 750.00,
+        interestDue: 105.00,
+        savingsDue: 105.00,
+        totalDue: 960.00,
+        paidAmount: 960.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06689',
+        loanType: '40 Weeks',
+        loanCycle: 4,
+        memberCode: 'MMM0156',
+        memberName: 'Pothula Padmavathi',
+        loanAmount: 25000.00,
+        currentEMI: 29,
+        principalDue: 875.00,
+        interestDue: 122.50,
+        savingsDue: 122.50,
+        totalDue: 1120.00,
+        paidAmount: 1120.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06612',
+        loanType: '40 Weeks',
+        loanCycle: 3,
+        memberCode: 'MMM0189',
+        memberName: 'Sunkara Anitha',
+        loanAmount: 20000.00,
+        currentEMI: 7,
+        principalDue: 625.00,
+        interestDue: 87.50,
+        savingsDue: 87.50,
+        totalDue: 800.00,
+        paidAmount: 800.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06578',
+        loanType: '40 Weeks',
+        loanCycle: 2,
+        memberCode: 'MMM0201',
+        memberName: 'Vemula Radha',
+        loanAmount: 35000.00,
+        currentEMI: 21,
+        principalDue: 875.00,
+        interestDue: 122.50,
+        savingsDue: 122.50,
+        totalDue: 1120.00,
+        paidAmount: 1120.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06534',
+        loanType: '40 Weeks',
+        loanCycle: 6,
+        memberCode: 'MMM0225',
+        memberName: 'Yerramsetti Satyavathi',
+        loanAmount: 45000.00,
+        currentEMI: 42,
+        principalDue: 1125.00,
+        interestDue: 157.50,
+        savingsDue: 157.50,
+        totalDue: 1440.00,
+        paidAmount: 1440.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06489',
+        loanType: '40 Weeks',
+        loanCycle: 5,
+        memberCode: 'MMM0245',
+        memberName: 'Nalluri Padma',
+        loanAmount: 30000.00,
+        currentEMI: 25,
+        principalDue: 750.00,
+        interestDue: 105.00,
+        savingsDue: 105.00,
+        totalDue: 960.00,
+        paidAmount: 960.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cheque',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06456',
+        loanType: '40 Weeks',
+        loanCycle: 4,
+        memberCode: 'MMM0267',
+        memberName: 'Gaddam Lakshmi',
+        loanAmount: 25000.00,
+        currentEMI: 18,
+        principalDue: 625.00,
+        interestDue: 87.50,
+        savingsDue: 87.50,
+        totalDue: 800.00,
+        paidAmount: 800.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06423',
+        loanType: '40 Weeks',
+        loanCycle: 3,
+        memberCode: 'MMM0289',
+        memberName: 'Korrapati Venkata Lakshmi',
+        loanAmount: 40000.00,
+        currentEMI: 15,
+        principalDue: 1000.00,
+        interestDue: 140.00,
+        savingsDue: 140.00,
+        totalDue: 1280.00,
+        paidAmount: 1280.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Online',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06390',
+        loanType: '40 Weeks',
+        loanCycle: 7,
+        memberCode: 'MMM0301',
+        memberName: 'Maddala Sridevi',
+        loanAmount: 35000.00,
+        currentEMI: 40,
+        principalDue: 875.00,
+        interestDue: 122.50,
+        savingsDue: 122.50,
+        totalDue: 1120.00,
+        paidAmount: 1120.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06367',
+        loanType: '40 Weeks',
+        loanCycle: 6,
+        memberCode: 'MMM0323',
+        memberName: 'Pamulapati Anjali',
+        loanAmount: 30000.00,
+        currentEMI: 33,
+        principalDue: 750.00,
+        interestDue: 105.00,
+        savingsDue: 105.00,
+        totalDue: 960.00,
+        paidAmount: 960.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06334',
+        loanType: '40 Weeks',
+        loanCycle: 5,
+        memberCode: 'MMM0345',
+        memberName: 'Ravipati Geetha',
+        loanAmount: 25000.00,
+        currentEMI: 28,
+        principalDue: 625.00,
+        interestDue: 87.50,
+        savingsDue: 87.50,
+        totalDue: 800.00,
+        paidAmount: 800.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Bank Transfer',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06301',
+        loanType: '40 Weeks',
+        loanCycle: 4,
+        memberCode: 'MMM0367',
+        memberName: 'Sabbella Padmaja',
+        loanAmount: 40000.00,
+        currentEMI: 20,
+        principalDue: 1000.00,
+        interestDue: 140.00,
+        savingsDue: 140.00,
+        totalDue: 1280.00,
+        paidAmount: 1280.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      },
+      {
+        loanId: 'L06278',
+        loanType: '40 Weeks',
+        loanCycle: 3,
+        memberCode: 'MMM0389',
+        memberName: 'Tadikonda Swathi',
+        loanAmount: 35000.00,
+        currentEMI: 12,
+        principalDue: 875.00,
+        interestDue: 122.50,
+        savingsDue: 122.50,
+        totalDue: 1120.00,
+        paidAmount: 1120.00,
+        advRecoveryCollected: 0.00,
+        addlSavings: 0,
+        prepaidDeath: false,
+        paymentMode: 'Cash',
+        payment: 'Payment'
+      }
+    ];
+    
+    // Simulate API delay
+    setTimeout(() => {
+      this.isLoading = false;
+      if (this.gridApi) {
+        this.gridApi.setGridOption('rowData', this.rowData);
+        setTimeout(() => {
+          this.gridApi?.sizeColumnsToFit();
+        }, 100);
+      }
+    }, 500);
     
     // Sample data structure - replace with actual API call
-    // this.recoveryPostingService.getPostingData(this.postingStatus, this.paymentType, this.selectedCenter)
+    // this.recoveryPostingService.getPostingData(this.selectedDate, this.paymentType, this.selectedCenter)
     //   .subscribe(data => {
     //     this.rowData = data;
     //     this.isLoading = false;
     //   });
-    
-    this.isLoading = false;
   }
 
   onGridReady(params: GridReadyEvent): void {
@@ -300,15 +601,15 @@ export class RecoveryPostingPage implements OnInit, ViewWillEnter {
     this.router.navigate(['/home']);
   }
 
-  onPostingStatusChange(): void {
-    this.loadData();
-  }
-
   onPaymentTypeChange(): void {
     this.loadData();
   }
 
   onCenterChange(): void {
+    this.loadData();
+  }
+
+  onDateChange(): void {
     this.loadData();
   }
 
