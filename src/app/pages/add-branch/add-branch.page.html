@@ -19,20 +19,35 @@
               label="Branch Name"
               labelPlacement="stacked"
               formControlName="name"
+                    (ionInput)="onNameInput($event)"
+                    maxlength="100"
               placeholder="Enter branch name"
               required>
             </ion-input>
           </ion-item>
           <div *ngIf="branchForm.get('name')?.invalid && branchForm.get('name')?.touched" class="error-message">
-            Branch name is required
+            <div *ngIf="branchForm.get('name')?.errors?.['required']">Branch name is required</div>
+            <div *ngIf="branchForm.get('name')?.errors?.['maxlength']">Branch name must be at most 100 characters</div>
+            <div *ngIf="branchForm.get('name')?.errors?.['pattern']">Branch name must be alphanumeric</div>
           </div>
 
           <ion-item>
             <ion-input
-              label="Address"
+              label="Address 1"
               labelPlacement="stacked"
-              formControlName="address"
-              placeholder="Enter address">
+              formControlName="address1"
+              placeholder="Enter address line 1"
+              maxlength="100">
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
+              label="Address 2"
+              labelPlacement="stacked"
+              formControlName="address2"
+              placeholder="Enter address line 2 (optional)"
+              maxlength="100">
             </ion-input>
           </ion-item>
 
@@ -56,23 +71,33 @@
 
           <ion-item>
             <ion-input
+              label="Country"
+              labelPlacement="stacked"
+              formControlName="country"
+              placeholder="Country"
+              readonly>
+            </ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-input
               label="Phone"
               labelPlacement="stacked"
               type="tel"
-              formControlName="phone"
+              formControlName="phoneNumber"
               placeholder="Enter phone number">
             </ion-input>
           </ion-item>
 
           <ion-item>
             <ion-input
-              label="Email"
+              label="Zip Code"
               labelPlacement="stacked"
-              type="email"
-              formControlName="email"
-              placeholder="Enter email address">
+              formControlName="zipCode"
+              placeholder="Enter zip/postal code">
             </ion-input>
           </ion-item>
+
 
           <ion-button
             expand="block"

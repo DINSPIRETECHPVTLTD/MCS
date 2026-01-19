@@ -17,28 +17,34 @@
       <ion-input
         formControlName="name"
         placeholder="Enter branch name"
-        type="text">
+        (ionInput)="onNameInput($event)"
+        type="text"
+        maxlength="100">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('name') }}</ion-note>
     </ion-item>
 
     <!-- Branch Code -->
-    <ion-item>
-      <ion-label position="stacked">Branch Code</ion-label>
-      <ion-input
-        formControlName="code"
-        placeholder="Enter branch code"
-        type="text">
-      </ion-input>
-    </ion-item>
+    
 
     <!-- Address -->
     <ion-item>
-      <ion-label position="stacked">Address</ion-label>
+      <ion-label position="stacked">Address 1</ion-label>
       <ion-input
-        formControlName="address"
-        placeholder="Enter address"
-        type="text">
+        formControlName="address1"
+        placeholder="Enter address line 1"
+        type="text"
+        maxlength="100">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Address 2</ion-label>
+      <ion-input
+        formControlName="address2"
+        placeholder="Enter address line 2"
+        type="text"
+        maxlength="100">
       </ion-input>
     </ion-item>
 
@@ -48,7 +54,8 @@
       <ion-input
         formControlName="city"
         placeholder="Enter city"
-        type="text">
+        type="text"
+         maxlength="100">
       </ion-input>
     </ion-item>
 
@@ -58,7 +65,29 @@
       <ion-input
         formControlName="state"
         placeholder="Enter state"
-        type="text">
+        type="text"
+         maxlength="100">
+      </ion-input>
+    </ion-item>
+
+     <!-- Zip Code -->
+    <ion-item>
+      <ion-label position="stacked">Zip Code</ion-label>
+      <ion-input
+        formControlName="zipCode"
+        placeholder="Enter zip/postal code"
+        type="text"
+        maxlength="10">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Country</ion-label>
+      <ion-input
+        formControlName="country"
+        placeholder="Country"
+        type="text"
+        readonly>
       </ion-input>
     </ion-item>
 
@@ -66,45 +95,41 @@
     <ion-item [class.ion-invalid]="isFieldInvalid('phone')">
       <ion-label position="stacked">Phone Number</ion-label>
       <ion-input
-        formControlName="phone"
+        formControlName="phoneNumber"
         placeholder="Enter 10-digit phone number"
         type="tel"
         maxlength="10">
       </ion-input>
-      <ion-note slot="error">{{ getFieldError('phone') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
     </ion-item>
 
-    <!-- Email -->
-    <ion-item [class.ion-invalid]="isFieldInvalid('email')">
-      <ion-label position="stacked">Email</ion-label>
-      <ion-input
-        formControlName="email"
-        placeholder="Enter email address"
-        type="email">
-      </ion-input>
-      <ion-note slot="error">{{ getFieldError('email') }}</ion-note>
-    </ion-item>
+   
+    
 
-    <!-- Action Buttons -->
-    <div class="ion-margin-top">
+    <!-- Action Buttons moved to footer -->
+  </form>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <div class="action-row footer-row">
       <ion-button
-        expand="block"
-        type="submit"
+        type="button"
+        (click)="onSubmit()"
         [disabled]="branchForm.invalid && submitted"
         class="save-button">
         <ion-icon name="checkmark-outline" slot="start"></ion-icon>
         {{ isEditing ? 'Update Branch' : 'Save Branch' }}
       </ion-button>
-      
+
       <ion-button
-        expand="block"
         fill="outline"
         type="button"
         (click)="closeModal()"
-        class="ion-margin-top">
+        class="cancel-button">
         Cancel
       </ion-button>
     </div>
-  </form>
-</ion-content>
+  </ion-toolbar>
+</ion-footer>
 
