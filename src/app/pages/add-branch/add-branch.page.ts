@@ -24,7 +24,7 @@ export class AddBranchPage implements OnInit, ViewWillEnter {
     private toastController: ToastController
   ) {
     this.branchForm = this.formBuilder.group({
-      name: ['', [Validators.required]],
+      name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       address: [''],
       city: [''],
       state: [''],
@@ -37,6 +37,16 @@ export class AddBranchPage implements OnInit, ViewWillEnter {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
+    }
+  }
+
+  onNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.branchForm.get('name');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
     }
   }
 

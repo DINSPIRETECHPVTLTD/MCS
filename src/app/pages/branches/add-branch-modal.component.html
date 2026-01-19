@@ -17,7 +17,9 @@
       <ion-input
         formControlName="name"
         placeholder="Enter branch name"
-        type="text">
+        (ionInput)="onNameInput($event)"
+        type="text"
+        maxlength="100">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('name') }}</ion-note>
     </ion-item>

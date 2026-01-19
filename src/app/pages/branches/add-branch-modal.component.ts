@@ -26,7 +26,7 @@ export class AddBranchModalComponent implements OnInit {
     private toastController: ToastController
   ) {
     this.branchForm = this.formBuilder.group({
-      name: ['', [Validators.required]],
+      name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       code: [''],
       address: [''],
       city: [''],
@@ -44,6 +44,16 @@ export class AddBranchModalComponent implements OnInit {
       this.branchForm.patchValue({
         organizationId: organizationId
       });
+    }
+  }
+
+  onNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.branchForm.get('name');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
     }
   }
 
