@@ -27,12 +27,13 @@ export class AddBranchModalComponent implements OnInit {
   ) {
     this.branchForm = this.formBuilder.group({
       name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
-      code: [''],
-      address: [''],
+      address1: ['', [Validators.maxLength(100)]],
+      address2: ['', [Validators.maxLength(100)]],
       city: [''],
       state: [''],
-      phone: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-      email: ['', [Validators.email]],
+      country: ['India'],
+      zipCode: [''],
+      phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/)]],
       organizationId: [0]
     });
   }
@@ -76,16 +77,20 @@ export class AddBranchModalComponent implements OnInit {
     });
     await loading.present();
 
-    const branchData: CreateBranchRequest = {
+    const address1 = this.branchForm.value.address1?.trim() || '';
+    const address2 = this.branchForm.value.address2?.trim() || '';
+
+    const branchData = {
       name: this.branchForm.value.name.trim(),
-      code: this.branchForm.value.code?.trim() || '',
-      address: this.branchForm.value.address?.trim() || '',
+      address1: address1,
+      address2: address2,
       city: this.branchForm.value.city?.trim() || '',
       state: this.branchForm.value.state?.trim() || '',
-      phone: this.branchForm.value.phone?.trim() || '',
-      email: this.branchForm.value.email?.trim() || '',
+      country: this.branchForm.value.country || 'India',
+      zipCode: this.branchForm.value.zipCode?.trim() || '',
+      phoneNumber: this.branchForm.value.phoneNumber?.trim() || '',
       organizationId: this.branchForm.value.organizationId
-    };
+    } as CreateBranchRequest;
 
     this.branchService.createBranch(branchData).subscribe({
       next: async (branch) => {
@@ -126,12 +131,20 @@ export class AddBranchModalComponent implements OnInit {
       if (field.errors?.['required']) {
         return `${this.getFieldLabel(fieldName)} is required`;
       }
-      if (field.errors?.['email']) {
-        return 'Please enter a valid email address';
+      if (field.errors?.['maxlength']) {
+        if (fieldName === 'address1' || fieldName === 'address2') {
+          return `${this.getFieldLabel(fieldName)} must be at most 100 characters`;
+        }
+        if (fieldName === 'name') {
+          return 'Branch name must be at most 100 characters';
+        }
       }
       if (field.errors?.['pattern']) {
-        if (fieldName === 'phone') {
+        if (fieldName === 'phoneNumber') {
           return 'Please enter a valid 10-digit phone number';
+        }
+        if (fieldName === 'name') {
+          return 'Branch name must be alphanumeric';
         }
       }
     }
@@ -143,9 +156,12 @@ export class AddBranchModalComponent implements OnInit {
       name: 'Branch name',
       code: 'Branch code',
       address: 'Address',
+      address1: 'Address 1',
+      address2: 'Address 2',
       city: 'City',
       state: 'State',
-      phone: 'Phone number',
+      zipCode: 'Zip Code',
+      phoneNumber: 'Phone number',
       email: 'Email'
     };
     return labels[fieldName] || fieldName;

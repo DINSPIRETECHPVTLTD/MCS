@@ -25,11 +25,13 @@ export class AddBranchPage implements OnInit, ViewWillEnter {
   ) {
     this.branchForm = this.formBuilder.group({
       name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
-      address: [''],
+      address1: ['', [Validators.maxLength(100)]],
+      address2: ['', [Validators.maxLength(100)]],
       city: [''],
       state: [''],
-      phone: [''],
-      email: ['']
+      country: ['India'],
+      zipCode: [''],
+      phoneNumber: ['']
     });
   }
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { Branch, CreateBranchRequest } from '../models/branch.models';
@@ -54,7 +55,16 @@ export class BranchService {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
 
-    return this.http.post<Branch>(`${this.apiUrl}/Branches`, branch, { headers });
+    // Try primary endpoint then fallback to an alternative if not found
+    return this.http.post<Branch>(`${this.apiUrl}/Branches`, branch, { headers }).pipe(
+      catchError((err) => {
+        if (err.status === 404) {
+          // Try alternative endpoint(s)
+          return this.http.post<Branch>(`${this.apiUrl}/Branch/Create`, branch, { headers });
+        }
+        return throwError(() => err);
+      })
+    );
   }
 }
 
