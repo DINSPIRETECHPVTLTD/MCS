@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoadingController, ToastController, ViewWillEnter, ModalController } from '@ionic/angular';
+import { LoadingController, ToastController, ViewWillEnter, ModalController, AlertController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { BranchService } from '../../services/branch.service';
@@ -28,9 +28,34 @@ export class BranchesPage implements OnInit, ViewWillEnter {
   columnDefs: ColDef[] = [
     { field: 'id', headerName: 'ID', width: 80, sortable: true, filter: true },
     { field: 'name', headerName: 'Name', sortable: true, filter: true, flex: 1 },
-    { field: 'code', headerName: 'Code', sortable: true, filter: true, width: 120 },
     { field: 'city', headerName: 'City', sortable: true, filter: true, width: 150 },
-    { field: 'address', headerName: 'Address', sortable: true, filter: true, flex: 1 }
+    { field: 'state', headerName: 'State', sortable: true, filter: true, width: 120 },
+    { headerName: 'Address', valueGetter: (params: any) => {
+        const a1 = params.data?.address1 || params.data?.address || '';
+        const a2 = params.data?.address2 || '';
+        return [a1, a2].filter(Boolean).join(' ');
+      }, sortable: true, filter: true, flex: 1 },
+    { field: 'country', headerName: 'Country', sortable: true, filter: true, width: 120 },
+    { field: 'zipCode', headerName: 'Zip', sortable: true, filter: true, width: 120 },
+    { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 140 },
+    {
+      headerName: 'Actions',
+      field: 'actions',
+      width: 160,
+      cellRenderer: (params: any) => {
+        const container = document.createElement('div');
+        container.className = 'actions-cell';
+        container.innerHTML = `
+          <button class="ag-btn ag-edit">Edit</button>
+          <button class="ag-btn ag-delete">Delete</button>
+        `;
+        const editBtn = container.querySelector('.ag-edit');
+        const delBtn = container.querySelector('.ag-delete');
+        if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editBranch(params.data));
+        if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.deleteBranch(params.data));
+        return container;
+      }
+    }
   ];
   defaultColDef: ColDef = { 
     resizable: true, 
@@ -48,7 +73,8 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     private router: Router,
     private loadingController: LoadingController,
     private toastController: ToastController,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private alertController: AlertController
   ) {
     this.branchForm = this.formBuilder.group({
       name: [''],
@@ -59,7 +85,14 @@ export class BranchesPage implements OnInit, ViewWillEnter {
       phone: [''],
       email: ['']
     });
+
+    // Grid options with context so cell renderers can call component methods
+    this.gridOptions = {
+      context: { componentParent: this }
+    } as any;
   }
+
+  gridOptions: any;
 
   ngOnInit(): void {
     console.log('BranchesPage ngOnInit called');
@@ -80,14 +113,15 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     }
   }
 
-  async loadBranches(): Promise<void> {
+  async loadBranches(forceRefresh: boolean = false): Promise<void> {
     // First, try to get branches from login response
     const branchesFromLogin = this.authService.getBranchesFromLogin();
-    
-    if (branchesFromLogin && branchesFromLogin.length > 0) {
-      // Use branches from login response (no loading needed)
-      this.branches = branchesFromLogin;
-      this.rowData = branchesFromLogin;
+
+    // If we have branches from login and not forcing refresh, use them
+    if (!forceRefresh && branchesFromLogin && branchesFromLogin.length > 0) {
+      const normalized = this.normalizeBranches(branchesFromLogin);
+      this.branches = normalized;
+      this.rowData = normalized;
       this.isLoading = false;
       console.log('Loaded branches from login response:', branchesFromLogin.length);
       return;
@@ -105,9 +139,10 @@ export class BranchesPage implements OnInit, ViewWillEnter {
       next: (branches) => {
         loading.dismiss();
         this.isLoading = false;
-        this.branches = branches || [];
-        this.rowData = branches || [];
-        console.log('Branches loaded from API:', this.branches.length);
+        const normalized = this.normalizeBranches(branches);
+        this.branches = normalized;
+        this.rowData = normalized;
+        console.log('Branches loaded from API (normalized):', this.branches.length);
         if (this.branches.length === 0) {
           console.log('No branches found - array is empty');
         }
@@ -118,9 +153,10 @@ export class BranchesPage implements OnInit, ViewWillEnter {
           next: (branches) => {
             loading.dismiss();
             this.isLoading = false;
-            this.branches = branches || [];
-            this.rowData = branches || [];
-            console.log('Branches loaded from alternative endpoint:', this.branches.length);
+            const normalized = this.normalizeBranches(branches);
+            this.branches = normalized;
+            this.rowData = normalized;
+            console.log('Branches loaded from alternative endpoint (normalized):', this.branches.length);
           },
           error: (err) => {
             loading.dismiss();
@@ -136,6 +172,40 @@ export class BranchesPage implements OnInit, ViewWillEnter {
           }
         });
       }
+    });
+  }
+
+  private normalizeBranches(raw: any): Branch[] {
+    if (!raw) return [];
+
+    let list: any[] = raw;
+    if (!Array.isArray(raw)) {
+      if (raw.data && Array.isArray(raw.data)) list = raw.data;
+      else if (raw.items && Array.isArray(raw.items)) list = raw.items;
+      else if (raw.rows && Array.isArray(raw.rows)) list = raw.rows;
+      else if (raw.branches && Array.isArray(raw.branches)) list = raw.branches;
+      else if (raw.value && Array.isArray(raw.value)) list = raw.value;
+      else if (raw.result && Array.isArray(raw.result)) list = raw.result;
+      else list = [raw];
+    }
+
+    return list.map((b: any) => {
+      const address1 = b.address1 ?? b.addressLine1 ?? '';
+      const address2 = b.address2 ?? b.addressLine2 ?? '';
+      const combined = b.address ?? [address1, address2].filter(Boolean).join(' ');
+      return {
+        id: b.id ?? b.branchId ?? 0,
+        name: b.name ?? b.branchName ?? '',
+        address1: address1,
+        address2: address2,
+        address: combined,
+        city: b.city ?? b.town ?? '',
+        state: b.state ?? '',
+        country: b.country ?? b.countryName ?? '',
+        zipCode: b.zipCode ?? b.postalCode ?? b.zip ?? '',
+        phoneNumber: b.phoneNumber ?? b.phone ?? b.contact ?? '',
+        ...b
+      } as Branch;
     });
   }
 
@@ -169,11 +239,47 @@ export class BranchesPage implements OnInit, ViewWillEnter {
 
     const { data } = await modal.onWillDismiss();
     if (data && data.success) {
-      // Refresh branches list after successful save
-      this.loadBranches();
+      // Refresh branches list after successful save (force API fetch)
+      this.loadBranches(true);
     }
     this.showAddForm = false;
     this.resetForm();
+  }
+
+  editBranch(branch: Branch): void {
+    this.isEditing = true;
+    this.editingBranchId = branch.id;
+    this.openAddBranchModal();
+  }
+
+  async deleteBranch(branch: Branch): Promise<void> {
+    const alert = await this.alertController.create({
+      header: 'Confirm delete',
+      message: `Are you sure you want to delete branch "${branch.name}"?`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Delete',
+          handler: async () => {
+            const loading = await this.loadingController.create({ message: 'Deleting...', spinner: 'crescent' });
+            await loading.present();
+            this.branchService.deleteBranch(branch.id).subscribe({
+              next: async () => {
+                await loading.dismiss();
+                this.showToast('Branch deleted', 'success');
+                this.loadBranches(true);
+              },
+              error: async (err) => {
+                await loading.dismiss();
+                console.error('Delete error', err);
+                this.showToast('Failed to delete branch', 'danger');
+              }
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
   resetForm(): void {
