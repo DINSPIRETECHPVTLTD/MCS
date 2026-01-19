@@ -110,23 +110,25 @@
         --background-hover: #2d5aa0 !important;
         --background-focused: #2d5aa0 !important;
         color: #ffffff !important;
+        background-color: #3880ff !important;
         
-        .button-native {
+        ::ng-deep .button-native {
           background-color: #3880ff !important;
           color: #ffffff !important;
         }
       }
       
       &[color="medium"] {
-        --background: #92949c !important;
+        --background: #3880ff !important;
         --color: #ffffff !important;
-        --background-activated: #787a80 !important;
-        --background-hover: #787a80 !important;
-        --background-focused: #787a80 !important;
+        --background-activated: #2d5aa0 !important;
+        --background-hover: #2d5aa0 !important;
+        --background-focused: #2d5aa0 !important;
         color: #ffffff !important;
+        background-color: #3880ff !important;
         
-        .button-native {
-          background-color: #92949c !important;
+        ::ng-deep .button-native {
+          background-color: #3880ff !important;
           color: #ffffff !important;
         }
       }

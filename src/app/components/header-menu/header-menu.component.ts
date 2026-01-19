@@ -36,6 +36,7 @@ export class HeaderMenuComponent implements OnInit {
   userLevel: string = '';
   isOrgOwner: boolean = false;
   isBranchUser: boolean = false;
+  isStaff: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -85,11 +86,13 @@ export class HeaderMenuComponent implements OnInit {
     // Use helper methods from UserContext service
     this.isOrgOwner = this.userContext.isOrgOwner();
     this.isBranchUser = this.userContext.isBranchUser();
+    this.isStaff = this.userRole?.toLowerCase() === 'staff';
     console.log('User Context:', this.userContext);
     console.log('User Role:', this.userRole);
     console.log('User Level:', this.userLevel);
     console.log('Is Org Owner:', this.isOrgOwner);
     console.log('Is Branch User:', this.isBranchUser);
+    console.log('Is Staff:', this.isStaff);
 
     // Try to get organization from login response first
     const orgFromLogin = this.authService.getOrganizationInfo();
@@ -238,7 +241,7 @@ export class HeaderMenuComponent implements OnInit {
       setTimeout(() => {
         this.navigateToRoute('/organization-info');
       }, 0);
-    } else if (menu === 'Dashboard') {
+    } else if (menu === 'Dashboard' || menu === 'My View') {
       this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
       this.showLoanSubmenu = false;

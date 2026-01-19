@@ -98,12 +98,12 @@
   <!-- Navigation Menu for Branch User (submenu items as main menu) -->
   <ion-toolbar class="nav-toolbar" *ngIf="isBranchUser">
     <div class="nav-menu">
-      <!-- Dashboard -->
+      <!-- Dashboard / My View -->
       <button 
         class="nav-item" 
-        [class.active]="activeMenu === 'Dashboard'"
-        (click)="setActiveMenu('Dashboard')">
-        Dashboard
+        [class.active]="activeMenu === 'Dashboard' || activeMenu === 'My View'"
+        (click)="setActiveMenu(isStaff ? 'My View' : 'Dashboard')">
+        {{ isStaff ? 'My View' : 'Dashboard' }}
       </button>
       
       <!-- Centers -->

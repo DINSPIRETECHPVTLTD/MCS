@@ -6,46 +6,185 @@
 
 <ion-content [fullscreen]="true" class="ion-padding">
   <div class="content-container">
-    <h1>Branch Dashboard</h1>
-    <p>Branch overview and statistics will be displayed here.</p>
-    
-    <ion-grid>
-      <ion-row>
-        <ion-col size="12" size-md="6" size-lg="4">
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>Centers</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <h2>0</h2>
-              <p>Total Centers</p>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-        <ion-col size="12" size-md="6" size-lg="4">
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>Staff</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <h2>0</h2>
-              <p>Total Staff</p>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-        <ion-col size="12" size-md="6" size-lg="4">
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>Members</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <h2>0</h2>
-              <p>Total Members</p>
-            </ion-card-content>
-          </ion-card>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
+    <!-- My View for Staff -->
+    <div *ngIf="isStaff">
+      <h1>My View</h1>
+      
+      <!-- Date Selection Tabs -->
+      <div class="date-tabs">
+        <button 
+          class="date-tab" 
+          [class.active]="selectedDate === 'today'"
+          (click)="selectDate('today')">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>Today</span>
+          <small>{{ todayDate }}</small>
+        </button>
+        <button 
+          class="date-tab" 
+          [class.active]="selectedDate === 'tomorrow'"
+          (click)="selectDate('tomorrow')">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>Tomorrow</span>
+          <small>{{ tomorrowDate }}</small>
+        </button>
+      </div>
+      
+      <!-- Summary Cards -->
+      <ion-grid class="summary-grid">
+        <ion-row>
+          <ion-col size="12" size-md="6" size-lg="4">
+            <ion-card class="summary-card">
+              <ion-card-content>
+                <div class="summary-item">
+                  <ion-icon name="people-outline" class="summary-icon"></ion-icon>
+                  <div class="summary-details">
+                    <h2>{{ getTotalMembers() }}</h2>
+                    <p>Total Members</p>
+                  </div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="6" size-lg="4">
+            <ion-card class="summary-card">
+              <ion-card-content>
+                <div class="summary-item">
+                  <ion-icon name="cash-outline" class="summary-icon"></ion-icon>
+                  <div class="summary-details">
+                    <h2>₹{{ getTotalAmount().toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</h2>
+                    <p>Total Amount</p>
+                  </div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="6" size-lg="4">
+            <ion-card class="summary-card">
+              <ion-card-content>
+                <div class="summary-item">
+                  <ion-icon name="person-outline" class="summary-icon"></ion-icon>
+                  <div class="summary-details">
+                    <h2>{{ getTotalPOCs() }}</h2>
+                    <p>Total POCs</p>
+                  </div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <!-- POCs Table -->
+      <ion-card class="pocs-card">
+        <ion-card-header>
+          <ion-card-title>POCs Overview</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="table-container">
+            <table class="pocs-table">
+              <thead>
+                <tr>
+                  <th>POC Name</th>
+                  <th>Center Name</th>
+                  <th class="text-right">Member Count</th>
+                  <th class="text-right">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container *ngFor="let poc of getCurrentPOCsData()">
+                  <tr class="poc-row" (click)="togglePOCExpand(poc)">
+                    <td class="expand-cell">
+                      <ion-icon 
+                        [name]="poc.expanded ? 'chevron-down-outline' : 'chevron-forward-outline'"
+                        class="expand-icon">
+                      </ion-icon>
+                      {{ poc.pocName }}
+                    </td>
+                    <td>{{ poc.centerName }}</td>
+                    <td class="text-right">{{ poc.memberCount }}</td>
+                    <td class="text-right">₹{{ poc.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
+                  </tr>
+                  <tr *ngIf="poc.expanded" class="member-details-row">
+                    <td colspan="4" class="member-details-cell">
+                      <div class="members-container">
+                        <table class="members-table">
+                          <thead>
+                            <tr>
+                              <th>Member ID</th>
+                              <th>Member Name</th>
+                              <th class="text-right">Weekly Due</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr *ngFor="let member of poc.members">
+                              <td>{{ member.memberId }}</td>
+                              <td>{{ member.memberName }}</td>
+                              <td class="text-right">₹{{ member.weeklyDue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="2"><strong>Total ({{ selectedDate === 'today' ? 'Today' : 'Tomorrow' }})</strong></td>
+                  <td class="text-right"><strong>{{ getTotalMembers() }}</strong></td>
+                  <td class="text-right"><strong>₹{{ getTotalAmount().toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Regular Dashboard for Non-Staff -->
+    <div *ngIf="!isStaff">
+      <h1>Branch Dashboard</h1>
+      <p>Branch overview and statistics will be displayed here.</p>
+      
+      <ion-grid>
+        <ion-row>
+          <ion-col size="12" size-md="6" size-lg="4">
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>Centers</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <h2>0</h2>
+                <p>Total Centers</p>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="6" size-lg="4">
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>Staff</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <h2>0</h2>
+                <p>Total Staff</p>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+          <ion-col size="12" size-md="6" size-lg="4">
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>Members</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <h2>0</h2>
+                <p>Total Members</p>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </div>
   </div>
 </ion-content>
 
