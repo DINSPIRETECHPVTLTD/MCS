@@ -74,7 +74,7 @@
                   "with": "src/environments/environment.dev.ts"
                 }
               ],
-              "index": "src/index.html",
+              "index": "src/index.dev.html",
               "optimization": false,
               "sourceMap": true,
               "buildOptimizer": false
@@ -86,7 +86,7 @@
                   "with": "src/environments/environment.test.ts"
                 }
               ],
-              "index": "src/index.html",
+              "index": "src/index.test.html",
               "optimization": true,
               "sourceMap": false,
               "buildOptimizer": true,
