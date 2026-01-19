@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoadingController, ToastController, ViewWillEnter, ModalController } from '@ionic/angular';
+import { LoadingController, ToastController, ViewWillEnter, ModalController, AlertController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { BranchService } from '../../services/branch.service';
@@ -37,7 +37,25 @@ export class BranchesPage implements OnInit, ViewWillEnter {
       }, sortable: true, filter: true, flex: 1 },
     { field: 'country', headerName: 'Country', sortable: true, filter: true, width: 120 },
     { field: 'zipCode', headerName: 'Zip', sortable: true, filter: true, width: 120 },
-    { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 140 }
+    { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 140 },
+    {
+      headerName: 'Actions',
+      field: 'actions',
+      width: 160,
+      cellRenderer: (params: any) => {
+        const container = document.createElement('div');
+        container.className = 'actions-cell';
+        container.innerHTML = `
+          <button class="ag-btn ag-edit">Edit</button>
+          <button class="ag-btn ag-delete">Delete</button>
+        `;
+        const editBtn = container.querySelector('.ag-edit');
+        const delBtn = container.querySelector('.ag-delete');
+        if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editBranch(params.data));
+        if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.deleteBranch(params.data));
+        return container;
+      }
+    }
   ];
   defaultColDef: ColDef = { 
     resizable: true, 
@@ -55,7 +73,8 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     private router: Router,
     private loadingController: LoadingController,
     private toastController: ToastController,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private alertController: AlertController
   ) {
     this.branchForm = this.formBuilder.group({
       name: [''],
@@ -66,7 +85,14 @@ export class BranchesPage implements OnInit, ViewWillEnter {
       phone: [''],
       email: ['']
     });
+
+    // Grid options with context so cell renderers can call component methods
+    this.gridOptions = {
+      context: { componentParent: this }
+    } as any;
   }
+
+  gridOptions: any;
 
   ngOnInit(): void {
     console.log('BranchesPage ngOnInit called');
@@ -218,6 +244,42 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     }
     this.showAddForm = false;
     this.resetForm();
+  }
+
+  editBranch(branch: Branch): void {
+    this.isEditing = true;
+    this.editingBranchId = branch.id;
+    this.openAddBranchModal();
+  }
+
+  async deleteBranch(branch: Branch): Promise<void> {
+    const alert = await this.alertController.create({
+      header: 'Confirm delete',
+      message: `Are you sure you want to delete branch "${branch.name}"?`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Delete',
+          handler: async () => {
+            const loading = await this.loadingController.create({ message: 'Deleting...', spinner: 'crescent' });
+            await loading.present();
+            this.branchService.deleteBranch(branch.id).subscribe({
+              next: async () => {
+                await loading.dismiss();
+                this.showToast('Branch deleted', 'success');
+                this.loadBranches(true);
+              },
+              error: async (err) => {
+                await loading.dismiss();
+                console.error('Delete error', err);
+                this.showToast('Failed to delete branch', 'danger');
+              }
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
   resetForm(): void {
