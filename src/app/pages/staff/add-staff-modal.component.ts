@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ModalController, LoadingController, ToastController } from '@ionic/angular';
+import { ModalController, LoadingController, ToastController, AlertController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { CreateUserRequest } from '../../models/user.models';
 import { UserContextService } from '../../services/user-context.service';
@@ -25,6 +25,8 @@ export class AddStaffModalComponent implements OnInit {
     private userContext: UserContextService,
     private loadingController: LoadingController,
     private toastController: ToastController
+    ,
+    private alertController: AlertController
   ) {
     this.staffForm = this.formBuilder.group({
       email: ['', [Validators.email, Validators.maxLength(100)]],
@@ -40,7 +42,8 @@ export class AddStaffModalComponent implements OnInit {
       pinCode: ['', [Validators.pattern(/^[0-9]{6}$/), Validators.maxLength(6)]],
       organizationId: [0],
       branchId: [null],
-      role: ['staff', [Validators.required]]
+      role: ['Staff', [Validators.required]]
+      
     });
   }
 
@@ -139,6 +142,38 @@ export class AddStaffModalComponent implements OnInit {
     } else {
       console.warn('No branch ID available for staff creation');
     }
+
+    // If editing, make password optional and load existing user data
+    if (this.isEditing && this.editingStaffId) {
+      const pwdControl = this.staffForm.get('password');
+      if (pwdControl) {
+        pwdControl.clearValidators();
+        pwdControl.updateValueAndValidity();
+      }
+
+      this.userService.getUser(this.editingStaffId).subscribe({
+        next: (user) => {
+          this.staffForm.patchValue({
+            email: user.email || '',
+            firstName: user.firstName || '',
+            middleName: user.middleName || '',
+            lastName: user.lastName || '',
+            phoneNumber: user.phoneNumber || '',
+            address1: user.address1 || '',
+            address2: user.address2 || '',
+            city: user.city || '',
+            state: user.state || '',
+            pinCode: user.pinCode || '',
+            role: user.role ? (user.role.toLowerCase().includes('branch') ? 'BranchAdmin' : 'Staff') : 'Staff',
+            organizationId: user.organizationId || this.staffForm.value.organizationId,
+            branchId: user.branchId || this.staffForm.value.branchId
+          });
+        },
+        error: (err) => {
+          console.error('Failed to load user for editing', err);
+        }
+      });
+    }
   }
 
   async onSubmit(): Promise<void> {
@@ -177,23 +212,72 @@ export class AddStaffModalComponent implements OnInit {
       branchId: this.staffForm.value.branchId
     };
 
-    this.userService.createUser(staffData).subscribe({
-      next: async (staff) => {
-        await loading.dismiss();
-        this.showToast(
-          this.isEditing ? 'Staff updated successfully!' : 'Staff created successfully!', 
-          'success'
-        );
-        // Close modal and return success
-        await this.modalController.dismiss({ success: true, staff });
-      },
-      error: async (error) => {
-        await loading.dismiss();
-        const errorMessage = error.error?.message || error.message || 'Failed to create staff. Please try again.';
-        this.showToast(errorMessage, 'danger');
-        console.error('Error creating staff:', error);
+    if (this.isEditing && this.editingStaffId) {
+      // If password is empty, don't send it in update payload
+      if (!this.staffForm.value.password) {
+        delete staffData.password;
       }
+      this.userService.updateUser(this.editingStaffId, staffData).subscribe({
+        next: async (staff) => {
+          await loading.dismiss();
+          this.showToast('Staff updated successfully!', 'success');
+          await this.modalController.dismiss({ success: true, staff });
+        },
+        error: async (error) => {
+          await loading.dismiss();
+          const errorMessage = error.error?.message || error.message || 'Failed to update staff. Please try again.';
+          this.showToast(errorMessage, 'danger');
+          console.error('Error updating staff:', error);
+        }
+      });
+    } else {
+      this.userService.createUser(staffData).subscribe({
+        next: async (staff) => {
+          await loading.dismiss();
+          this.showToast('Staff created successfully!', 'success');
+          await this.modalController.dismiss({ success: true, staff });
+        },
+        error: async (error) => {
+          await loading.dismiss();
+          const errorMessage = error.error?.message || error.message || 'Failed to create staff. Please try again.';
+          this.showToast(errorMessage, 'danger');
+          console.error('Error creating staff:', error);
+        }
+      });
+    }
+  }
+
+  async onDelete(): Promise<void> {
+    if (!this.isEditing || !this.editingStaffId) return;
+
+    const alert = await this.alertController.create({
+      header: 'Confirm delete',
+      message: 'Are you sure you want to delete this staff member?',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            const loading = await this.loadingController.create({ message: 'Deleting staff...', spinner: 'crescent' });
+            await loading.present();
+            this.userService.deleteUser(this.editingStaffId!).subscribe({
+              next: async () => {
+                await loading.dismiss();
+                this.showToast('Staff deleted', 'success');
+                await this.modalController.dismiss({ success: true, deleted: true });
+              },
+              error: async (err) => {
+                await loading.dismiss();
+                this.showToast(err.error?.message || 'Failed to delete staff', 'danger');
+                console.error('Delete staff error', err);
+              }
+            });
+          }
+        }
+      ]
     });
+    await alert.present();
   }
 
   async closeModal(): Promise<void> {

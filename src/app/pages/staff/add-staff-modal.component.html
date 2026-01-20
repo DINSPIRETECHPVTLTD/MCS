@@ -160,17 +160,35 @@
 
     <ion-item [class.ion-invalid]="isFieldInvalid('role')">
       <ion-label position="stacked">Role <span class="required">*</span></ion-label>
-      <ion-select formControlName="role" interface="popover">
-        <ion-select-option value="branchAdmin">Branch Admin</ion-select-option>
-        <ion-select-option value="staff">Staff</ion-select-option>
+      <ion-select formControlName="role" interface="popover" placeholder="Select role">
+        <ion-select-option value="BranchAdmin">Branch Admin</ion-select-option>
+        <ion-select-option value="Staff">Staff</ion-select-option>
       </ion-select>
       <ion-note slot="error">{{ getFieldError('role') }}</ion-note>
     </ion-item>
 
-    <div class="form-actions">
-      <ion-button fill="clear" (click)="closeModal()">Cancel</ion-button>
-      <ion-button class="save-button" color="primary" type="submit">Save changes</ion-button>
-    </div>
+  </form>
 
-  </form>    
 </ion-content>
+
+<ion-footer>
+  <ion-toolbar class="footer-toolbar">
+    <div class="footer-actions">
+      <div class="left-action">
+        <ion-button class="save-btn" color="primary" fill="solid" (click)="onSubmit()" [disabled]="staffForm.invalid">
+          <ion-icon slot="start" name="checkmark-outline"></ion-icon>
+          <span class="btn-text">Save Changes</span>
+        </ion-button>
+      </div>
+
+      <div class="right-actions">
+        <ion-button *ngIf="isEditing" class="delete-btn" color="danger" fill="outline" (click)="onDelete()">
+          <ion-icon slot="start" name="trash-outline"></ion-icon>
+          <span class="btn-text">Delete</span>
+        </ion-button>
+
+        <ion-button class="cancel-btn" type="button" fill="outline" (click)="closeModal()">Cancel</ion-button>
+      </div>
+    </div>
+  </ion-toolbar>
+</ion-footer>

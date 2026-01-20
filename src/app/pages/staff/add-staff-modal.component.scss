@@ -2,8 +2,87 @@ ion-content {
   --padding-start: 16px;
   --padding-end: 16px;
   --padding-top: 16px;
-  --padding-bottom: 16px;
+  --padding-bottom: 120px; /* ensure form fields are not hidden behind sticky footer */
+
+  /* also ensure native inner scroll area has enough bottom spacing */
+  .scroll-content {
+    padding-bottom: 120px !important;
+  }
 }
+
+ion-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  background: var(--ion-toolbar-background, #fff);
+  box-shadow: 0 -6px 18px rgba(0,0,0,0.08);
+}
+
+.footer-toolbar {
+  padding: 16px;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.left-action {
+  flex: 0 0 48%;
+}
+
+.right-actions {
+  flex: 0 0 48%;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  height: 48px;
+  width: 100%;
+  border-radius: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Ensure save button background and text are visible even when disabled */
+.save-btn {
+  --background: var(--ion-color-primary, #4f6ef7);
+  background: var(--ion-color-primary, #4f6ef7);
+  color: #fff;
+  --box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.save-btn[disabled], .save-btn.ion-disabled {
+  opacity: 0.65;
+  filter: none;
+  background: color-mix(in srgb, var(--ion-color-primary, #4f6ef7) 60%, #ffffff 40%);
+}
+
+.save-btn ion-icon, .save-btn .btn-text { color: inherit; }
+
+.delete-btn {
+  min-width: 120px;
+  height: 44px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.cancel-btn {
+  min-width: 120px;
+  height: 44px;
+  border-radius: 6px;
+  --border-color: var(--ion-color-primary-shade);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.btn-text { letter-spacing: 0.6px; }
 
 form {
   ion-item {

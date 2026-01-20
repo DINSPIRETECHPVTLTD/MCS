@@ -40,7 +40,8 @@ export class StaffPage implements OnInit, ViewWillEnter {
       firstName: [''],
       lastName: [''],
       email: [''],
-      phoneNumber: ['']
+      phoneNumber: [''],
+      role: ['']
     });
   }
 
@@ -137,6 +138,16 @@ export class StaffPage implements OnInit, ViewWillEnter {
             user.branchId?.toString() === this.selectedBranch!.id.toString()
           );
         }
+
+        // Apply role filter from the UI (if set)
+        const selectedRole = this.staffForm.get('role')?.value;
+        if (selectedRole) {
+          const roleLower = selectedRole.toString().toLowerCase();
+          filteredStaff = filteredStaff.filter(user => {
+            if (!user.role) return false;
+            return user.role.toString().toLowerCase() === roleLower;
+          });
+        }
         
         this.staff = filteredStaff;
         console.log('Staff loaded:', this.staff.length, 'for branch:', this.selectedBranch?.id);
@@ -169,9 +180,20 @@ export class StaffPage implements OnInit, ViewWillEnter {
       this.resetForm();
     } else {
       // Open modal
+      this.isEditing = false;
+      this.editingStaffId = null;
       this.showAddForm = true;
       await this.openAddStaffModal();
     }
+  }
+
+  editStaff(member: User): void {
+    if (!member || !member.id) return;
+    this.isEditing = true;
+    this.editingStaffId = member.id;
+    this.showAddForm = true;
+    // Open modal in edit mode
+    this.openAddStaffModal();
   }
 
   async openAddStaffModal(): Promise<void> {
