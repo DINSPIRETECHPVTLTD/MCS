@@ -1,0 +1,158 @@
+<ion-header [translucent]="false">
+  <ion-toolbar>
+    <ion-title>{{ isEditing ? 'Edit POC' : 'Add New POC' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <form [formGroup]="pocForm" (ngSubmit)="onSubmit()">
+    <!-- Name Fields -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('firstName')">
+      <ion-label position="floating">First Name <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="firstName"
+        placeholder="Enter first name"
+        type="text">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">Middle Name</ion-label>
+      <ion-input
+        formControlName="middleName"
+        placeholder="Enter middle name"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
+      <ion-label position="floating">Last Name <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="lastName"
+        placeholder="Enter last name"
+        type="text">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('lastName') }}</ion-note>
+    </ion-item>
+
+    <!-- Contact Fields -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('phoneNumber')">
+      <ion-label position="floating">Phone Number <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="phoneNumber"
+        placeholder="Enter 10-digit phone number"
+        type="tel"
+        maxlength="10">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
+    </ion-item>
+
+    <!-- Address Fields -->
+    <ion-item>
+      <ion-label position="floating">Address Line 1</ion-label>
+      <ion-input
+        formControlName="address1"
+        placeholder="Enter address line 1"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">Address Line 2</ion-label>
+      <ion-input
+        formControlName="address2"
+        placeholder="Enter address line 2"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">City</ion-label>
+      <ion-input
+        formControlName="city"
+        placeholder="Enter city"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">State</ion-label>
+      <ion-input
+        formControlName="state"
+        placeholder="Enter state"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
+      <ion-label position="floating">ZIP Code</ion-label>
+      <ion-input
+        formControlName="zipCode"
+        placeholder="Enter 6-digit ZIP code"
+        type="tel"
+        maxlength="6">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">Country</ion-label>
+      <ion-input
+        formControlName="country"
+        placeholder="Enter country"
+        type="text">
+      </ion-input>
+    </ion-item>
+
+    <!-- Center Dropdown -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('centerId')">
+      <ion-label position="floating">Center <span class="required">*</span></ion-label>
+      <ion-select
+        formControlName="centerId"
+        placeholder="Select a center"
+        interface="popover">
+        <ion-select-option *ngFor="let center of centers" [value]="center.id">
+          {{ center.code ? center.code + ' - ' : '' }}{{ center.name }}
+        </ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('centerId') }}</ion-note>
+    </ion-item>
+
+    <div *ngIf="isLoadingCenters" class="loading-message">
+      <ion-spinner name="crescent"></ion-spinner>
+      <ion-text color="medium">Loading centers...</ion-text>
+    </div>
+
+    <div *ngIf="!isLoadingCenters && centers.length === 0" class="error-message">
+      <ion-text color="danger">No centers available. Please add centers first.</ion-text>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="button-container">
+      <ion-button
+        expand="block"
+        type="submit"
+        color="primary"
+        [disabled]="pocForm.invalid || isLoadingCenters">
+        <ion-icon name="save-outline" slot="start"></ion-icon>
+        Save Changes
+      </ion-button>
+
+      <ion-button
+        expand="block"
+        fill="outline"
+        color="medium"
+        (click)="closeModal()"
+        type="button">
+        <ion-icon name="close-outline" slot="start"></ion-icon>
+        Cancel
+      </ion-button>
+    </div>
+  </form>
+</ion-content>
