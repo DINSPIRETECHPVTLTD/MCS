@@ -63,5 +63,19 @@ form {
     text-transform: none;
     margin-top: 24px;
   }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 16px;
+
+    ion-button {
+      height: 44px;
+      --padding-start: 16px;
+      --padding-end: 16px;
+    }
+  }
 }
 

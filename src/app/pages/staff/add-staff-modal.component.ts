@@ -39,7 +39,8 @@ export class AddStaffModalComponent implements OnInit {
       state: ['', [Validators.maxLength(100)]],
       pinCode: ['', [Validators.pattern(/^[0-9]{6}$/), Validators.maxLength(6)]],
       organizationId: [0],
-      branchId: [null]
+      branchId: [null],
+      role: ['staff', [Validators.required]]
     });
   }
 
@@ -171,7 +172,7 @@ export class AddStaffModalComponent implements OnInit {
       pinCode: this.staffForm.value.pinCode?.trim() || '',
       email: this.staffForm.value.email?.trim() || '',
       password: this.staffForm.value.password,
-
+      role: this.staffForm.value.role,
       organizationId: this.staffForm.value.organizationId,
       branchId: this.staffForm.value.branchId
     };

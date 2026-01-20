@@ -157,5 +157,20 @@
       </ion-input>
       <ion-note slot="error">{{ getFieldError('pinCode') }}</ion-note>
     </ion-item>
+
+    <ion-item [class.ion-invalid]="isFieldInvalid('role')">
+      <ion-label position="stacked">Role <span class="required">*</span></ion-label>
+      <ion-select formControlName="role" interface="popover">
+        <ion-select-option value="branchAdmin">Branch Admin</ion-select-option>
+        <ion-select-option value="staff">Staff</ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('role') }}</ion-note>
+    </ion-item>
+
+    <div class="form-actions">
+      <ion-button fill="clear" (click)="closeModal()">Cancel</ion-button>
+      <ion-button class="save-button" color="primary" type="submit">Save changes</ion-button>
+    </div>
+
   </form>    
 </ion-content>
