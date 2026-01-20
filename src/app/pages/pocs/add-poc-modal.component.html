@@ -17,7 +17,9 @@
       <ion-input
         formControlName="firstName"
         placeholder="Enter first name"
-        type="text">
+        (ionInput)="onFirstNameInput($event)"
+        type="text"
+        maxlength="100">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
     </ion-item>

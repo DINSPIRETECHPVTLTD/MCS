@@ -36,7 +36,7 @@ export class AddPocModalComponent implements OnInit {
     private toastController: ToastController
   ) {
     this.pocForm = this.formBuilder.group({
-      firstName: ['', [Validators.required]],
+      firstName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z ]+$/)]],
       middleName: [''],
       lastName: ['', [Validators.required]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
@@ -64,7 +64,15 @@ export class AddPocModalComponent implements OnInit {
       console.warn('No branch ID available for POC creation');
     }
   }
-
+  onFirstNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.pocForm.get('firstName');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
   async loadCenters(branchId: number): Promise<void> {
     this.isLoadingCenters = true;
     
@@ -173,6 +181,14 @@ export class AddPocModalComponent implements OnInit {
         }
         if (fieldName === 'zipCode') {
           return 'Please enter a valid 6-digit ZIP code';
+        }
+        if (fieldName === 'firstName') {
+          return 'First name must contain only letters';
+        }
+      }
+      if (field.errors['maxlength']) {
+        if (fieldName === 'firstName') {
+          return 'First name must be at most 100 characters';
         }
       }
     }
