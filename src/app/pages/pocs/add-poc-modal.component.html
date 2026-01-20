@@ -24,13 +24,16 @@
       <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
     </ion-item>
 
-    <ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('middleName')">
       <ion-label position="floating">Middle Name</ion-label>
       <ion-input
         formControlName="middleName"
         placeholder="Enter middle name"
-        type="text">
+        (ionInput)="onMiddleNameInput($event)"
+        type="text"
+        maxlength="100">
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('middleName') }}</ion-note>
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
@@ -38,7 +41,9 @@
       <ion-input
         formControlName="lastName"
         placeholder="Enter last name"
-        type="text">
+        (ionInput)="onLastNameInput($event)"
+        type="text"
+        maxlength="100">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('lastName') }}</ion-note>
     </ion-item>
@@ -141,7 +146,9 @@
         expand="block"
         type="submit"
         color="primary"
-        [disabled]="pocForm.invalid || isLoadingCenters">
+        fill="solid"
+        [disabled]="pocForm.invalid || isLoadingCenters"
+        style="--background: #3880ff; --color: #ffffff; --background-activated: #3171e0;">
         <ion-icon name="save-outline" slot="start"></ion-icon>
         Save Changes
       </ion-button>
