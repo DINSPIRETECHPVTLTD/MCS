@@ -40,16 +40,5 @@ export class UserService {
     }
     return this.http.post<User>(`${this.apiUrl}/Users`, user, { headers });
   }
-
-  deleteUser(id: number): Observable<any> {
-    const token = this.authService.getToken();
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
-    return this.http.delete(`${this.apiUrl}/Users/${id}`, { headers });
-  }
 }
 

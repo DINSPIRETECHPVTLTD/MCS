@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoadingController, ToastController, ViewWillEnter, ModalController, AlertController } from '@ionic/angular';
+import { LoadingController, ToastController, ViewWillEnter, ModalController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
@@ -39,7 +39,6 @@ export class UsersPage implements OnInit, ViewWillEnter {
     private loadingController: LoadingController,
     private toastController: ToastController,
     private modalController: ModalController,
-    private alertController: AlertController
   ) {
     this.userForm = this.formBuilder.group({
       firstName: ['', [Validators.required]],
