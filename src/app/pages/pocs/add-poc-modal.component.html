@@ -61,22 +61,26 @@
     </ion-item>
 
     <!-- Address Fields -->
-    <ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('address1')">
       <ion-label position="floating">Address Line 1</ion-label>
       <ion-input
         formControlName="address1"
         placeholder="Enter address line 1"
-        type="text">
+        type="text"
+        maxlength="100">
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('address1') }}</ion-note>
     </ion-item>
 
-    <ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('address2')">
       <ion-label position="floating">Address Line 2</ion-label>
       <ion-input
         formControlName="address2"
         placeholder="Enter address line 2"
-        type="text">
+        type="text"
+        maxlength="100">
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('address2') }}</ion-note>
     </ion-item>
 
     <ion-item>
@@ -84,7 +88,8 @@
       <ion-input
         formControlName="city"
         placeholder="Enter city"
-        type="text">
+        type="text"
+        maxlength="100">
       </ion-input>
     </ion-item>
 
@@ -93,17 +98,18 @@
       <ion-input
         formControlName="state"
         placeholder="Enter state"
-        type="text">
+        type="text"
+        maxlength="100">
       </ion-input>
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
-      <ion-label position="floating">ZIP Code</ion-label>
+      <ion-label position="floating">Zip Code</ion-label>
       <ion-input
         formControlName="zipCode"
-        placeholder="Enter 6-digit ZIP code"
-        type="tel"
-        maxlength="6">
+        placeholder="Enter zip/postal code"
+        type="text"
+        maxlength="10">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
     </ion-item>
@@ -112,8 +118,9 @@
       <ion-label position="floating">Country</ion-label>
       <ion-input
         formControlName="country"
-        placeholder="Enter country"
-        type="text">
+        placeholder="Country"
+        type="text"
+        readonly>
       </ion-input>
     </ion-item>
 

@@ -40,12 +40,12 @@ export class AddPocModalComponent implements OnInit {
       middleName: ['', [Validators.maxLength(100), Validators.pattern(/^[a-zA-Z ]+$/)]],
       lastName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z ]+$/)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-      address1: [''],
-      address2: [''],
+      address1: ['', [Validators.maxLength(100)]],
+      address2: ['', [Validators.maxLength(100)]],
       city: [''],
       state: [''],
-      zipCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
-      country: [''],
+      zipCode: [''],
+      country: ['India'],
       centerId: [null, [Validators.required]],
       branchId: [null]
     });
@@ -221,6 +221,9 @@ export class AddPocModalComponent implements OnInit {
         }
         if (fieldName === 'lastName') {
           return 'Last name must be at most 100 characters';
+        }
+        if (fieldName === 'address1' || fieldName === 'address2') {
+          return 'Address must be at most 100 characters';
         }
       }
     }
