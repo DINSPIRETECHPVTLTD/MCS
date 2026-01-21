@@ -13,7 +13,7 @@
   <form [formGroup]="pocForm" (ngSubmit)="onSubmit()">
     <!-- Name Fields -->
     <ion-item [class.ion-invalid]="isFieldInvalid('firstName')">
-      <ion-label position="floating">First Name <span class="required">*</span></ion-label>
+      <ion-label position="stacked">First Name <span class="required">*</span></ion-label>
       <ion-input
         formControlName="firstName"
         placeholder="Enter first name"
@@ -25,7 +25,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('middleName')">
-      <ion-label position="floating">Middle Name</ion-label>
+      <ion-label position="stacked">Middle Name</ion-label>
       <ion-input
         formControlName="middleName"
         placeholder="Enter middle name"
@@ -37,7 +37,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
-      <ion-label position="floating">Last Name <span class="required">*</span></ion-label>
+      <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
       <ion-input
         formControlName="lastName"
         placeholder="Enter last name"
@@ -50,7 +50,7 @@
 
     <!-- Contact Fields -->
     <ion-item [class.ion-invalid]="isFieldInvalid('phoneNumber')">
-      <ion-label position="floating">Phone Number <span class="required">*</span></ion-label>
+      <ion-label position="stacked">Phone Number <span class="required">*</span></ion-label>
       <ion-input
         formControlName="phoneNumber"
         placeholder="Enter 10-digit phone number"
@@ -62,7 +62,7 @@
 
     <!-- Address Fields -->
     <ion-item [class.ion-invalid]="isFieldInvalid('address1')">
-      <ion-label position="floating">Address Line 1</ion-label>
+      <ion-label position="stacked">Address Line 1</ion-label>
       <ion-input
         formControlName="address1"
         placeholder="Enter address line 1"
@@ -73,7 +73,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('address2')">
-      <ion-label position="floating">Address Line 2</ion-label>
+      <ion-label position="stacked">Address Line 2</ion-label>
       <ion-input
         formControlName="address2"
         placeholder="Enter address line 2"
@@ -84,7 +84,7 @@
     </ion-item>
 
     <ion-item>
-      <ion-label position="floating">City</ion-label>
+      <ion-label position="stacked">City</ion-label>
       <ion-input
         formControlName="city"
         placeholder="Enter city"
@@ -94,7 +94,7 @@
     </ion-item>
 
     <ion-item>
-      <ion-label position="floating">State</ion-label>
+      <ion-label position="stacked">State</ion-label>
       <ion-input
         formControlName="state"
         placeholder="Enter state"
@@ -104,7 +104,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
-      <ion-label position="floating">Zip Code</ion-label>
+      <ion-label position="stacked">Zip Code</ion-label>
       <ion-input
         formControlName="zipCode"
         placeholder="Enter zip/postal code"
@@ -115,7 +115,7 @@
     </ion-item>
 
     <ion-item>
-      <ion-label position="floating">Country</ion-label>
+      <ion-label position="stacked">Country</ion-label>
       <ion-input
         formControlName="country"
         placeholder="Country"
@@ -126,7 +126,7 @@
 
     <!-- Center Dropdown -->
     <ion-item [class.ion-invalid]="isFieldInvalid('centerId')">
-      <ion-label position="floating">Center <span class="required">*</span></ion-label>
+      <ion-label position="stacked">Center <span class="required">*</span></ion-label>
       <ion-select
         formControlName="centerId"
         placeholder="Select a center"
