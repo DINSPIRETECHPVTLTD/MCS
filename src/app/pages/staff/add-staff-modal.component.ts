@@ -208,6 +208,7 @@ export class AddStaffModalComponent implements OnInit {
       email: this.staffForm.value.email?.trim() || '',
       password: this.staffForm.value.password,
       role: this.staffForm.value.role,
+      level:'Branch',
       organizationId: this.staffForm.value.organizationId,
       branchId: this.staffForm.value.branchId
     };
