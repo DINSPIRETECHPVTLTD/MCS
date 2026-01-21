@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoadingController, ToastController, ViewWillEnter, ModalController } from '@ionic/angular';
+import { LoadingController, ToastController, ViewWillEnter, ModalController, AlertController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
@@ -38,7 +38,8 @@ export class UsersPage implements OnInit, ViewWillEnter {
     private router: Router,
     private loadingController: LoadingController,
     private toastController: ToastController,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private alertController: AlertController
   ) {
     this.userForm = this.formBuilder.group({
       firstName: ['', [Validators.required]],
@@ -70,10 +71,22 @@ export class UsersPage implements OnInit, ViewWillEnter {
     this.setOrganizationId();
     // set up grid columns
     this.columnDefs = [
-
       { headerName: 'First Name', field: 'firstName', flex: 1 },
       { headerName: 'Last Name', field: 'lastName', flex: 1 },
       { headerName: 'Email', field: 'email', flex: 1.5 },
+      { headerName: 'Actions',field: 'actions', flex: 0.8,
+        sortable: false,
+        filter: false,
+        resizable: false,
+        cellRenderer: (params: any) => {
+          return `
+            <div class="action-buttons">
+              <button class="ag-action ag-edit" title="Edit">Edit</button>
+              <button class="ag-action ag-delete" title="Delete">Delete</button>
+            </div>
+          `;
+        }
+      }
     ];
   }
 
