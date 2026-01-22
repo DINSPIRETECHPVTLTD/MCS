@@ -11,27 +11,6 @@
 
 <ion-content class="ion-padding">
   <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
-    <!-- Email and Password Fields (at top) -->
-    <ion-item [class.ion-invalid]="isFieldInvalid('email')">
-      <ion-label position="stacked">Email <span class="required">*</span></ion-label>
-      <ion-input
-        formControlName="email"
-        placeholder="Enter email address"
-        type="email">
-      </ion-input>
-      <ion-note slot="error">{{ getFieldError('email') }}</ion-note>
-    </ion-item>
-
-    <ion-item [class.ion-invalid]="isFieldInvalid('password')">
-      <ion-label position="stacked">Password <span class="required">*</span></ion-label>
-      <ion-input
-        formControlName="password"
-        placeholder="Enter password"
-        type="password">
-      </ion-input>
-      <ion-note slot="error">{{ getFieldError('password') }}</ion-note>
-    </ion-item>
-
     <!-- Name Fields -->
     <ion-item [class.ion-invalid]="isFieldInvalid('firstName')">
       <ion-label position="stacked">First Name <span class="required">*</span></ion-label>
@@ -72,6 +51,27 @@
         maxlength="10">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
+    </ion-item>
+
+    <!-- Email and Password Fields -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('email')">
+      <ion-label position="stacked">Email <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="email"
+        placeholder="Enter email address"
+        type="email">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('email') }}</ion-note>
+    </ion-item>
+
+    <ion-item [class.ion-invalid]="isFieldInvalid('password')">
+      <ion-label position="stacked">Password <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="password"
+        placeholder="Enter password"
+        type="password">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('password') }}</ion-note>
     </ion-item>
 
     <!-- Address Fields -->
@@ -122,19 +122,18 @@
       <ion-note slot="error">{{ getFieldError('pinCode') }}</ion-note>
     </ion-item>
 
-    <!-- Level and Role (Read-only) -->
-    <ion-item>
+    <!-- Level and Role -->
+    <ion-item style="display: none;">
       <ion-label position="stacked">Level <span class="required">*</span></ion-label>
       <ion-input
         formControlName="level"
         placeholder="Enter user level"
-        type="text"
-        readonly>
+        type="text">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('level') }}</ion-note>
     </ion-item>
 
-    <ion-item>
+    <ion-item style="display: none;">
       <ion-label position="stacked">Role <span class="required">*</span></ion-label>
       <ion-input
         formControlName="role"
