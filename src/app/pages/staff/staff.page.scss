@@ -1,5 +1,7 @@
 // Staff Page Specific Styles
 .staff-list-container {
+  padding: 16px;
+  
   h2 {
     margin: 0 0 16px 0;
     font-size: 24px;
@@ -111,7 +113,7 @@
   margin-top: 12px;
 }
 
-.staff-grid {
+.staff-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
@@ -146,3 +148,87 @@
 
 .card-footer { display:flex; justify-content:flex-end; }
 
+/* AG Grid styles */
+.ag-grid-wrapper {
+  width: 100%;
+  
+  ag-grid-angular {
+    display: block;
+    width: 100%;
+  }
+}
+
+/* Actions column buttons inside ag-grid */
+.ag-theme-alpine .action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.ag-theme-alpine .ag-btn {
+  appearance: none;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.ag-theme-alpine .ag-edit {
+  background: var(--ion-color-primary);
+  color: white;
+}
+
+.ag-theme-alpine .ag-edit:hover {
+  background: var(--ion-color-primary-shade);
+  transform: translateY(-1px);
+}
+
+.ag-theme-alpine .ag-delete {
+  background: var(--ion-color-danger);
+  color: white;
+}
+
+.ag-theme-alpine .ag-delete:hover {
+  background: var(--ion-color-danger-shade);
+  transform: translateY(-1px);
+}
+
+.ag-theme-alpine .ag-save {
+  background: var(--ion-color-success);
+  color: white;
+}
+
+.ag-theme-alpine .ag-save:hover {
+  background: var(--ion-color-success-shade);
+  transform: translateY(-1px);
+}
+
+.ag-theme-alpine .ag-cancel {
+  background: var(--ion-color-medium);
+  color: white;
+}
+
+.ag-theme-alpine .ag-cancel:hover {
+  background: var(--ion-color-medium-shade);
+  transform: translateY(-1px);
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .ag-grid-wrapper ag-grid-angular {
+    height: calc(100vh - 300px);
+    min-height: 300px;
+  }
+}
