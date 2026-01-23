@@ -1,0 +1,52 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Add Center</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+<ion-content class="ion-padding">
+  <form #centerForm="ngForm" (ngSubmit)="saveCenter(centerForm)">
+    <ion-item>
+      <ion-label position="stacked">Branch</ion-label>
+      <ion-input [value]="branch?.name" readonly></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label position="stacked">Center Name</ion-label>
+      <ion-input [(ngModel)]="centerName" name="centerName" placeholder="Enter center name" required [ngModelOptions]="{standalone: true}"></ion-input>
+    </ion-item>
+    <div *ngIf="formSubmitted && !centerName" style="color: red; margin-block-end: 8px;">Center Name is required.</div>
+    <ion-item>
+      <ion-label position="stacked">Address</ion-label>
+      <ion-input [(ngModel)]="address" name="address" placeholder="Enter address" required [ngModelOptions]="{standalone: true}"></ion-input>
+    </ion-item>
+    <div *ngIf="formSubmitted && !address" style="color: red; margin-block-end: 8px;">Address is required.</div>
+    <ion-item>
+      <ion-label position="stacked">City</ion-label>
+      <ion-input [(ngModel)]="city" name="city" placeholder="Enter city" required [ngModelOptions]="{standalone: true}"></ion-input>
+    </ion-item>
+    <div *ngIf="formSubmitted && !city" style="color: red; margin-block-end: 8px;">City is required.</div>
+    <ion-item>
+      <ion-label position="stacked">Pin Code</ion-label>
+      <ion-input [(ngModel)]="pinCode" name="pinCode" placeholder="Enter pin code" required [ngModelOptions]="{standalone: true}"></ion-input>
+    </ion-item>
+    <div *ngIf="formSubmitted && !pinCode" style="color: red; margin-block-end: 8px;">Pin Code is required.</div>
+    <ion-grid>
+      <ion-row>
+        <ion-col>
+          <ion-button expand="block" type="submit" [disabled]="isSaving">{{ isSaving ? 'Saving...' : 'Save ' }}</ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-button expand="block" type="button" (click)="clearForm()">Clear</ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-button expand="block" type="button" (click)="closeModal()">Close</ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+    <div style="margin-block-end: 32px;"></div>
+  </form>
+</ion-content>

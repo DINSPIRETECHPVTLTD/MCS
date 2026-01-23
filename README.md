@@ -74,7 +74,7 @@ ionic cap open ios
 ## API Configuration
 
 The app is configured to connect to the API at:
-- **Base URL**: `https://localhost:7091/api`
+- **Base URL**: `https://localhost:54036/api`
 - **Login Endpoint**: `POST /api/Auth/login`
 
 To change the API URL, edit `src/environments/environment.ts` and `src/environments/environment.prod.ts`.

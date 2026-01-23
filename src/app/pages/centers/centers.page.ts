@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ViewWillEnter } from '@ionic/angular';
+import { ViewWillEnter, ModalController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { BranchService, Branch } from '../../services/branch.service';
+import { AddCenterModalComponent } from './add-center-modal/add-center-modal.component';
 
 @Component({
   selector: 'app-centers',
@@ -12,10 +13,12 @@ import { BranchService, Branch } from '../../services/branch.service';
 export class CentersPage implements OnInit, ViewWillEnter {
   activeMenu: string = 'Centers';
   centers: any[] = [];
+  selectedBranch: Branch | null = null;
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private modalController: ModalController
   ) { }
 
   ngOnInit(): void {
@@ -39,7 +42,19 @@ export class CentersPage implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
+    this.selectedBranch = branch;
     console.log('Branch changed to:', branch);
   }
+
+  async openAddCenterModal() {
+    const modal = await this.modalController.create({
+      component: AddCenterModalComponent,
+      componentProps: {
+        branch: this.selectedBranch
+      }
+    });
+    await modal.present();
+  }
 }
+
 

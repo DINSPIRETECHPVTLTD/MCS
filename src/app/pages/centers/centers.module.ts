@@ -5,6 +5,7 @@ import { IonicModule } from '@ionic/angular';
 import { CentersPageRoutingModule } from './centers-routing.module';
 import { CentersPage } from './centers.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
+import { AddCenterModalModule } from './add-center-modal/add-center-modal.module';
 
 @NgModule({
   imports: [
@@ -12,7 +13,8 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     FormsModule,
     IonicModule,
     CentersPageRoutingModule,
-    HeaderMenuComponent
+    HeaderMenuComponent,
+    AddCenterModalModule
   ],
   declarations: [CentersPage]
 })

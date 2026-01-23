@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Ionic Angular: Serve & Debug",
+			"type": "shell",
+			"command": "ionic serve",
+			"args": [],
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
