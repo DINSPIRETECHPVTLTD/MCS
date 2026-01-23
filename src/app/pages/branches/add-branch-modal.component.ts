@@ -27,13 +27,13 @@ export class AddBranchModalComponent implements OnInit {
   ) {
     this.branchForm = this.formBuilder.group({
       name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
-      address1: ['', [Validators.maxLength(100)]],
-      address2: ['', [Validators.maxLength(100)]],
-      city: [''],
-      state: [''],
-      country: ['India'],
-      zipCode: [''],
-      phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/)]],
+      address1: ['', [Validators.required, Validators.maxLength(100)]],
+      address2: ['', [Validators.required, Validators.maxLength(100)]],
+      city: ['', [Validators.required, Validators.maxLength(100)]],
+      state: ['', [Validators.required, Validators.maxLength(100)]],
+      country: ['India', [Validators.required]],
+      zipCode: ['', [Validators.required, Validators.maxLength(10)]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       organizationId: [0]
     });
   }
