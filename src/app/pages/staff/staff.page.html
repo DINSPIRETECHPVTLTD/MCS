@@ -4,7 +4,7 @@
   (branchChange)="onBranchChange($event)">
 </app-header-menu>
 
-<ion-content [fullscreen]="true" class="ion-padding">
+<ion-content [fullscreen]="true">
   <!-- Staff List -->
   <div class="staff-list-container">
     <form [formGroup]="staffForm" class="staff-filter" style="display:flex; gap:12px; align-items:center; margin-bottom:16px;">
@@ -33,10 +33,10 @@
         Click "Add Staff" to create a new staff member
       </p>
     </div>
-    <div *ngIf="staff.length > 0" class="staff-grid">
+    <div *ngIf="staff.length > 0" class="ag-grid-wrapper">
       <ag-grid-angular
         class="ag-theme-alpine"
-        style="width: 100%; height: 60vh;"
+        style="width: 100%; height: 50vh;"
         [rowData]="rowData"
         [columnDefs]="columnDefs"
         [gridOptions]="gridOptions"
