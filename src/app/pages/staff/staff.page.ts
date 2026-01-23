@@ -249,7 +249,7 @@ export class StaffPage implements OnInit, ViewWillEnter {
         this.displayedStaff = [...this.staff];
         this.rowData = [...this.staff];
         if (this.gridApi) {
-          (this.gridApi as any).setRowData(this.rowData);
+          this.gridApi.setGridOption('rowData', this.rowData);
           setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
         }
         console.log('Staff loaded:', this.staff.length, 'for branch:', this.selectedBranch?.id);
@@ -345,7 +345,7 @@ export class StaffPage implements OnInit, ViewWillEnter {
   onGridReady(params: GridReadyEvent) {
     this.gridApi = params.api;
     if (this.rowData && this.rowData.length > 0) {
-      (this.gridApi as any).setRowData(this.rowData);
+      this.gridApi.setGridOption('rowData', this.rowData);
     }
     setTimeout(() => {
       this.gridApi?.sizeColumnsToFit();
