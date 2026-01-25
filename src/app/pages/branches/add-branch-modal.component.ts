@@ -4,6 +4,9 @@ import { ModalController, LoadingController, ToastController } from '@ionic/angu
 import { BranchService } from '../../services/branch.service';
 import { CreateBranchRequest } from '../../models/branch.models';
 import { UserContextService } from '../../services/user-context.service';
+import { Subject, takeUntil } from 'rxjs';
+import { Branch } from '../../models/branch.models';
+
 
 @Component({
   selector: 'app-add-branch-modal',
@@ -13,7 +16,8 @@ import { UserContextService } from '../../services/user-context.service';
 export class AddBranchModalComponent implements OnInit {
   @Input() isEditing: boolean = false;
   @Input() editingBranchId: number | null = null;
-  
+  branches: { id: number, name: string }[] = [];
+
   branchForm: FormGroup;
   submitted: boolean = false;
 
@@ -24,28 +28,37 @@ export class AddBranchModalComponent implements OnInit {
     private userContext: UserContextService,
     private loadingController: LoadingController,
     private toastController: ToastController
-  ) {
+  )
+  
+  {
     this.branchForm = this.formBuilder.group({
-      name: ['', [Validators.required]],
-      code: [''],
-      address: [''],
-      city: [''],
-      state: [''],
-      phone: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-      email: ['', [Validators.email]],
-      organizationId: [0]
+  name: ['', [Validators.required]],
+  code: [''],
+  address: [''],
+  city: [''],
+  state: [''],
+  phone: ['', [Validators.pattern(/^[0-9]{10}$/)]],
+  email: ['', [Validators.email]],
+  organizationId: [0],
+  branchId: [null, [Validators.required]] // <-- Add this line for branch dropdown
     });
   }
 
-  ngOnInit(): void {
-    // Set organization ID
-    const organizationId = this.userContext.organizationId;
-    if (organizationId) {
-      this.branchForm.patchValue({
-        organizationId: organizationId
-      });
-    }
+ngOnInit(): void {
+  const organizationId = this.userContext.organizationId;
+  if (organizationId) {
+    this.branchForm.patchValue({ organizationId });
   }
+
+  // Load branches for dropdown
+  this.branchService.getBranches().subscribe({
+    next: (data) => {
+      this.branches = data; // <-- branch array with only id & name
+      console.log('Branches loaded:', this.branches); // Step 1 debug
+    },
+    error: (err) => console.error('Failed to load branches', err)
+  });
+}
 
   async onSubmit(): Promise<void> {
     this.submitted = true;
@@ -145,5 +158,7 @@ export class AddBranchModalComponent implements OnInit {
     const field = this.branchForm.get(fieldName);
     return !!(field && field.invalid && (field.touched || this.submitted));
   }
+
+
 }
 
