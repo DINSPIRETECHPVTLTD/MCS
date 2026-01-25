@@ -31,14 +31,14 @@ export class AddUserModalComponent implements OnInit {
       firstName: ['', [Validators.required]],
       middleName: [''],
       lastName: ['', [Validators.required]],
-      phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/)]],
+      phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/), Validators.required]],
       address1: [''],
       address2: [''],
       city: [''],
       state: [''],
       pinCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
-      level: ['', [Validators.required]],
-      role: ['', [Validators.required]],
+      level: ['Org', [Validators.required]],
+      role: ['Owner', [Validators.required]],
       organizationId: [0]
     });
   }

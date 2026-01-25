@@ -66,6 +66,31 @@
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
+            },
+            "dev": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.dev.ts"
+                }
+              ],
+              "index": "src/index.dev.html",
+              "optimization": false,
+              "sourceMap": true,
+              "buildOptimizer": false
+            },
+            "test": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.test.ts"
+                }
+              ],
+              "index": "src/index.test.html",
+              "optimization": true,
+              "sourceMap": false,
+              "buildOptimizer": true,
+              "outputHashing": "all"
             }
           },
           "defaultConfiguration": "production"
@@ -78,6 +103,12 @@
             },
             "development": {
               "buildTarget": "app:build:development"
+            },
+            "dev": {
+              "buildTarget": "app:build:dev"
+            },
+            "test": {
+              "buildTarget": "app:build:test"
             }
           },
           "defaultConfiguration": "development"
