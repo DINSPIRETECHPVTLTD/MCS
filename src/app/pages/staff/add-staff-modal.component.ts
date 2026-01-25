@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ModalController, LoadingController, ToastController } from '@ionic/angular';
+import { ModalController, LoadingController, ToastController, AlertController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { CreateUserRequest } from '../../models/user.models';
 import { UserContextService } from '../../services/user-context.service';
@@ -17,7 +17,6 @@ export class AddStaffModalComponent implements OnInit {
   
   staffForm: FormGroup;
   submitted: boolean = false;
-  roleOptions: string[] = ['BranchAdmin', 'Staff'];
 
   constructor(
     private formBuilder: FormBuilder,
@@ -26,24 +25,103 @@ export class AddStaffModalComponent implements OnInit {
     private userContext: UserContextService,
     private loadingController: LoadingController,
     private toastController: ToastController
+    ,
+    private alertController: AlertController
   ) {
     this.staffForm = this.formBuilder.group({
-      email: ['', [Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      firstName: ['', [Validators.required]],
-      middleName: [''],
-      lastName: ['', [Validators.required]],
+      email: ['', [Validators.email, Validators.maxLength(100)]],
+      password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(12)]],
+      firstName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
+      middleName: ['', [Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
+      lastName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-      address1: [''],
-      address2: [''],
-      city: [''],
-      state: [''],
-      pinCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
-      level: ['branch'], // Fixed to 'branch'
-      role: ['Staff', [Validators.required]], // Default to 'Staff', options: 'BranchAdmin' or 'Staff'
+      address1: ['', [Validators.maxLength(100)]],
+      address2: ['', [Validators.maxLength(100)]],
+      city: ['', [Validators.maxLength(100)]],
+      state: ['', [Validators.maxLength(100)]],
+      pinCode: ['', [Validators.pattern(/^[0-9]{6}$/), Validators.maxLength(6)]],
       organizationId: [0],
-      branchId: [null]
+      branchId: [null],
+      role: ['Staff', [Validators.required]]
+      
     });
+  }
+
+  onEmailInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const truncated = (raw || '').slice(0, 100);
+    const control = this.staffForm.get('email');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onAddressInput(event: any, fieldName: string): void {
+    const raw = event?.detail?.value ?? '';
+    const truncated = (raw || '').slice(0, 100);
+    const control = this.staffForm.get(fieldName);
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onFirstNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.staffForm.get('firstName');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onMiddleNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.staffForm.get('middleName');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onLastNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.staffForm.get('lastName');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onPhoneInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^0-9]/g, '');
+    const truncated = sanitized.slice(0, 10);
+    const control = this.staffForm.get('phoneNumber');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onPasswordInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const truncated = (raw || '').slice(0, 12);
+    const control = this.staffForm.get('password');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
+
+  onPinInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^0-9]/g, '');
+    const truncated = sanitized.slice(0, 6);
+    const control = this.staffForm.get('pinCode');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
   }
 
   ngOnInit(): void {
@@ -63,6 +141,38 @@ export class AddStaffModalComponent implements OnInit {
       });
     } else {
       console.warn('No branch ID available for staff creation');
+    }
+
+    // If editing, make password optional and load existing user data
+    if (this.isEditing && this.editingStaffId) {
+      const pwdControl = this.staffForm.get('password');
+      if (pwdControl) {
+        pwdControl.clearValidators();
+        pwdControl.updateValueAndValidity();
+      }
+
+      this.userService.getUser(this.editingStaffId).subscribe({
+        next: (user) => {
+          this.staffForm.patchValue({
+            email: user.email || '',
+            firstName: user.firstName || '',
+            middleName: user.middleName || '',
+            lastName: user.lastName || '',
+            phoneNumber: user.phoneNumber || '',
+            address1: user.address1 || '',
+            address2: user.address2 || '',
+            city: user.city || '',
+            state: user.state || '',
+            pinCode: user.pinCode || '',
+            role: user.role ? (user.role.toLowerCase().includes('branch') ? 'BranchAdmin' : 'Staff') : 'Staff',
+            organizationId: user.organizationId || this.staffForm.value.organizationId,
+            branchId: user.branchId || this.staffForm.value.branchId
+          });
+        },
+        error: (err) => {
+          console.error('Failed to load user for editing', err);
+        }
+      });
     }
   }
 
@@ -97,29 +207,78 @@ export class AddStaffModalComponent implements OnInit {
       pinCode: this.staffForm.value.pinCode?.trim() || '',
       email: this.staffForm.value.email?.trim() || '',
       password: this.staffForm.value.password,
-      level: 'branch', // Fixed to 'branch'
-      role: this.staffForm.value.role, // 'BranchAdmin' or 'Staff'
+      role: this.staffForm.value.role,
+      level:'Branch',
       organizationId: this.staffForm.value.organizationId,
       branchId: this.staffForm.value.branchId
     };
 
-    this.userService.createUser(staffData).subscribe({
-      next: async (staff) => {
-        await loading.dismiss();
-        this.showToast(
-          this.isEditing ? 'Staff updated successfully!' : 'Staff created successfully!', 
-          'success'
-        );
-        // Close modal and return success
-        await this.modalController.dismiss({ success: true, staff });
-      },
-      error: async (error) => {
-        await loading.dismiss();
-        const errorMessage = error.error?.message || error.message || 'Failed to create staff. Please try again.';
-        this.showToast(errorMessage, 'danger');
-        console.error('Error creating staff:', error);
+    if (this.isEditing && this.editingStaffId) {
+      // If password is empty, don't send it in update payload
+      if (!this.staffForm.value.password) {
+        delete staffData.password;
       }
+      this.userService.updateUser(this.editingStaffId, staffData).subscribe({
+        next: async (staff) => {
+          await loading.dismiss();
+          this.showToast('Staff updated successfully!', 'success');
+          await this.modalController.dismiss({ success: true, staff });
+        },
+        error: async (error) => {
+          await loading.dismiss();
+          const errorMessage = error.error?.message || error.message || 'Failed to update staff. Please try again.';
+          this.showToast(errorMessage, 'danger');
+          console.error('Error updating staff:', error);
+        }
+      });
+    } else {
+      this.userService.createUser(staffData).subscribe({
+        next: async (staff) => {
+          await loading.dismiss();
+          this.showToast('Staff created successfully!', 'success');
+          await this.modalController.dismiss({ success: true, staff });
+        },
+        error: async (error) => {
+          await loading.dismiss();
+          const errorMessage = error.error?.message || error.message || 'Failed to create staff. Please try again.';
+          this.showToast(errorMessage, 'danger');
+          console.error('Error creating staff:', error);
+        }
+      });
+    }
+  }
+
+  async onDelete(): Promise<void> {
+    if (!this.isEditing || !this.editingStaffId) return;
+
+    const alert = await this.alertController.create({
+      header: 'Confirm delete',
+      message: 'Are you sure you want to delete this staff member?',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            const loading = await this.loadingController.create({ message: 'Deleting staff...', spinner: 'crescent' });
+            await loading.present();
+            this.userService.deleteUser(this.editingStaffId!).subscribe({
+              next: async () => {
+                await loading.dismiss();
+                this.showToast('Staff deleted', 'success');
+                await this.modalController.dismiss({ success: true, deleted: true });
+              },
+              error: async (err) => {
+                await loading.dismiss();
+                this.showToast(err.error?.message || 'Failed to delete staff', 'danger');
+                console.error('Delete staff error', err);
+              }
+            });
+          }
+        }
+      ]
     });
+    await alert.present();
   }
 
   async closeModal(): Promise<void> {
@@ -144,6 +303,12 @@ export class AddStaffModalComponent implements OnInit {
       }
       if (field.errors?.['email']) {
         return 'Please enter a valid email address';
+      }
+      if (field.errors?.['maxlength']) {
+        if (fieldName === 'email') {
+          return 'Email must be at most 100 characters';
+        }
+        return `${this.getFieldLabel(fieldName)} must be at most ${field.errors['maxlength'].requiredLength} characters`;
       }
       if (field.errors?.['pattern']) {
         if (fieldName === 'phoneNumber') {

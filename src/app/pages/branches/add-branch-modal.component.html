@@ -28,77 +28,90 @@
     
 
     <!-- Address -->
-    <ion-item>
-      <ion-label position="stacked">Address 1</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('address1')">
+      <ion-label position="stacked">Address 1 <span class="required">*</span></ion-label>
       <ion-input
         formControlName="address1"
         placeholder="Enter address line 1"
         type="text"
-        maxlength="100">
+        maxlength="100"
+        required>
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('address1') }}</ion-note>
     </ion-item>
 
-    <ion-item>
-      <ion-label position="stacked">Address 2</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('address2')">
+      <ion-label position="stacked">Address 2 <span class="required">*</span></ion-label>
       <ion-input
         formControlName="address2"
         placeholder="Enter address line 2"
         type="text"
-        maxlength="100">
+        maxlength="100"
+        required>
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('address2') }}</ion-note>
     </ion-item>
 
     <!-- City -->
-    <ion-item>
-      <ion-label position="stacked">City</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('city')">
+      <ion-label position="stacked">City <span class="required">*</span></ion-label>
       <ion-input
         formControlName="city"
         placeholder="Enter city"
         type="text"
-         maxlength="100">
+         maxlength="100"
+         required>
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('city') }}</ion-note>
     </ion-item>
 
     <!-- State -->
-    <ion-item>
-      <ion-label position="stacked">State</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('state')">
+      <ion-label position="stacked">State <span class="required">*</span></ion-label>
       <ion-input
         formControlName="state"
         placeholder="Enter state"
         type="text"
-         maxlength="100">
+         maxlength="100"
+         required>
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('state') }}</ion-note>
     </ion-item>
 
      <!-- Zip Code -->
-    <ion-item>
-      <ion-label position="stacked">Zip Code</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
+      <ion-label position="stacked">Zip Code <span class="required">*</span></ion-label>
       <ion-input
         formControlName="zipCode"
         placeholder="Enter zip/postal code"
         type="text"
-        maxlength="10">
+        maxlength="10"
+        required>
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
     </ion-item>
 
-    <ion-item>
-      <ion-label position="stacked">Country</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('country')">
+      <ion-label position="stacked">Country <span class="required">*</span></ion-label>
       <ion-input
         formControlName="country"
         placeholder="Country"
         type="text"
-        readonly>
+        readonly
+        required>
       </ion-input>
+      <ion-note slot="error">{{ getFieldError('country') }}</ion-note>
     </ion-item>
 
     <!-- Phone -->
-    <ion-item [class.ion-invalid]="isFieldInvalid('phone')">
-      <ion-label position="stacked">Phone Number</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('phoneNumber')">
+      <ion-label position="stacked">Phone Number <span class="required">*</span></ion-label>
       <ion-input
         formControlName="phoneNumber"
         placeholder="Enter 10-digit phone number"
         type="tel"
-        maxlength="10">
+        maxlength="10"
+        required>
       </ion-input>
       <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
     </ion-item>

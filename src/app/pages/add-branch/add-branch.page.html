@@ -31,71 +31,111 @@
             <div *ngIf="branchForm.get('name')?.errors?.['pattern']">Branch name must be alphanumeric</div>
           </div>
 
-          <ion-item>
+          <ion-item [class.ion-invalid]="branchForm.get('address1')?.invalid && branchForm.get('address1')?.touched">
             <ion-input
               label="Address 1"
               labelPlacement="stacked"
               formControlName="address1"
               placeholder="Enter address line 1"
-              maxlength="100">
+              maxlength="100"
+              required>
             </ion-input>
           </ion-item>
+          <div *ngIf="branchForm.get('address1')?.invalid && branchForm.get('address1')?.touched" class="error-message">
+            <div *ngIf="branchForm.get('address1')?.errors?.['required']">Address line 1 is required</div>
+            <div *ngIf="branchForm.get('address1')?.errors?.['maxlength']">Address line 1 must be at most 100 characters</div>
+          </div>
 
-          <ion-item>
+          <ion-item [class.ion-invalid]="branchForm.get('address2')?.invalid && branchForm.get('address2')?.touched">
             <ion-input
               label="Address 2"
               labelPlacement="stacked"
               formControlName="address2"
-              placeholder="Enter address line 2 (optional)"
-              maxlength="100">
+              placeholder="Enter address line 2"
+              maxlength="100"
+              required>
             </ion-input>
           </ion-item>
+          <div *ngIf="branchForm.get('address2')?.invalid && branchForm.get('address2')?.touched" class="error-message">
+            <div *ngIf="branchForm.get('address2')?.errors?.['required']">Address line 2 is required</div>
+            <div *ngIf="branchForm.get('address2')?.errors?.['maxlength']">Address line 2 must be at most 100 characters</div>
+          </div>
 
-          <ion-item>
+          <ion-item [class.ion-invalid]="branchForm.get('city')?.invalid && branchForm.get('city')?.touched">
+            <ion-label position="stacked">City <span class="required">*</span></ion-label>
             <ion-input
               label="City"
               labelPlacement="stacked"
               formControlName="city"
-              placeholder="Enter city">
+              placeholder="Enter city"
+              maxlength="100"
+              required>
             </ion-input>
+            <ion-note slot="error">
+              <div *ngIf="branchForm.get('city')?.errors?.['required']">City is required</div>
+              <div *ngIf="branchForm.get('city')?.errors?.['maxlength']">City must be at most 100 characters</div>
+            </ion-note>
           </ion-item>
 
-          <ion-item>
+          <ion-item [class.ion-invalid]="branchForm.get('state')?.invalid && branchForm.get('state')?.touched">
+            <ion-label position="stacked">State <span class="required">*</span></ion-label>
             <ion-input
               label="State"
               labelPlacement="stacked"
               formControlName="state"
-              placeholder="Enter state">
+              placeholder="Enter state"
+              maxlength="100"
+              required>
             </ion-input>
+            <ion-note slot="error">
+              <div *ngIf="branchForm.get('state')?.errors?.['required']">State is required</div>
+              <div *ngIf="branchForm.get('state')?.errors?.['maxlength']">State must be at most 100 characters</div>
+            </ion-note>
           </ion-item>
 
-          <ion-item>
+          <ion-item [class.ion-invalid]="branchForm.get('country')?.invalid && branchForm.get('country')?.touched">
+            <ion-label position="stacked">Country <span class="required">*</span></ion-label>
             <ion-input
               label="Country"
               labelPlacement="stacked"
               formControlName="country"
               placeholder="Country"
-              readonly>
+              readonly
+              required>
             </ion-input>
+            <ion-note slot="error">
+              <div *ngIf="branchForm.get('country')?.errors?.['required']">Country is required</div>
+            </ion-note>
           </ion-item>
 
-          <ion-item>
+          <ion-item [class.ion-invalid]="branchForm.get('phoneNumber')?.invalid && branchForm.get('phoneNumber')?.touched">
+            <ion-label position="stacked">Phone <span class="required">*</span></ion-label>
             <ion-input
               label="Phone"
               labelPlacement="stacked"
               type="tel"
               formControlName="phoneNumber"
-              placeholder="Enter phone number">
+              placeholder="Enter phone number"
+              maxlength="10"
+              required>
             </ion-input>
+            <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
           </ion-item>
 
-          <ion-item>
+          <ion-item [class.ion-invalid]="branchForm.get('zipCode')?.invalid && branchForm.get('zipCode')?.touched">
+            <ion-label position="stacked">Zip Code <span class="required">*</span></ion-label>
             <ion-input
               label="Zip Code"
               labelPlacement="stacked"
               formControlName="zipCode"
-              placeholder="Enter zip/postal code">
+              placeholder="Enter zip/postal code"
+              maxlength="10"
+              required>
             </ion-input>
+            <ion-note slot="error">
+              <div *ngIf="branchForm.get('zipCode')?.errors?.['required']">Zip code is required</div>
+              <div *ngIf="branchForm.get('zipCode')?.errors?.['maxlength']">Zip code must be at most 10 characters</div>
+            </ion-note>
           </ion-item>
 
 
