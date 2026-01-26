@@ -1,68 +1,282 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
-
-export interface Member {
-  id: number;
-  memberId: string;
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  age: number;
-  phone?: string;
-  email?: string;
-  address?: string;
-  city?: string;
-  dateOfBirth?: string;
-  gender?: string;
-  [key: string]: any;
-}
+import {
+  Member,
+  CreateMemberRequest,
+  BranchOption,
+  CenterOption,
+  POCOption,
+  AadhaarValidationResponse
+} from '../models/member.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MemberService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = '/api/Members';
 
   constructor(
     private http: HttpClient,
     private authService: AuthService
-  ) {}
+  ) { }
 
-  searchMembers(searchTerm: string): Observable<Member[]> {
+  private getHeaders(): HttpHeaders {
     const token = this.authService.getToken();
-    let headers = new HttpHeaders({
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
-    
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    // TODO: Replace with actual API endpoint when available
-    // For now, return empty array - API endpoint should search by firstName, lastName, middleName, and memberId
-    // return this.http.get<Member[]>(`${this.apiUrl}/Members/Search?searchTerm=${encodeURIComponent(searchTerm)}`, { headers });
-    
-    // Placeholder: Return empty array for now
-    return of([]);
   }
 
-  getMemberById(memberId: string): Observable<Member> {
-    const token = this.authService.getToken();
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-    
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
+  private normalizePOC(raw: any): POCOption {
+    const firstName = raw?.firstName ?? raw?.FirstName ?? '';
+    const middleName = raw?.middleName ?? raw?.MiddleName ?? '';
+    const lastName = raw?.lastName ?? raw?.LastName ?? '';
 
-    // TODO: Replace with actual API endpoint when available
-    // return this.http.get<Member>(`${this.apiUrl}/Members/${memberId}`, { headers });
-    
-    // Placeholder: Return null for now
-    return of({} as Member);
+    const nameFromParts = [firstName, middleName, lastName].filter(Boolean).join(' ').trim();
+    const name = (
+      raw?.name ??
+      raw?.Name ??
+      raw?.poc ??
+      raw?.POC ??
+      raw?.fullName ??
+      raw?.FullName ??
+      nameFromParts ??
+      ''
+    ).toString().trim();
+
+    const contact =
+      raw?.phoneNumber ??
+      raw?.PhoneNumber ??
+      raw?.contactNumber ??
+      raw?.ContactNumber ??
+      raw?.mobileNumber ??
+      raw?.MobileNumber ??
+      raw?.phone ??
+      raw?.Phone ??
+      '';
+
+    return {
+      id: Number(raw?.id ?? raw?.pocId ?? raw?.POCId ?? 0),
+      branchId: Number(raw?.branchId ?? raw?.BranchId ?? 0),
+      centerId: Number(raw?.centerId ?? raw?.CenterId ?? raw?.centerID ?? raw?.CenterID ?? 0),
+      contactNumber: (raw?.contactNumber ?? raw?.ContactNumber ?? contact ?? '').toString(),
+      phoneNumber: (raw?.phoneNumber ?? raw?.PhoneNumber ?? contact ?? '').toString(),
+      email: raw?.email ?? raw?.Email,
+      firstName: firstName?.toString() ?? '',
+      middleName: middleName?.toString() ?? '',
+      lastName: lastName?.toString() ?? '',
+      name
+    };
+  }
+
+  /**
+   * Get all branches for dropdown
+   */
+  getBranchOptions(): Observable<BranchOption[]> {
+    return this.http.get<any>('/Branches', {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => {
+        const branches = response.$values ?? response;
+        return branches.map((branch: any) => ({
+          id: branch.id,
+          name: branch.name,
+          code: branch.code || ''
+        }));
+      })
+    );
+  }
+
+  /**
+   * Get all centers from database
+   */
+  getAllCenters(): Observable<CenterOption[]> {
+  return this.http.get<any>('/Centers', {
+    headers: this.getHeaders()
+  }).pipe(
+    map(response => {
+      console.log('Centers API RAW Response:', response);
+
+      const centersRaw =
+        response?.$values ??
+        response?.data?.$values ??
+        response?.data ??
+        response?.data?.centers ??
+        response?.centers ??
+        response?.items?.$values ??
+        response?.items ??
+        response;
+
+      const centers = Array.isArray(centersRaw)
+        ? centersRaw
+        : Array.isArray(centersRaw?.$values)
+          ? centersRaw.$values
+          : [];
+
+      return centers
+        .filter((center: any) => {
+          if (!center) return false;
+          const isDeleted = center?.isDeleted ?? center?.IsDeleted ?? false;
+          const id = Number(center?.id ?? center?.Id ?? 0);
+          const name = (center?.name ?? center?.Name ?? center?.centerName ?? center?.CenterName ?? '').toString().trim();
+          return !isDeleted && id > 0 && !!name;
+        })
+        .map((center: any) => ({
+          id: Number(center?.id ?? center?.Id ?? 0),
+          name: (center?.name ?? center?.Name ?? center?.centerName ?? center?.CenterName ?? '').toString().trim(),
+          branchId: Number(center?.branchId ?? center?.BranchId ?? 0)
+        }));
+    })
+  );
+}
+
+
+  /**
+   * Get centers by branch - filters from all centers
+   */
+  getCentersByBranch(branchId: number): Observable<CenterOption[]> {
+    console.log('Fetching centers for branchId:', branchId);
+    return this.http.get<any[]>('/Centers', {
+      headers: this.getHeaders()
+    }).pipe(
+      map(data => {
+        console.log('Centers by Branch API Response:', data);
+        // Map API response to CenterOption interface
+        return data
+          .filter(center => center.branchId === branchId)
+          .map(center => ({
+            id: center.id,
+            name: center.name || center.centerName || '',
+            branchId: center.branchId || 0
+          }));
+      })
+    );
+  }
+
+  /**
+   * Get POCs by branch and center
+   */
+  getPOCsByBranchAndCenter(branchId: number, centerId: number): Observable<POCOption[]> {
+    return this.http.get<any>(
+      `${environment.apiUrl}/pocs/branch/${branchId}/center/${centerId}`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      map(response => {
+        const items = response?.$values ?? response;
+        const list = Array.isArray(items) ? items : [];
+        return list.map(poc => this.normalizePOC(poc));
+      })
+    );
+}
+
+  /**
+   * Get POC details by ID
+   */
+  getPOCById(pocId: number): Observable<POCOption> {
+    return this.http.get<any>(`/api/pocs/${pocId}`, {
+      headers: this.getHeaders()
+    }).pipe(
+      map(response => this.normalizePOC(response))
+    );
+  }
+
+  /**
+   * Validate Aadhaar uniqueness
+   */
+  validateAadhaarUniqueness(aadhaar: string): Observable<AadhaarValidationResponse> {
+    return this.http.get<AadhaarValidationResponse>(
+      `/api/members/validate-aadhaar/${aadhaar}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * Create new member
+   */
+  createMember(memberData: CreateMemberRequest): Observable<Member> {
+    return this.http.post<Member>(this.apiUrl, memberData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Update existing member
+   */
+  updateMember(memberId: number, memberData: CreateMemberRequest): Observable<Member> {
+    return this.http.put<Member>(`${this.apiUrl}/${memberId}`, memberData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Get member by ID
+   */
+  getMemberById(memberId: number): Observable<Member> {
+    return this.http.get<Member>(`${this.apiUrl}/${memberId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Get all members by branch
+   */
+  getMembersByBranch(branchId: number): Observable<Member[]> {
+    return this.http.get<Member[]>(`${this.apiUrl}/branch/${branchId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Get all members
+   */
+  getAllMembers(): Observable<Member[]> {
+    return this.http.get<Member[]>(this.apiUrl, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Get members using query params (some backends prefer this over /branch routes)
+   * Example: GET /api/Members?branchId=1&centerId=2
+   */
+  getMembersFiltered(filter: { branchId?: number; centerId?: number }): Observable<Member[]> {
+    const params: Record<string, string> = {};
+    if (filter.branchId) params['branchId'] = String(filter.branchId);
+    if (filter.centerId) params['centerId'] = String(filter.centerId);
+
+    return this.http.get<Member[]>(this.apiUrl, {
+      headers: this.getHeaders(),
+      params
+    });
+  }
+
+  /**
+   * Delete member
+   */
+  deleteMember(memberId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${memberId}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Get all POCs from API
+   */
+  getAllPOCs(): Observable<POCOption[]> {
+    return this.http.get<any>(
+      `${environment.apiUrl}/POCs`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      map(response => {
+        const items = response?.$values ?? response;
+        const list = Array.isArray(items) ? items : [];
+        return list.map(poc => this.normalizePOC(poc));
+      })
+    );
   }
 }
