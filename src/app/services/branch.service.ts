@@ -1,17 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
-
-export interface Branch {
-  id: number;
-  name: string;
-  code?: string;
-  address?: string;
-  city?: string;
-  [key: string]: any;
-}
+import { Branch, CreateBranchRequest } from '../models/branch.models';
 
 @Injectable({
   providedIn: 'root'
@@ -38,7 +31,7 @@ export class BranchService {
     return this.http.get<Branch[]>(`${this.apiUrl}/Branches`, { headers });
   }
 
-  // Alternative endpoint if the above doesn't work
+  // Get branches list from API
   getBranchesList(): Observable<Branch[]> {
     const token = this.authService.getToken();
     let headers = new HttpHeaders({
@@ -62,18 +55,28 @@ export class BranchService {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
 
-    return this.http.post<Branch>(`${this.apiUrl}/Branches`, branch, { headers });
+    // Try primary endpoint then fallback to an alternative if not found
+    return this.http.post<Branch>(`${this.apiUrl}/Branches`, branch, { headers }).pipe(
+      catchError((err) => {
+        if (err.status === 404) {
+          // Try alternative endpoint(s)
+          return this.http.post<Branch>(`${this.apiUrl}/Branch/Create`, branch, { headers });
+        }
+        return throwError(() => err);
+      })
+    );
   }
-}
 
-export interface CreateBranchRequest {
-  name: string;
-  code?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  phone?: string;
-  email?: string;
-  organizationId?: number;
+  deleteBranch(id: number): Observable<any> {
+    const token = this.authService.getToken();
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    return this.http.delete(`${this.apiUrl}/Branches/${id}`, { headers });
+  }
 }
 

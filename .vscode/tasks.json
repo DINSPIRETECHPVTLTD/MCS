@@ -2,10 +2,35 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Ionic Angular: Serve & Debug",
+			"label": "ng serve",
 			"type": "shell",
-			"command": "ionic serve",
-			"args": [],
+			"command": "npx ng serve",
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "ng serve",
+			"type": "shell",
+			"command": "npx ng serve",
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "ng build (npx.cmd)",
+			"type": "shell",
+			"command": "npx.cmd",
+			"args": [
+				"ng",
+				"build",
+				"--progress=false"
+			],
+			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
 		}

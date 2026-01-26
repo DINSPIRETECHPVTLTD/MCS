@@ -1,9 +1,11 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouteReuseStrategy } from '@angular/router';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { addIcons } from 'ionicons';
+import { ApiInterceptor } from './interceptors/api.interceptor';
 import { 
   personCircleOutline, 
   addOutline, 
@@ -20,8 +22,10 @@ import {
   checkmarkOutline
 } from 'ionicons/icons';
 import { AppComponent } from './app.component';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { AppRoutingModule } from './app-routing.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 
 // Register all icons used in the app
 addIcons({
@@ -40,19 +44,27 @@ addIcons({
   'checkmark-outline': checkmarkOutline
 });
 
+ModuleRegistry.registerModules([ AllCommunityModule ]);
+
 @NgModule({
   declarations: [AppComponent],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     IonicModule.forRoot(),
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule
   ],
-  providers: [
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
-  ],
+ providers: [
+  { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+  {
+    provide: HTTP_INTERCEPTORS,
+    useClass: ApiInterceptor,
+    multi: true
+  }
+],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

@@ -54,6 +54,22 @@ const routes: Routes = [
   {
     path: 'members',
     loadChildren: () => import('./pages/members/members.module').then(m => m.MembersPageModule)
+  },
+  {
+    path: 'add-loan',
+    loadChildren: () => import('./pages/add-loan/add-loan.module').then(m => m.AddLoanPageModule)
+  },
+  {
+    path: 'manage-loan',
+    loadChildren: () => import('./pages/manage-loan/manage-loan.module').then(m => m.ManageLoanPageModule)
+  },
+  {
+    path: 'preclose-loan',
+    loadChildren: () => import('./pages/preclose-loan/preclose-loan.module').then(m => m.PrecloseLoanPageModule)
+  },
+  {
+    path: 'recovery-posting',
+    loadChildren: () => import('./pages/recovery-posting/recovery-posting.module').then(m => m.RecoveryPostingPageModule)
   }
 ];
 

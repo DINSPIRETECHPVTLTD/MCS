@@ -1,0 +1,35 @@
+<app-header-menu 
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
+</app-header-menu>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="content-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h1>Preclose Loan</h1>
+    </div>
+    
+    <div *ngIf="loans.length === 0" class="empty-state">
+      <ion-icon name="close-circle-outline" size="large"></ion-icon>
+      <p>No loans available for preclosure</p>
+      <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
+        Loans eligible for preclosure will be displayed here
+      </p>
+    </div>
+    
+    <ion-list *ngIf="loans.length > 0">
+      <ion-item *ngFor="let loan of loans" class="loan-item">
+        <ion-label>
+          <h2>{{ loan.loanNumber || 'Loan #' + loan.id }}</h2>
+          <p *ngIf="loan.memberName">Member: {{ loan.memberName }}</p>
+          <p *ngIf="loan.amount">Amount: {{ loan.amount }}</p>
+          <p *ngIf="loan.outstandingAmount">Outstanding: {{ loan.outstandingAmount }}</p>
+        </ion-label>
+        <ion-button slot="end" fill="outline" color="warning">
+          Preclose
+        </ion-button>
+      </ion-item>
+    </ion-list>
+  </div>
+</ion-content>

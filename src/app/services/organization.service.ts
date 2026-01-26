@@ -3,16 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
-
-export interface Organization {
-  id?: number;
-  name: string;
-  phone?: string;
-  city?: string;
-  email?: string;
-  address?: string;
-  [key: string]: any;
-}
+import { Organization } from '../models/organization.models';
 
 @Injectable({
   providedIn: 'root'

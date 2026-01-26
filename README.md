@@ -125,7 +125,7 @@ ionic cap sync
 ## Troubleshooting
 
 ### CORS Issues
-If you encounter CORS errors when connecting to `https://localhost:7091`, you may need to:
+If you encounter CORS errors when connecting to `https://localhost:61008`, you may need to:
 1. Configure your API server to allow requests from your app's origin
 2. Use a proxy configuration in Angular (see `angular.json` proxy settings)
 

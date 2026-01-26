@@ -1,8 +1,12 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
-import { BranchService, CreateBranchRequest } from '../../services/branch.service';
+import { BranchService } from '../../services/branch.service';
+import { CreateBranchRequest } from '../../models/branch.models';
 import { UserContextService } from '../../services/user-context.service';
+import { Subject, takeUntil } from 'rxjs';
+import { Branch } from '../../models/branch.models';
+
 
 @Component({
   selector: 'app-add-branch-modal',
@@ -12,7 +16,8 @@ import { UserContextService } from '../../services/user-context.service';
 export class AddBranchModalComponent implements OnInit {
   @Input() isEditing: boolean = false;
   @Input() editingBranchId: number | null = null;
-  
+  branches: { id: number, name: string }[] = [];
+
   branchForm: FormGroup;
   submitted: boolean = false;
 
@@ -23,26 +28,45 @@ export class AddBranchModalComponent implements OnInit {
     private userContext: UserContextService,
     private loadingController: LoadingController,
     private toastController: ToastController
-  ) {
+  )
+  
+  {
     this.branchForm = this.formBuilder.group({
-      name: ['', [Validators.required]],
-      code: [''],
-      address: [''],
-      city: [''],
-      state: [''],
-      phone: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-      email: ['', [Validators.email]],
-      organizationId: [0]
+  name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
+  address1: ['', [Validators.required, Validators.maxLength(100)]],
+  address2: ['', [Validators.required, Validators.maxLength(100)]],
+  city: ['', [Validators.required, Validators.maxLength(100)]],
+  state: ['', [Validators.required, Validators.maxLength(100)]],
+  country: ['India', [Validators.required]],
+  zipCode: ['', [Validators.required, Validators.maxLength(10)]],
+  phoneNumber: ['', [Validators.required]],
+  organizationId: [0]
     });
   }
 
-  ngOnInit(): void {
-    // Set organization ID
-    const organizationId = this.userContext.organizationId;
-    if (organizationId) {
-      this.branchForm.patchValue({
-        organizationId: organizationId
-      });
+ngOnInit(): void {
+  const organizationId = this.userContext.organizationId;
+  if (organizationId) {
+    this.branchForm.patchValue({ organizationId });
+  }
+
+  // Load branches for dropdown
+  this.branchService.getBranches().subscribe({
+    next: (data) => {
+      this.branches = data; // <-- branch array with only id & name
+      console.log('Branches loaded:', this.branches); // Step 1 debug
+    },
+    error: (err) => console.error('Failed to load branches', err)
+  });
+}
+
+  onNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.branchForm.get('name');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
     }
   }
 
@@ -65,16 +89,20 @@ export class AddBranchModalComponent implements OnInit {
     });
     await loading.present();
 
-    const branchData: CreateBranchRequest = {
+    const address1 = this.branchForm.value.address1?.trim() || '';
+    const address2 = this.branchForm.value.address2?.trim() || '';
+
+    const branchData = {
       name: this.branchForm.value.name.trim(),
-      code: this.branchForm.value.code?.trim() || '',
-      address: this.branchForm.value.address?.trim() || '',
+      address1: address1,
+      address2: address2,
       city: this.branchForm.value.city?.trim() || '',
       state: this.branchForm.value.state?.trim() || '',
-      phone: this.branchForm.value.phone?.trim() || '',
-      email: this.branchForm.value.email?.trim() || '',
+      country: this.branchForm.value.country || 'India',
+      zipCode: this.branchForm.value.zipCode?.trim() || '',
+      phoneNumber: this.branchForm.value.phoneNumber?.trim() || '',
       organizationId: this.branchForm.value.organizationId
-    };
+    } as CreateBranchRequest;
 
     this.branchService.createBranch(branchData).subscribe({
       next: async (branch) => {
@@ -115,12 +143,20 @@ export class AddBranchModalComponent implements OnInit {
       if (field.errors?.['required']) {
         return `${this.getFieldLabel(fieldName)} is required`;
       }
-      if (field.errors?.['email']) {
-        return 'Please enter a valid email address';
+      if (field.errors?.['maxlength']) {
+        if (fieldName === 'address1' || fieldName === 'address2') {
+          return `${this.getFieldLabel(fieldName)} must be at most 100 characters`;
+        }
+        if (fieldName === 'name') {
+          return 'Branch name must be at most 100 characters';
+        }
       }
       if (field.errors?.['pattern']) {
-        if (fieldName === 'phone') {
+        if (fieldName === 'phoneNumber') {
           return 'Please enter a valid 10-digit phone number';
+        }
+        if (fieldName === 'name') {
+          return 'Branch name must be alphanumeric';
         }
       }
     }
@@ -132,9 +168,12 @@ export class AddBranchModalComponent implements OnInit {
       name: 'Branch name',
       code: 'Branch code',
       address: 'Address',
+      address1: 'Address 1',
+      address2: 'Address 2',
       city: 'City',
       state: 'State',
-      phone: 'Phone number',
+      zipCode: 'Zip Code',
+      phoneNumber: 'Phone number',
       email: 'Email'
     };
     return labels[fieldName] || fieldName;
@@ -144,5 +183,7 @@ export class AddBranchModalComponent implements OnInit {
     const field = this.branchForm.get(fieldName);
     return !!(field && field.invalid && (field.touched || this.submitted));
   }
+
+
 }
 

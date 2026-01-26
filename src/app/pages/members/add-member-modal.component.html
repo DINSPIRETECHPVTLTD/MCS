@@ -1,0 +1,236 @@
+<ion-content class="add-member-content">
+  <div class="add-member-dialog">
+    <div class="dialog-header">
+      <h2>Add New Member</h2>
+      <ion-button fill="clear" size="small" (click)="onCancel()" aria-label="Close">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
+    <mat-divider></mat-divider>
+
+    <form class="add-member-form" [formGroup]="memberForm" (ngSubmit)="onSave()">
+      <!-- Assignment Details -->
+      <mat-card class="section-card">
+        <div class="section-title">Assignment Details</div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Center <span class="required">*</span></mat-label>
+            <select matNativeControl formControlName="centerId">
+              <option value="">Select Center</option>
+              <option *ngFor="let center of centers" [value]="center.id">{{ center.name }}</option>
+            </select>
+            <mat-error *ngIf="isFieldInvalid('centerId')">{{ getFieldError('centerId') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>POC (Point of Contact) <span class="required">*</span></mat-label>
+            <select matNativeControl formControlName="pocId" [disabled]="pocs.length === 0">
+              <option value="">Select POC</option>
+              <option *ngFor="let poc of pocs" [value]="poc.id">{{ poc.name }}</option>
+            </select>
+            <mat-error *ngIf="isFieldInvalid('pocId')">{{ getFieldError('pocId') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field readonly-field">
+            <mat-label>POC Contact Number <span class="required">*</span></mat-label>
+            <input matInput type="tel" formControlName="pocContactNumber" readonly aria-readonly="true" />
+            <mat-hint>Auto-filled from POC</mat-hint>
+            <mat-error *ngIf="isFieldInvalid('pocContactNumber')">{{ getFieldError('pocContactNumber') }}</mat-error>
+          </mat-form-field>
+        </div>
+      </mat-card>
+
+      <!-- Member Personal Details -->
+      <mat-card class="section-card">
+        <div class="section-title">Member Personal Details</div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>First Name <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="firstName" maxlength="50" />
+            <mat-error *ngIf="isFieldInvalid('firstName')">{{ getFieldError('firstName') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Middle Name</mat-label>
+            <input matInput type="text" formControlName="middleName" maxlength="50" />
+            <mat-error *ngIf="isFieldInvalid('middleName')">{{ getFieldError('middleName') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Last Name <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="lastName" maxlength="50" />
+            <mat-error *ngIf="isFieldInvalid('lastName')">{{ getFieldError('lastName') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Date of Birth <span class="required">*</span></mat-label>
+            <input
+              matInput
+              #dobInput
+              type="date"
+              class="date-input"
+              formControlName="dateOfBirth"
+              [attr.max]="todayString"
+              (click)="openNativeDatePicker(dobInput)" />
+            <mat-error *ngIf="isFieldInvalid('dateOfBirth')">{{ getFieldError('dateOfBirth') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field readonly-field">
+            <mat-label>Age</mat-label>
+            <input matInput type="number" formControlName="age" readonly aria-readonly="true" />
+            <mat-hint>Auto-calculated</mat-hint>
+            <mat-error *ngIf="isFieldInvalid('age')">{{ getFieldError('age') }}</mat-error>
+          </mat-form-field>
+        </div>
+      </mat-card>
+
+      <!-- Contact & Address Details -->
+      <mat-card class="section-card">
+        <div class="section-title">Contact & Address Details</div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Phone Number <span class="required">*</span></mat-label>
+            <input matInput type="tel" inputmode="numeric" formControlName="phoneNumber" maxlength="10" />
+            <mat-error *ngIf="isFieldInvalid('phoneNumber')">{{ getFieldError('phoneNumber') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Alternate Phone</mat-label>
+            <input matInput type="tel" inputmode="numeric" formControlName="altPhone" maxlength="10" />
+            <mat-error *ngIf="isFieldInvalid('altPhone')">{{ getFieldError('altPhone') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field full-width">
+            <mat-label>Address Line 1 <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="address1" maxlength="200" />
+            <mat-error *ngIf="isFieldInvalid('address1')">{{ getFieldError('address1') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field full-width">
+            <mat-label>Address Line 2</mat-label>
+            <input matInput type="text" formControlName="address2" maxlength="200" />
+            <mat-error *ngIf="isFieldInvalid('address2')">{{ getFieldError('address2') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>City <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="city" maxlength="100" />
+            <mat-error *ngIf="isFieldInvalid('city')">{{ getFieldError('city') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>State <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="state" maxlength="100" />
+            <mat-error *ngIf="isFieldInvalid('state')">{{ getFieldError('state') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Zip Code <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="zipCode" maxlength="6" />
+            <mat-error *ngIf="isFieldInvalid('zipCode')">{{ getFieldError('zipCode') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Aadhaar</mat-label>
+            <input matInput type="tel" inputmode="numeric" formControlName="aadhaar" maxlength="12" />
+            <mat-error *ngIf="isFieldInvalid('aadhaar')">{{ getFieldError('aadhaar') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Occupation</mat-label>
+            <input matInput type="text" formControlName="occupation" maxlength="100" />
+            <mat-error *ngIf="isFieldInvalid('occupation')">{{ getFieldError('occupation') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Status <span class="required">*</span></mat-label>
+            <select matNativeControl formControlName="status">
+              <option *ngFor="let status of memberStatuses" [value]="status.value">{{ status.label }}</option>
+            </select>
+            <mat-error *ngIf="isFieldInvalid('status')">{{ getFieldError('status') }}</mat-error>
+          </mat-form-field>
+        </div>
+      </mat-card>
+
+      <!-- Guardian Details -->
+      <mat-card class="section-card">
+        <div class="section-title">Guardian Details</div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>First Name <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="guardianFirstName" maxlength="100" />
+            <mat-error *ngIf="isFieldInvalid('guardianFirstName')">{{ getFieldError('guardianFirstName') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Middle Name</mat-label>
+            <input matInput type="text" formControlName="guardianMiddleName" maxlength="100" />
+            <mat-error *ngIf="isFieldInvalid('guardianMiddleName')">{{ getFieldError('guardianMiddleName') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Last Name <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="guardianLastName" maxlength="100" />
+            <mat-error *ngIf="isFieldInvalid('guardianLastName')">{{ getFieldError('guardianLastName') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Phone <span class="required">*</span></mat-label>
+            <input matInput type="tel" inputmode="numeric" formControlName="guardianPhone" maxlength="10" />
+            <mat-error *ngIf="isFieldInvalid('guardianPhone')">{{ getFieldError('guardianPhone') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>DOB</mat-label>
+            <input
+              matInput
+              #guardianDobInput
+              type="date"
+              class="date-input"
+              formControlName="guardianDOB"
+              [attr.max]="todayString"
+              (click)="openNativeDatePicker(guardianDobInput)" />
+            <mat-error *ngIf="isFieldInvalid('guardianDOB')">{{ getFieldError('guardianDOB') }}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Age <span class="required">*</span></mat-label>
+            <input
+              matInput
+              type="number"
+              formControlName="guardianAge"
+              min="18"
+              max="150"
+              [readonly]="!!memberForm.get('guardianDOB')?.value"
+              [placeholder]="memberForm.get('guardianDOB')?.value ? 'Auto-calculated' : '18+'" />
+            <mat-error *ngIf="isFieldInvalid('guardianAge')">{{ getFieldError('guardianAge') }}</mat-error>
+          </mat-form-field>
+        </div>
+      </mat-card>
+
+      <div class="dialog-footer">
+        <ion-button
+          type="button"
+          fill="outline"
+          (click)="onClear()"
+          [disabled]="isSubmitting"
+          class="clear-button">
+          Clear
+        </ion-button>
+
+        <ion-button
+          type="submit"
+          [disabled]="isSubmitting || memberForm.invalid"
+          class="save-button">
+          <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+          Save Member
+        </ion-button>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-overlay">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading data...</p>
+  </div>
+</ion-content>

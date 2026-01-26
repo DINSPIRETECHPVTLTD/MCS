@@ -15,32 +15,32 @@
       </ion-button>
     </div>
     
-    <!-- Debug info -->
-    <div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-size: 12px;">
-      <p style="margin: 0;">Branches count: {{ branches.length }}</p>
-      <p style="margin: 4px 0 0 0;">Loading: {{ isLoading ? 'Yes' : 'No' }}</p>
+    <!-- AG Grid -->
+    <div *ngIf="isLoading" style="text-align: center; padding: 20px;">
+      <ion-spinner></ion-spinner>
+      <p>Loading branches...</p>
     </div>
     
-    <div *ngIf="branches.length === 0 && !isLoading" class="empty-state">
+    <div *ngIf="!isLoading && branches.length === 0" class="empty-state">
       <ion-icon name="business-outline" size="large"></ion-icon>
       <p>No branches found</p>
       <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
         Click "Add Branch" to create a new branch
       </p>
     </div>
-    <ion-list *ngIf="branches.length > 0">
-      <ion-item *ngFor="let branch of branches" class="branch-item">
-        <ion-avatar slot="start">
-          <ion-icon name="business-outline"></ion-icon>
-        </ion-avatar>
-        <ion-label>
-          <h2>{{ branch.name }}</h2>
-          <p *ngIf="branch.code">Code: {{ branch.code }}</p>
-          <p *ngIf="branch.city">{{ branch.city }}</p>
-          <p *ngIf="branch.address">{{ branch.address }}</p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
+    
+    <div *ngIf="!isLoading && branches.length > 0" class="branches-grid">
+      <ag-grid-angular
+        class="ag-theme-alpine"
+        style="width: 100%; height: 60vh;"
+        [rowData]="rowData"
+        [columnDefs]="columnDefs"
+        [gridOptions]="gridOptions"
+        [defaultColDef]="defaultColDef"
+        [pagination]="pagination"
+        [paginationPageSize]="paginationPageSize">
+      </ag-grid-angular>
+    </div>
   </div>
 </ion-content>
 

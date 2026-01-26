@@ -3,8 +3,10 @@ import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
-import { OrganizationService, Organization } from '../../services/organization.service';
-import { BranchService, Branch } from '../../services/branch.service';
+import { OrganizationService } from '../../services/organization.service';
+import { BranchService } from '../../services/branch.service';
+import { Organization } from '../../models/organization.models';
+import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-organization-info',

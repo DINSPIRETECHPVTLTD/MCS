@@ -1,7 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
-import { UserService, CreateUserRequest } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { CreateUserRequest } from '../../models/user.models';
 import { UserContextService } from '../../services/user-context.service';
 
 @Component({
@@ -25,19 +26,19 @@ export class AddUserModalComponent implements OnInit {
     private toastController: ToastController
   ) {
     this.userForm = this.formBuilder.group({
-      email: ['', [Validators.email]],
+      email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       firstName: ['', [Validators.required]],
       middleName: [''],
       lastName: ['', [Validators.required]],
-      phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/)]],
+      phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/), Validators.required]],
       address1: [''],
       address2: [''],
       city: [''],
       state: [''],
       pinCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
-      level: ['Org'],
-      role: ['Owner'],
+      level: ['Org', [Validators.required]],
+      role: ['Owner', [Validators.required]],
       organizationId: [0]
     });
   }
