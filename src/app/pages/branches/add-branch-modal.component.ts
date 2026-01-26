@@ -32,15 +32,15 @@ export class AddBranchModalComponent implements OnInit {
   
   {
     this.branchForm = this.formBuilder.group({
-  name: ['', [Validators.required]],
-  code: [''],
-  address: [''],
-  city: [''],
-  state: [''],
-  phone: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-  email: ['', [Validators.email]],
-  organizationId: [0],
-  branchId: [null, [Validators.required]] // <-- Add this line for branch dropdown
+  name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
+  address1: ['', [Validators.required, Validators.maxLength(100)]],
+  address2: ['', [Validators.required, Validators.maxLength(100)]],
+  city: ['', [Validators.required, Validators.maxLength(100)]],
+  state: ['', [Validators.required, Validators.maxLength(100)]],
+  country: ['India', [Validators.required]],
+  zipCode: ['', [Validators.required, Validators.maxLength(10)]],
+  phoneNumber: ['', [Validators.required]],
+  organizationId: [0]
     });
   }
 
@@ -59,6 +59,16 @@ ngOnInit(): void {
     error: (err) => console.error('Failed to load branches', err)
   });
 }
+
+  onNameInput(event: any): void {
+    const raw = event?.detail?.value ?? '';
+    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
+    const truncated = sanitized.slice(0, 100);
+    const control = this.branchForm.get('name');
+    if (control && control.value !== truncated) {
+      control.setValue(truncated);
+    }
+  }
 
   async onSubmit(): Promise<void> {
     this.submitted = true;

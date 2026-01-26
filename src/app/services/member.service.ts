@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, catchError, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import {
@@ -12,6 +12,8 @@ import {
   POCOption,
   AadhaarValidationResponse
 } from '../models/member.models';
+
+export type { Member } from '../models/member.models';
 
 @Injectable({
   providedIn: 'root'
@@ -238,6 +240,47 @@ export class MemberService {
     return this.http.get<Member[]>(this.apiUrl, {
       headers: this.getHeaders()
     });
+  }
+
+  /**
+   * Search members by a free-text term.
+   * Attempts a backend search endpoint first, then falls back to client-side filtering.
+   */
+  searchMembers(term: string): Observable<Member[]> {
+    const query = (term ?? '').trim();
+    if (!query) return of([]);
+
+    const q = query.toLowerCase();
+
+    // Best-effort server-side search (endpoint/param names can vary by backend)
+    return this.http.get<Member[]>(`${this.apiUrl}/search`, {
+      headers: this.getHeaders(),
+      params: { term: query }
+    }).pipe(
+      catchError(() =>
+        this.getAllMembers().pipe(
+          map((members) =>
+            (members ?? []).filter((m) => {
+              const id = String((m as any)?.id ?? '');
+              const phone = String((m as any)?.phoneNumber ?? '');
+              const firstName = String((m as any)?.firstName ?? '').toLowerCase();
+              const middleName = String((m as any)?.middleName ?? '').toLowerCase();
+              const lastName = String((m as any)?.lastName ?? '').toLowerCase();
+              const fullName = `${firstName} ${middleName} ${lastName}`.replace(/\s+/g, ' ').trim();
+
+              return (
+                id.includes(query) ||
+                phone.includes(query) ||
+                firstName.includes(q) ||
+                middleName.includes(q) ||
+                lastName.includes(q) ||
+                fullName.includes(q)
+              );
+            })
+          )
+        )
+      )
+    );
   }
 
   /**

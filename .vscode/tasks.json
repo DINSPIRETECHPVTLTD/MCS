@@ -20,6 +20,19 @@
 				"$tsc"
 			],
 			"group": "build"
+		},
+		{
+			"label": "ng build (npx.cmd)",
+			"type": "shell",
+			"command": "npx.cmd",
+			"args": [
+				"ng",
+				"build",
+				"--progress=false"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }
