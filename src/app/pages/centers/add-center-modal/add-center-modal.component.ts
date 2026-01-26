@@ -8,13 +8,6 @@ import { CenterService } from 'src/app/services/center.service';
   styleUrls: ['./add-center-modal.component.scss']
 })
 export class AddCenterModalComponent {
-    clearForm() {
-      this.centerName = '';
-      this.address = '';
-      this.city = '';
-      this.pinCode = '';
-      this.formSubmitted = false;
-    }
   @Input() branch: any;
 
   centerName: string = '';
