@@ -11,31 +11,6 @@
 
 <ion-content [fullscreen]="true" class="ion-padding">
   <form [formGroup]="staffForm" (ngSubmit)="onSubmit()">
-    <!-- Email and Password Fields (at top) -->
-    <ion-item [class.ion-invalid]="isFieldInvalid('email')">
-      <ion-label position="stacked">Email</ion-label>
-      <ion-input
-        formControlName="email"
-        placeholder="Enter email address"
-        type="email"
-        maxlength="100"
-        (ionInput)="onEmailInput($event)">
-      </ion-input>
-      <ion-note slot="error">{{ getFieldError('email') }}</ion-note>
-    </ion-item>
-
-    <ion-item [class.ion-invalid]="isFieldInvalid('password')">
-      <ion-label position="stacked">Password <span class="required">*</span></ion-label>
-      <ion-input
-        formControlName="password"
-        placeholder="Enter password"
-        type="password"
-        maxlength="12"
-        (ionInput)="onPasswordInput($event)">
-      </ion-input>
-      <ion-note slot="error">{{ getFieldError('password') }}</ion-note>
-    </ion-item>
-
     <!-- Name Fields -->
     <ion-item [class.ion-invalid]="isFieldInvalid('firstName')">
       <ion-label position="stacked">First Name <span class="required">*</span></ion-label>
@@ -54,7 +29,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('middleName')">
-      <ion-label position="stacked">Middle Name</ion-label>
+      <ion-label position="stacked">Middle Name <span class="required">*</span></ion-label>
       <ion-input
         formControlName="middleName"
         placeholder="Enter middle name"
@@ -63,6 +38,7 @@
         (ionInput)="onMiddleNameInput($event)">
       </ion-input>
       <ion-note slot="error">
+        <div *ngIf="staffForm.get('middleName')?.errors?.['required']">Middle name is required</div>
         <div *ngIf="staffForm.get('middleName')?.errors?.['maxlength']">Middle name must be at most 100 characters</div>
         <div *ngIf="staffForm.get('middleName')?.errors?.['pattern']">Middle name must be alphanumeric</div>
       </ion-note>
@@ -86,7 +62,7 @@
 
     <!-- Contact Fields -->
     <ion-item [class.ion-invalid]="isFieldInvalid('phoneNumber')">
-      <ion-label position="stacked">Phone Number</ion-label>
+      <ion-label position="stacked">Phone Number <span class="required">*</span></ion-label>
       <ion-input
         formControlName="phoneNumber"
         placeholder="Enter 10-digit phone number"
@@ -97,9 +73,34 @@
       <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
     </ion-item>
 
+    <!-- Email and Password Fields -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('email')">
+      <ion-label position="stacked">Email ID <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="email"
+        placeholder="Enter email address"
+        type="email"
+        maxlength="100"
+        (ionInput)="onEmailInput($event)">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('email') }}</ion-note>
+    </ion-item>
+
+    <ion-item [class.ion-invalid]="isFieldInvalid('password')">
+      <ion-label position="stacked">Password <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="password"
+        placeholder="Enter password"
+        type="password"
+        maxlength="12"
+        (ionInput)="onPasswordInput($event)">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('password') }}</ion-note>
+    </ion-item>
+
     <!-- Address Fields -->
     <ion-item>
-      <ion-label position="stacked">Address Line 1</ion-label>
+      <ion-label position="stacked">Address Line 1 <span class="required">*</span></ion-label>
       <ion-input
         formControlName="address1"
         placeholder="Enter address line 1"
@@ -111,7 +112,7 @@
     </ion-item>
 
     <ion-item>
-      <ion-label position="stacked">Address Line 2</ion-label>
+      <ion-label position="stacked">Address Line 2 <span class="required">*</span></ion-label>
       <ion-input
         formControlName="address2"
         placeholder="Enter address line 2"
@@ -123,7 +124,7 @@
     </ion-item>
 
     <ion-item>
-      <ion-label position="stacked">City</ion-label>
+      <ion-label position="stacked">City <span class="required">*</span></ion-label>
       <ion-input
         formControlName="city"
         placeholder="Enter city"
@@ -135,7 +136,7 @@
     </ion-item>
 
     <ion-item>
-      <ion-label position="stacked">State</ion-label>
+      <ion-label position="stacked">State <span class="required">*</span></ion-label>
       <ion-input
         formControlName="state"
         placeholder="Enter state"
@@ -147,7 +148,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('pinCode')">
-      <ion-label position="stacked">Pin Code</ion-label>
+      <ion-label position="stacked">Pin Code <span class="required">*</span></ion-label>
       <ion-input
         formControlName="pinCode"
         placeholder="Enter 6-digit pin code"
@@ -158,6 +159,7 @@
       <ion-note slot="error">{{ getFieldError('pinCode') }}</ion-note>
     </ion-item>
 
+    <!-- Role Field -->
     <ion-item [class.ion-invalid]="isFieldInvalid('role')">
       <ion-label position="stacked">Role <span class="required">*</span></ion-label>
       <ion-select formControlName="role" interface="popover" placeholder="Select role">
