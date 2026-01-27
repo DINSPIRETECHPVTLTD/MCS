@@ -1,12 +1,123 @@
-.content-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+/* Centers page aligned with Members page layout */
+.users-list-container {
+  margin-top: 16px;
+}
 
-  h1 {
-    color: var(--ion-color-primary);
-    margin-bottom: 16px;
+.centers-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.centers-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.centers-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+
+  ion-button {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: none;
   }
+}
+
+.filter-card {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-field {
+  min-width: 220px;
+  flex: 0 0 auto;
+}
+
+.filter-field--search {
+  min-width: 260px;
+  flex: 1 1 320px;
+}
+
+.users-grid {
+  width: 100%;
+}
+
+.table-scroll {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.centers-table {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
+}
+
+/* Sticky first column */
+.centers-table .mat-column-centerName,
+.centers-table .mat-header-cell.mat-column-centerName {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: #ffffff;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.08);
+}
+
+.centers-table th.mat-header-cell.mat-column-centerName {
+  background: var(--ion-color-primary-shade);
+  z-index: 4;
+}
+
+.centers-table th.mat-header-cell {
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--ion-color-primary-shade);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 12px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.centers-table td.mat-cell {
+  color: rgba(0, 0, 0, 0.82);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 12px 14px;
+}
+
+.centers-table tr.mat-row:nth-child(even) td.mat-cell {
+  background: color-mix(in srgb, var(--ion-color-primary) 6%, #ffffff 94%);
+}
+
+.centers-table tr.mat-row:hover td.mat-cell {
+  background: color-mix(in srgb, var(--ion-color-primary) 12%, #ffffff 88%);
+}
+
+.truncate {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.truncate--address {
+  max-width: 320px;
 }
 
 .empty-state {
@@ -22,6 +133,13 @@
   p {
     margin: 0;
     font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .centers-table th.mat-header-cell,
+  .centers-table td.mat-cell {
+    padding: 10px 12px;
   }
 }
 
