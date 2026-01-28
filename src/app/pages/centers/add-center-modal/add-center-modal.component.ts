@@ -114,11 +114,12 @@ export class AddCenterModalComponent implements OnInit, OnDestroy {
       next: async () => {
         this.isSaving = false;
         await this.showToast('Saved successfully');
-        this.closeModal();
+        this.modalController.dismiss({ success: true });
       },
-      error: async () => {
+      error: async (err) => {
         this.isSaving = false;
-        await this.showToast('Data not saved');
+        const errorMessage = err.error?.message || err.message || 'Data not saved';
+        await this.showToast(errorMessage);
       }
     });
   }

@@ -6,6 +6,7 @@ import { CentersPageRoutingModule } from './centers-routing.module';
 import { CentersPage } from './centers.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 import { AddCenterModalModule } from './add-center-modal/add-center-modal.module';
+import { AgGridModule } from 'ag-grid-angular';
 
 @NgModule({
   imports: [
@@ -14,7 +15,8 @@ import { AddCenterModalModule } from './add-center-modal/add-center-modal.module
     IonicModule,
     CentersPageRoutingModule,
     HeaderMenuComponent,
-    AddCenterModalModule
+    AddCenterModalModule,
+    AgGridModule
   ],
   declarations: [CentersPage]
 })

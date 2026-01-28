@@ -14,7 +14,14 @@
       </ion-button>
     </div>
     
-    <div *ngIf="centers.length === 0" class="empty-state">
+    <!-- Loading state -->
+    <div *ngIf="isLoading" style="text-align: center; padding: 20px;">
+      <ion-spinner></ion-spinner>
+      <p>Loading centers...</p>
+    </div>
+    
+    <!-- Empty state -->
+    <div *ngIf="!isLoading && centers.length === 0" class="empty-state">
       <ion-icon name="location-outline" size="large"></ion-icon>
       <p>No centers found</p>
       <p style="font-size: 12px; margin-block-start: 8px; color: var(--ion-color-medium);">
@@ -22,14 +29,19 @@
       </p>
     </div>
     
-    <ion-list *ngIf="centers.length > 0">
-      <ion-item *ngFor="let center of centers">
-        <ion-label>
-          <h2>{{ center.name }}</h2>
-          <p>{{ center.address }}</p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
+    <!-- AG Grid -->
+    <div *ngIf="!isLoading && centers.length > 0" class="centers-grid">
+      <ag-grid-angular
+        class="ag-theme-alpine"
+        style="width: 100%; height: 60vh;"
+        [rowData]="rowData"
+        [columnDefs]="columnDefs"
+        [gridOptions]="gridOptions"
+        [defaultColDef]="defaultColDef"
+        [pagination]="pagination"
+        [paginationPageSize]="paginationPageSize">
+      </ag-grid-angular>
+    </div>
   </div>
 </ion-content>
 
