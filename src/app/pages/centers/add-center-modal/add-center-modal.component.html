@@ -11,6 +11,10 @@
 <ion-content class="ion-padding">
   <form #centerForm="ngForm" (ngSubmit)="saveCenter(centerForm)">
     <ion-item>
+      <ion-label position="stacked">Branch <span style="color: red">*</span></ion-label>
+      <ion-input [value]="branch?.name" readonly></ion-input>
+    </ion-item>
+    <ion-item>
       <ion-label position="stacked">Center Name <span style="color: red">*</span></ion-label>
       <ion-input [(ngModel)]="centerName" name="centerName" placeholder="Enter center name" required [ngModelOptions]="{standalone: true}"></ion-input>
     </ion-item>

@@ -175,24 +175,30 @@ export class HeaderMenuComponent implements OnInit {
         const userBranch = branches.find(b => b.id === userBranchId || b.id.toString() === userBranchId.toString());
         if (userBranch) {
           this.selectedBranch = userBranch;
+          this.branchService.setSelectedBranch(userBranch);
         } else if (branches.length > 0) {
           this.selectedBranch = branches[0];
+          this.branchService.setSelectedBranch(branches[0]);
         }
       } else if (branches.length > 0) {
         this.selectedBranch = branches[0];
+        this.branchService.setSelectedBranch(branches[0]);
       }
     } else {
       // For org level users
       if (branches.length === 1) {
         this.selectedBranch = branches[0];
+        this.branchService.setSelectedBranch(branches[0]);
       } else if (branches.length > 1) {
         // Set first branch as default or get from localStorage
         const savedBranchId = localStorage.getItem('selected_branch_id');
         if (savedBranchId) {
           const savedBranch = branches.find(b => b.id.toString() === savedBranchId);
           this.selectedBranch = savedBranch || branches[0];
+          this.branchService.setSelectedBranch(this.selectedBranch);
         } else {
           this.selectedBranch = branches[0];
+          this.branchService.setSelectedBranch(branches[0]);
         }
       }
     }
@@ -206,6 +212,7 @@ export class HeaderMenuComponent implements OnInit {
     this.selectedBranch = branch;
     this.showBranchDropdown = false;
     localStorage.setItem('selected_branch_id', branch.id.toString());
+    this.branchService.setSelectedBranch(branch);
     this.branchChange.emit(branch);
   }
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
@@ -11,11 +11,21 @@ import { Branch, CreateBranchRequest } from '../models/branch.models';
 })
 export class BranchService {
   private apiUrl = environment.apiUrl;
+  private selectedBranchSubject = new BehaviorSubject<Branch | null>(null);
+  public selectedBranch$ = this.selectedBranchSubject.asObservable();
 
   constructor(
     private http: HttpClient,
     private authService: AuthService
   ) {}
+
+  setSelectedBranch(branch: Branch | null): void {
+    this.selectedBranchSubject.next(branch);
+  }
+
+  getSelectedBranch(): Branch | null {
+    return this.selectedBranchSubject.value;
+  }
 
   getBranches(): Observable<Branch[]> {
     const token = this.authService.getToken();
