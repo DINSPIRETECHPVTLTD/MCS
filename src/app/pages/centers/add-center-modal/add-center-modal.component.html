@@ -11,11 +11,7 @@
 <ion-content class="ion-padding">
   <form #centerForm="ngForm" (ngSubmit)="saveCenter(centerForm)">
     <ion-item>
-      <ion-label position="stacked">Branch</ion-label>
-      <ion-input [value]="branch?.name" readonly></ion-input>
-    </ion-item>
-    <ion-item>
-      <ion-label position="stacked">Center Name</ion-label>
+      <ion-label position="stacked">Center Name <span style="color: red">*</span></ion-label>
       <ion-input [(ngModel)]="centerName" name="centerName" placeholder="Enter center name" required [ngModelOptions]="{standalone: true}"></ion-input>
     </ion-item>
     <div *ngIf="formSubmitted && !centerName" style="color: red; margin-block-end: 8px;">Center Name is required.</div>
@@ -29,11 +25,6 @@
       <ion-input [(ngModel)]="city" name="city" placeholder="Enter city" required [ngModelOptions]="{standalone: true}"></ion-input>
     </ion-item>
     <div *ngIf="formSubmitted && !city" style="color: red; margin-block-end: 8px;">City is required.</div>
-    <ion-item>
-      <ion-label position="stacked">Pin Code</ion-label>
-      <ion-input [(ngModel)]="pinCode" name="pinCode" placeholder="Enter pin code" required [ngModelOptions]="{standalone: true}"></ion-input>
-    </ion-item>
-    <div *ngIf="formSubmitted && !pinCode" style="color: red; margin-block-end: 8px;">Pin Code is required.</div>
     <ion-grid>
       <ion-row>
         <ion-col>

@@ -8,12 +8,9 @@ import { CenterService } from 'src/app/services/center.service';
   styleUrls: ['./add-center-modal.component.scss']
 })
 export class AddCenterModalComponent {
-  @Input() branch: any;
-
   centerName: string = '';
   address: string = '';
   city: string = '';
-  pinCode: string = '';
   isSaving: boolean = false;
   formSubmitted: boolean = false;
 
@@ -29,17 +26,15 @@ export class AddCenterModalComponent {
 
   async saveCenter(form: any) {
     this.formSubmitted = true;
-    if (!this.centerName || !this.address || !this.city || !this.pinCode) {
+    if (!this.centerName || !this.address || !this.city) {
       await this.showToast('Please fill all fields');
       return;
     }
     this.isSaving = true;
     const centerData = {
-      name: this.centerName,
-      address: this.address,
-      city: this.city,
-      pinCode: this.pinCode,
-      branchId: this.branch?.id
+      Name: this.centerName,
+      CenterAddress: this.address,
+      City: this.city
     };
     this.centerService.addCenter(centerData).subscribe({
       next: async () => {

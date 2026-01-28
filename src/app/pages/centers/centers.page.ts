@@ -4,6 +4,7 @@ import { ViewWillEnter, ModalController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { BranchService } from '../../services/branch.service';
 import { Branch } from '../../models/branch.models';
+import { AddCenterModalComponent } from './add-center-modal/add-center-modal.component';
 
 @Component({
   selector: 'app-centers',
