@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
@@ -29,6 +30,16 @@ export class CenterService {
     });
   }
 
+  /**
+   * Update a center by ID (PUT: api/Centers/{id})
+   */
+  updateCenter(id: number, payload: Partial<Center>): Observable<Center> {
+    return this.http.put<Center>(`${this.centersUrl}/${id}`, payload, {
+      headers: this.getHeaders()
+    });
+  }
+
+
   private unwrapList(response: any): any[] {
     const raw =
       response?.$values ??
@@ -54,6 +65,7 @@ export class CenterService {
             .map((c: any) => {
               const centerName = (c?.centerName ?? c?.CenterName ?? c?.name ?? c?.Name ?? '').toString().trim();
               const centerAddress = (c?.centerAddress ?? c?.CenterAddress ?? c?.address ?? c?.Address ?? '').toString();
+              const branchId = Number(c?.branchId ?? c?.BranchId ?? 0) || undefined;
               const branchName = (c?.branchName ?? c?.BranchName ?? c?.branch ?? c?.Branch ?? c?.branch?.name ?? c?.Branch?.Name ?? '').toString().trim();
               const city = (c?.city ?? c?.City ?? '').toString().trim();
 
@@ -62,6 +74,7 @@ export class CenterService {
                 centerName,
                 centerAddress,
                 branchName,
+                branchId,
                 city
               } satisfies Center;
             })
@@ -127,6 +140,15 @@ export class CenterService {
 
   createCenter(payload: CreateCenterRequest): Observable<Center> {
     return this.http.post<Center>(this.centersUrl, payload, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Delete a center by ID (DELETE: api/Centers/{id})
+   */
+  deleteCenter(id: number): Observable<any> {
+    return this.http.delete(`${this.centersUrl}/${id}`, {
       headers: this.getHeaders()
     });
   }

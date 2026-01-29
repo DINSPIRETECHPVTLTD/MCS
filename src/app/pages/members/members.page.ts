@@ -10,6 +10,7 @@ import { UserContextService } from '../../services/user-context.service';
 import { MemberService } from '../../services/member.service';
 import { Branch } from '../../models/branch.models';
 import { CenterOption, Member, POCOption } from '../../models/member.models';
+import { BranchService } from '../../services/branch.service';
 import { AddMemberModalComponent } from './add-member-modal.component';
 
 @Component({
@@ -48,22 +49,34 @@ export class MembersPage implements OnInit, ViewWillEnter, AfterViewInit {
     'guardianAge',
     'branch',
     'center',
-    'poc'
+    'poc',
+    'edit',
+    'delete'
   ];
   dataSource = new MatTableDataSource<Record<string, any>>([]);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
+  branches: Branch[] = [];
+  branchMap: Map<number, string> = new Map();
+
   constructor(
     private authService: AuthService,
     private userContext: UserContextService,
     private memberService: MemberService,
+    private branchService: BranchService,
     private router: Router,
     private modalController: ModalController,
     private toastController: ToastController,
     private loadingController: LoadingController
-  ) { }
+  ) {
+    // Fetch all branches for mapping
+    this.branchService.getBranches().subscribe(branches => {
+      this.branches = branches ?? [];
+      this.branchMap = new Map(this.branches.map(b => [Number(b.id), b.name]));
+    });
+  }
 
   ngOnInit(): void {
     if (!this.authService.isAuthenticated()) {
@@ -276,7 +289,7 @@ export class MembersPage implements OnInit, ViewWillEnter, AfterViewInit {
       memberStatus: m.status ?? m.Status ?? '',
       guardianName,
       guardianAge: m.guardianAge ?? m.GuardianAge ?? '',
-      branch: this.selectedBranch?.name ?? '',
+      branch: this.branchMap.get(Number(m.branchId ?? m.BranchId ?? 0)) ?? '',
       center: centerMap.get(centerId) ?? '',
       poc: pocDisplay
     };

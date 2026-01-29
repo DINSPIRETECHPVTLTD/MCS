@@ -3,6 +3,7 @@ export interface Center {
   centerName: string;
   centerAddress: string;
   branchName: string;
+  branchId?: number;
   city: string;
 }
 

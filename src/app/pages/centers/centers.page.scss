@@ -1,3 +1,10 @@
+mat-paginator {
+  margin-top: 16px;
+  background: #fff;
+  z-index: 2;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
 /* Centers page aligned with Members page layout */
 .users-list-container {
   margin-top: 16px;
@@ -57,19 +64,30 @@
 }
 
 .table-scroll {
-  max-height: 60vh;
-  overflow: auto;
+  height: calc(100vh - 320px); /* Adjust 320px as needed for header, toolbar, paginator, etc. */
+  min-height: 300px;
+  overflow-x: auto;
+  overflow-y: auto;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
-.centers-table {
-  width: 100%;
-  background: #ffffff;
-  border-radius: 12px;
+.centers-table th,
+.centers-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: left;
+  white-space: nowrap;
   overflow: hidden;
-  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
+  text-overflow: ellipsis;
+  vertical-align: middle;
 }
 
-/* Sticky first column */
+.centers-table tr.mat-row,
+.centers-table tr.mat-header-row {
+  min-height: 32px;
+  height: 36px;
+}
 .centers-table .mat-column-centerName,
 .centers-table .mat-header-cell.mat-column-centerName {
   position: sticky;
@@ -114,6 +132,22 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+}
+/* Action column */
+.centers-table .mat-column-actions,
+.centers-table th.mat-header-cell.mat-column-actions {
+  text-align: center;
+  min-width: 90px;
+  max-width: 120px;
+  position: sticky;
+  right: 0;
+  background: #fff;
+  z-index: 3;
+}
+
+.centers-table .mat-column-actions button {
+  margin: 0 2px;
 }
 
 .truncate--address {
@@ -136,10 +170,25 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .centers-table th.mat-header-cell,
   .centers-table td.mat-cell {
-    padding: 10px 12px;
+    padding: 8px 6px;
+    font-size: 13px;
+  }
+  .centers-table .mat-column-branchName {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .centers-table th.mat-header-cell,
+  .centers-table td.mat-cell {
+    padding: 6px 4px;
+    font-size: 12px;
+  }
+  .centers-table .mat-column-city {
+    display: none;
   }
 }
 

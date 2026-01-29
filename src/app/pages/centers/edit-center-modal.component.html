@@ -1,0 +1,48 @@
+<ion-content class="edit-center-content">
+  <div class="edit-center-dialog">
+    <div class="dialog-header">
+      <h2>Edit Center</h2>
+      <ion-button fill="clear" size="small" (click)="onCancel()" aria-label="Close">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
+    <mat-divider></mat-divider>
+
+    <form class="edit-center-form" [formGroup]="centerForm" (ngSubmit)="onUpdate()">
+      <mat-card class="section-card">
+        <div class="section-title">Edit Center Details</div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Center Name <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="centerName" maxlength="100" />
+            <mat-error *ngIf="centerForm.get('centerName')?.invalid">Required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>City <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="city" maxlength="50" />
+            <mat-error *ngIf="centerForm.get('city')?.invalid">Required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field full-width">
+            <mat-label>Center Address <span class="required">*</span></mat-label>
+            <textarea matInput formControlName="centerAddress" rows="3"></textarea>
+            <mat-error *ngIf="centerForm.get('centerAddress')?.invalid">Required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Branch Name <span class="required">*</span></mat-label>
+            <input matInput type="text" formControlName="branchName" />
+            <mat-error *ngIf="centerForm.get('branchName')?.invalid">Required</mat-error>
+          </mat-form-field>
+        </div>
+      </mat-card>
+      <div class="dialog-footer">
+        <ion-button type="submit" [disabled]="isSubmitting || centerForm.invalid" class="update-button">
+          <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+          Update Details
+        </ion-button>
+      </div>
+    </form>
+  </div>
+</ion-content>

@@ -28,13 +28,8 @@ export class LoginPage implements OnInit {
   }
 
   ngOnInit(): void {
-    // Check if already authenticated
-    if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/home']);
-    } else {
-      // Reset form when navigating to login page
-      this.loginForm.reset();
-    }
+    // Always reset form when navigating to login page
+    this.loginForm.reset();
   }
 
   togglePasswordVisibility(): void {
