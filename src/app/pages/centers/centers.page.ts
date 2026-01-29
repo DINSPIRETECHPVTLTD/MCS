@@ -1,4 +1,3 @@
-// ...existing code...
 import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoadingController, ModalController, ToastController, ViewWillEnter } from '@ionic/angular';
@@ -164,13 +163,21 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
               branchName: branchMap.get(Number((center as any).branchId ?? (center as any).BranchId ?? 0)) || center.branchName || ''
             }));
             this.dataSource.data = this.centers;
-            this.dataSource.paginator = this.paginator;
+            // Wire paginator/sort after view updates (they are inside *ngIf)
+            setTimeout(() => {
+              this.dataSource.paginator = this.paginator;
+              this.dataSource.sort = this.sort;
+            }, 0);
             this.isLoading = false;
             await loading.dismiss();
           },
           error: async () => {
             this.centers = centers ?? [];
             this.dataSource.data = this.centers;
+            setTimeout(() => {
+              this.dataSource.paginator = this.paginator;
+              this.dataSource.sort = this.sort;
+            }, 0);
             this.isLoading = false;
             await loading.dismiss();
             await this.showToast('Failed to load branches.', 'danger');

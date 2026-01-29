@@ -33,7 +33,7 @@ npm start
 ionic serve
 ```
 
-The app will be available at `http://localhost:4200`
+The app will be available at `http://localhost:63393`
 
 ### Mobile Development
 
@@ -74,7 +74,7 @@ ionic cap open ios
 ## API Configuration
 
 The app is configured to connect to the API at:
-- **Base URL**: `https://localhost:61008/api`
+- **Base URL**: `https://localhost:60478/api`
 - **Login Endpoint**: `POST /api/Auth/login`
 
 To change the API URL, edit `src/environments/environment.ts` and `src/environments/environment.prod.ts`.
@@ -125,7 +125,7 @@ ionic cap sync
 ## Troubleshooting
 
 ### CORS Issues
-If you encounter CORS errors when connecting to `https://localhost:61008`, you may need to:
+If you encounter CORS errors when connecting to `https://localhost:60478`, you may need to:
 1. Configure your API server to allow requests from your app's origin
 2. Use a proxy configuration in Angular (see `angular.json` proxy settings)
 

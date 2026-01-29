@@ -67,7 +67,7 @@
                 <span *ngSwitchDefault></span>
               </ng-container>
             </th>
-            <th *ngIf="displayedColumns.includes('actions')"></th>
+            <th *ngIf="displayedColumns.includes('actions')" class="filter-actions-cell"></th>
           </tr>
           <ng-container matColumnDef="centerName">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>Center Name</th>
@@ -102,7 +102,7 @@
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
       </div>
-      <mat-paginator [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
+      <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]" [pageSize]="25" showFirstLastButtons></mat-paginator>
     </div>
   </div>
 </ion-content>
