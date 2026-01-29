@@ -3,7 +3,8 @@ import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { BranchService } from '../../services/branch.service';
-import { MemberService, Member } from '../../services/member.service';
+import { MemberService } from '../../services/member.service';
+import { Member } from '../../models/member.models';
 import { Branch } from '../../models/branch.models';
 import { ColDef, GridApi, GridReadyEvent, RowSelectionOptions } from 'ag-grid-community';
 import { ToastController, LoadingController } from '@ionic/angular';
@@ -31,8 +32,11 @@ export class AddLoanPage implements OnInit, ViewWillEnter {
   rowData: Member[] = [];
   columnDefs: ColDef[] = [
     {
-      field: 'memberId',
       headerName: 'Member ID',
+      valueGetter: (params) => {
+        const data = params.data as Member;
+        return (data as any)?.memberId ?? (data as any)?.id ?? '';
+      },
       width: 150,
       sortable: true,
       filter: true
@@ -130,7 +134,7 @@ export class AddLoanPage implements OnInit, ViewWillEnter {
 
     try {
       this.memberService.searchMembers(this.searchTerm.trim()).subscribe({
-        next: (members) => {
+        next: (members: Member[]) => {
           this.searchResults = members;
           this.rowData = members;
           loading.dismiss();
@@ -150,7 +154,7 @@ export class AddLoanPage implements OnInit, ViewWillEnter {
             }, 100);
           }
         },
-        error: (error) => {
+        error: (error: unknown) => {
           console.error('Error searching members:', error);
           loading.dismiss();
           this.isSearching = false;

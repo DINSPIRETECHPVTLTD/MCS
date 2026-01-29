@@ -31,7 +31,7 @@ export class BranchService {
     return this.http.get<Branch[]>(`${this.apiUrl}/Branches`, { headers });
   }
 
-  // Alternative endpoint if the above doesn't work
+  // Get branches list from API
   getBranchesList(): Observable<Branch[]> {
     const token = this.authService.getToken();
     let headers = new HttpHeaders({
