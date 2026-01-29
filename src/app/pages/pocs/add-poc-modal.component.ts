@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { UserContextService } from '../../services/user-context.service';
 import { BranchService } from '../../services/branch.service';
+import { PocService, CreatePocRequest } from '../../services/poc.service';
 
 export interface Center {
   id: number;
@@ -32,6 +33,7 @@ export class AddPocModalComponent implements OnInit {
     private modalController: ModalController,
     private userContext: UserContextService,
     private branchService: BranchService,
+    private pocService: PocService,
     private loadingController: LoadingController,
     private toastController: ToastController
   ) {
@@ -132,7 +134,7 @@ export class AddPocModalComponent implements OnInit {
     });
     await loading.present();
 
-    const pocData: any = {
+    const pocData: CreatePocRequest = {
       firstName: this.pocForm.value.firstName.trim(),
       middleName: this.pocForm.value.middleName?.trim() || '',
       lastName: this.pocForm.value.lastName.trim(),
@@ -142,36 +144,31 @@ export class AddPocModalComponent implements OnInit {
       city: this.pocForm.value.city?.trim() || '',
       state: this.pocForm.value.state?.trim() || '',
       zipCode: this.pocForm.value.zipCode?.trim() || '',
-      country: this.pocForm.value.country?.trim() || '',
-      centerId: this.pocForm.value.centerId,
-      branchId: this.pocForm.value.branchId
+      country: this.pocForm.value.country?.trim() || 'India',
+      centerId: this.pocForm.value.centerId
+      
     };
 
-    try {
-      // TODO: Replace with actual API call when POCs service is available
-      // if (this.isEditing && this.editingPocId) {
-      //   await this.pocService.updatePoc(this.editingPocId, pocData).toPromise();
-      // } else {
-      //   await this.pocService.createPoc(pocData).toPromise();
-      // }
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      loading.dismiss();
-      this.showToast(
-        this.isEditing ? 'POC updated successfully' : 'POC created successfully',
-        'success'
-      );
-      this.modalController.dismiss({ success: true, data: pocData });
-    } catch (error: any) {
-      loading.dismiss();
-      console.error('Error saving POC:', error);
-      this.showToast(
-        error.error?.message || 'Failed to save POC. Please try again.',
-        'danger'
-      );
-    }
+    const apiCall = this.isEditing && this.editingPocId
+      ? this.pocService.updatePoc(this.editingPocId, pocData)
+      : this.pocService.createPoc(pocData);
+
+    apiCall.subscribe({
+      next: async (poc) => {
+        await loading.dismiss();
+        this.showToast(
+          this.isEditing ? 'POC updated successfully' : 'POC created successfully',
+          'success'
+        );
+        this.modalController.dismiss({ success: true, data: poc });
+      },
+      error: async (error) => {
+        await loading.dismiss();
+        console.error('Error saving POC:', error);
+        const errorMessage = error.error?.message || error.message || 'Failed to save POC. Please try again.';
+        this.showToast(errorMessage, 'danger');
+      }
+    });
   }
 
   closeModal(): void {

@@ -154,6 +154,7 @@
         type="submit"
         color="primary"
         fill="solid"
+        (click)="onSubmit()"
         [disabled]="pocForm.invalid || isLoadingCenters"
         style="--background: #3880ff; --color: #ffffff; --background-activated: #3171e0;">
         <ion-icon name="save-outline" slot="start"></ion-icon>
