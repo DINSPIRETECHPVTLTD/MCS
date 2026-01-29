@@ -6,6 +6,7 @@ import { PocsPageRoutingModule } from './pocs-routing.module';
 import { PocsPage } from './pocs.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 import { AddPocModalComponent } from './add-poc-modal.component';
+import { AgGridModule } from 'ag-grid-angular';
 
 @NgModule({
   imports: [
@@ -14,7 +15,8 @@ import { AddPocModalComponent } from './add-poc-modal.component';
     ReactiveFormsModule,
     IonicModule,
     PocsPageRoutingModule,
-    HeaderMenuComponent
+    HeaderMenuComponent,
+    AgGridModule
   ],
   declarations: [PocsPage, AddPocModalComponent]
 })

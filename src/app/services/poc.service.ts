@@ -46,68 +46,36 @@ export class PocService {
     private authService: AuthService
   ) {}
 
-  getPocs(): Observable<Poc[]> {
+  private getHeaders(): HttpHeaders {
     const token = this.authService.getToken();
-    let headers = new HttpHeaders({
+    const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
     
     if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
+      return headers.set('Authorization', `Bearer ${token}`);
     }
+    
+    return headers;
+  }
 
-    return this.http.get<Poc[]>(`${this.apiUrl}/POCs`, { headers });
+  getPocs(): Observable<Poc[]> {
+    return this.http.get<Poc[]>(`${this.apiUrl}/POCs`, { headers: this.getHeaders() });
   }
 
   getPocsByBranch(branchId: number): Observable<Poc[]> {
-    const token = this.authService.getToken();
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-    
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    return this.http.get<Poc[]>(`${this.apiUrl}/POCs/Branch/${branchId}`, { headers });
+    return this.http.get<Poc[]>(`${this.apiUrl}/POCs/Branch/${branchId}`, { headers: this.getHeaders() });
   }
 
   createPoc(poc: CreatePocRequest): Observable<Poc> {
-    const token = this.authService.getToken();
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-    
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    return this.http.post<Poc>(`${this.apiUrl}/POCs`, poc, { headers });
+    return this.http.post<Poc>(`${this.apiUrl}/POCs`, poc, { headers: this.getHeaders() });
   }
 
   updatePoc(id: number, poc: CreatePocRequest): Observable<Poc> {
-    const token = this.authService.getToken();
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-    
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    return this.http.put<Poc>(`${this.apiUrl}/POCs/${id}`, poc, { headers });
+    return this.http.put<Poc>(`${this.apiUrl}/POCs/${id}`, poc, { headers: this.getHeaders() });
   }
 
   deletePoc(id: number): Observable<any> {
-    const token = this.authService.getToken();
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-    
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    return this.http.delete(`${this.apiUrl}/POCs/${id}`, { headers });
+    return this.http.delete(`${this.apiUrl}/POCs/${id}`, { headers: this.getHeaders() });
   }
 }

@@ -4,6 +4,7 @@ import { ModalController, LoadingController, ToastController } from '@ionic/angu
 import { UserContextService } from '../../services/user-context.service';
 import { BranchService } from '../../services/branch.service';
 import { PocService, CreatePocRequest } from '../../services/poc.service';
+import { MemberService } from '../../services/member.service';
 
 export interface Center {
   id: number;
@@ -34,6 +35,7 @@ export class AddPocModalComponent implements OnInit {
     private userContext: UserContextService,
     private branchService: BranchService,
     private pocService: PocService,
+    private memberService: MemberService,
     private loadingController: LoadingController,
     private toastController: ToastController
   ) {
@@ -65,6 +67,51 @@ export class AddPocModalComponent implements OnInit {
     } else {
       console.warn('No branch ID available for POC creation');
     }
+
+    // Load POC data if editing
+    if (this.isEditing && this.editingPocId) {
+      this.loadPocData(this.editingPocId);
+    }
+  }
+
+  async loadPocData(pocId: number): Promise<void> {
+    const loading = await this.loadingController.create({
+      message: 'Loading POC data...',
+      spinner: 'crescent'
+    });
+    await loading.present();
+
+    // Using getPocs() and filtering, since there's no getPocById in the service
+    this.pocService.getPocs().subscribe({
+      next: (pocs) => {
+        loading.dismiss();
+        const poc = pocs.find(p => p.id === pocId);
+        if (poc) {
+          this.pocForm.patchValue({
+            firstName: poc.firstName,
+            middleName: poc.middleName || '',
+            lastName: poc.lastName,
+            phoneNumber: poc.phoneNumber,
+            address1: poc.address1 || '',
+            address2: poc.address2 || '',
+            city: poc.city || '',
+            state: poc.state || '',
+            zipCode: poc.zipCode || '',
+            country: poc.country || 'India',
+            centerId: poc.centerId
+          });
+        } else {
+          this.showToast('POC not found', 'danger');
+          this.closeModal();
+        }
+      },
+      error: (error) => {
+        loading.dismiss();
+        console.error('Error loading POC data:', error);
+        this.showToast('Failed to load POC data', 'danger');
+        this.closeModal();
+      }
+    });
   }
   onFirstNameInput(event: any): void {
     const raw = event?.detail?.value ?? '';
@@ -98,21 +145,23 @@ export class AddPocModalComponent implements OnInit {
   async loadCenters(branchId: number): Promise<void> {
     this.isLoadingCenters = true;
     
-    // TODO: Replace with actual centers API call when available
-    // For now, using dummy data
-    // Example: this.centersService.getCentersByBranch(branchId).subscribe(...)
-    
-    // Dummy data for demonstration
-    setTimeout(() => {
-      this.centers = [
-        { id: 1, name: 'Fatima Nagar', code: 'FN001', branchId: branchId },
-        { id: 2, name: 'Hasan Nagar Indiranagar', code: 'HN001', branchId: branchId },
-        { id: 3, name: 'Zoopark Kalapathra', code: 'ZK001', branchId: branchId },
-        { id: 4, name: 'Mangal Hat', code: 'MH001', branchId: branchId },
-        { id: 5, name: 'Kishan Bagh', code: 'KB001', branchId: branchId }
-      ];
-      this.isLoadingCenters = false;
-    }, 300);
+    this.memberService.getCentersByBranch(branchId).subscribe({
+      next: (centers) => {
+        this.centers = centers.map(center => ({
+          id: center.id,
+          name: center.name,
+          branchId: center.branchId
+        }));
+        this.isLoadingCenters = false;
+        console.log('Loaded centers:', this.centers);
+      },
+      error: (error) => {
+        console.error('Error loading centers:', error);
+        this.centers = [];
+        this.isLoadingCenters = false;
+        this.showToast('Failed to load centers. Please try again.', 'danger');
+      }
+    });
   }
 
   async onSubmit(): Promise<void> {

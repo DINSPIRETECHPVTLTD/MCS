@@ -147,29 +147,29 @@
       <ion-text color="danger">No centers available. Please add centers first.</ion-text>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="button-container">
+    <!-- Action Buttons moved to footer -->
+  </form>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <div class="action-row footer-row">
       <ion-button
-        expand="block"
-        type="submit"
-        color="primary"
-        fill="solid"
+        type="button"
         (click)="onSubmit()"
         [disabled]="pocForm.invalid || isLoadingCenters"
-        style="--background: #3880ff; --color: #ffffff; --background-activated: #3171e0;">
-        <ion-icon name="save-outline" slot="start"></ion-icon>
-        Save Changes
+        class="save-button">
+        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+        {{ isEditing ? 'Update POC' : 'Save POC' }}
       </ion-button>
 
       <ion-button
-        expand="block"
         fill="outline"
-        color="medium"
+        type="button"
         (click)="closeModal()"
-        type="button">
-        <ion-icon name="close-outline" slot="start"></ion-icon>
+        class="cancel-button">
         Cancel
       </ion-button>
     </div>
-  </form>
-</ion-content>
+  </ion-toolbar>
+</ion-footer>
