@@ -2,9 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService } from '../../services/branch.service';
 import { UserContextService } from '../../services/user-context.service';
-import { Branch } from '../../models/branch.models';
 
 export interface MemberDetail {
   memberId: string;
@@ -26,7 +24,7 @@ export interface POCData {
   templateUrl: './branch-dashboard.page.html',
   styleUrls: ['./branch-dashboard.page.scss']
 })
-export class BranchDashboardPage implements OnInit, ViewWillEnter {
+export class BranchDashboardComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'Dashboard';
   isStaff: boolean = false;
   pocsData: POCData[] = [];
@@ -593,8 +591,8 @@ export class BranchDashboardPage implements OnInit, ViewWillEnter {
     this.activeMenu = menu;
   }
 
-  onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
+  onBranchChange(_branch: Branch): void {
+    // Handle branch change if needed
   }
 }
 

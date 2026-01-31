@@ -7,7 +7,7 @@ import { ModalController, LoadingController, ToastController } from '@ionic/angu
 import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil, distinctUntilChanged } from 'rxjs/operators';
 import { MemberService } from '../../services/member.service';
-import { BranchOption, CenterOption, POCOption, MemberStatus } from '../../models/member.models';
+import { CenterOption, POCOption, MemberStatus } from '../../models/member.models';
 
 @Injectable()
 class ModalOverlayContainer extends OverlayContainer {
@@ -317,7 +317,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
             control.setErrors({ ...currentErrors, phoneNotUnique: true });
           }
         } else if (currentErrors['phoneNotUnique']) {
-          const { phoneNotUnique, ...rest } = currentErrors as any;
+          const { phoneNotUnique: _phoneNotUnique, ...rest } = currentErrors as any;
           const nextErrors = Object.keys(rest).length ? rest : null;
           control.setErrors(nextErrors);
         }

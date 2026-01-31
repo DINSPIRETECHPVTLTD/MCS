@@ -14,7 +14,7 @@ import { ColDef } from 'ag-grid-community';
   templateUrl: './branches.page.html',
   styleUrls: ['./branches.page.scss'],
 })
-export class BranchesPage implements OnInit, ViewWillEnter {
+export class BranchesComponent implements OnInit, ViewWillEnter {
   branches: Branch[] = [];
   branchForm: FormGroup;
   showAddForm: boolean = false;
@@ -95,20 +95,16 @@ export class BranchesPage implements OnInit, ViewWillEnter {
   gridOptions: any;
 
   ngOnInit(): void {
-    console.log('BranchesPage ngOnInit called');
     // Check authentication
     if (!this.authService.isAuthenticated()) {
-      console.log('Not authenticated, redirecting to login');
       this.router.navigate(['/login']);
       return;
     }
   }
 
   ionViewWillEnter(): void {
-    console.log('BranchesPage ionViewWillEnter called');
     // Reload branches when page becomes active
     if (this.authService.isAuthenticated()) {
-      console.log('Loading branches on view enter');
       this.loadBranches();
     }
   }
@@ -123,11 +119,9 @@ export class BranchesPage implements OnInit, ViewWillEnter {
       this.branches = normalized;
       this.rowData = normalized;
       this.isLoading = false;
-      console.log('Loaded branches from login response:', branchesFromLogin.length);
       return;
     }
-    
-    // Fallback: Fetch branches from API if not available from login
+
     this.isLoading = true;
     const loading = await this.loadingController.create({
       message: 'Loading branches...',
@@ -142,12 +136,8 @@ export class BranchesPage implements OnInit, ViewWillEnter {
         const normalized = this.normalizeBranches(branches);
         this.branches = normalized;
         this.rowData = normalized;
-        console.log('Branches loaded from API (normalized):', this.branches.length);
-        if (this.branches.length === 0) {
-          console.log('No branches found - array is empty');
-        }
       },
-      error: (error) => {
+      error: (_error) => {
         // Try alternative endpoint
         this.branchService.getBranchesList().subscribe({
           next: (branches) => {
@@ -156,7 +146,6 @@ export class BranchesPage implements OnInit, ViewWillEnter {
             const normalized = this.normalizeBranches(branches);
             this.branches = normalized;
             this.rowData = normalized;
-            console.log('Branches loaded from alternative endpoint (normalized):', this.branches.length);
           },
           error: (err) => {
             loading.dismiss();
@@ -166,8 +155,6 @@ export class BranchesPage implements OnInit, ViewWillEnter {
             console.error('Error loading branches:', err);
             if (err.status !== 404) {
               this.showToast('Error loading branches: ' + (err.error?.message || err.message || 'Unknown error'), 'danger');
-            } else {
-              console.log('No branches endpoint found or no branches exist yet');
             }
           }
         });
@@ -304,7 +291,6 @@ export class BranchesPage implements OnInit, ViewWillEnter {
 
   onBranchChange(branch: Branch): void {
     // Handle branch change if needed
-    console.log('Branch changed to:', branch);
   }
 }
 

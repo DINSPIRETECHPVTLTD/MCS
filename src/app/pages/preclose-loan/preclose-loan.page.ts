@@ -2,15 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService } from '../../services/branch.service';
-import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-preclose-loan',
   templateUrl: './preclose-loan.page.html',
   styleUrls: ['./preclose-loan.page.scss']
 })
-export class PrecloseLoanPage implements OnInit, ViewWillEnter {
+export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'Preclose Loan';
   loans: any[] = [];
 
@@ -40,6 +38,5 @@ export class PrecloseLoanPage implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
   }
 }

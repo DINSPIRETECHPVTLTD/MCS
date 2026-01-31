@@ -3,16 +3,14 @@ import { Router } from '@angular/router';
 import { ViewWillEnter, LoadingController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService } from '../../services/organization.service';
-import { BranchService } from '../../services/branch.service';
 import { Organization } from '../../models/organization.models';
-import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
 })
-export class HomePage implements OnInit, ViewWillEnter {
+export class HomeComponent implements OnInit, ViewWillEnter {
   organization: Organization | null = null;
   activeMenu: string = 'Dashboard';
 
@@ -84,6 +82,5 @@ export class HomePage implements OnInit, ViewWillEnter {
 
   onBranchChange(branch: Branch): void {
     // Handle branch change if needed
-    console.log('Branch changed to:', branch);
   }
 }

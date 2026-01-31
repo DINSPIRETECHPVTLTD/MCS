@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { PocsPageRoutingModule } from './pocs-routing.module';
-import { PocsPage } from './pocs.page';
+import { PocsComponent } from './pocs.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 
 @NgModule({
@@ -14,7 +14,7 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     PocsPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [PocsPage]
+  declarations: [PocsComponent]
 })
 export class PocsPageModule {}
 

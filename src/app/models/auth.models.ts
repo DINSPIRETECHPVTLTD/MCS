@@ -47,5 +47,5 @@ export interface LoginResponse {
   LastName?: string;
   Organization?: OrganizationWithBranchDto;
   Role?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

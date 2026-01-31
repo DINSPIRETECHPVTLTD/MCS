@@ -10,7 +10,7 @@ import { LoginRequest } from '../../models/auth.models';
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
 })
-export class LoginPage implements OnInit {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   showPassword = false;
 

@@ -16,7 +16,7 @@ import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
   templateUrl: './staff.page.html',
   styleUrls: ['./staff.page.scss']
 })
-export class StaffPage implements OnInit, ViewWillEnter {
+export class StaffComponent implements OnInit, ViewWillEnter {
   staff: User[] = [];
   displayedStaff: User[] = [];
   rowData: User[] = [];
@@ -74,10 +74,8 @@ export class StaffPage implements OnInit, ViewWillEnter {
   };
 
   ngOnInit(): void {
-    console.log('StaffPage ngOnInit called');
     // Check authentication
     if (!this.authService.isAuthenticated()) {
-      console.log('Not authenticated, redirecting to login');
       this.router.navigate(['/login']);
       return;
     }
@@ -195,7 +193,6 @@ export class StaffPage implements OnInit, ViewWillEnter {
   }
 
   ionViewWillEnter(): void {
-    console.log('StaffPage ionViewWillEnter called');
     // Reload staff when page becomes active
     if (this.authService.isAuthenticated()) {
       console.log('Loading staff on view enter');

@@ -5,7 +5,7 @@ export interface Branch {
   code?: string;
   address?: string;
   city?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface CreateBranchRequest {

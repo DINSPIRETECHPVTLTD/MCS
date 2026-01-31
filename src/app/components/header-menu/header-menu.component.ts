@@ -87,12 +87,6 @@ export class HeaderMenuComponent implements OnInit {
     this.isOrgOwner = this.userContext.isOrgOwner();
     this.isBranchUser = this.userContext.isBranchUser();
     this.isStaff = this.userRole?.toLowerCase() === 'staff';
-    console.log('User Context:', this.userContext);
-    console.log('User Role:', this.userRole);
-    console.log('User Level:', this.userLevel);
-    console.log('Is Org Owner:', this.isOrgOwner);
-    console.log('Is Branch User:', this.isBranchUser);
-    console.log('Is Staff:', this.isStaff);
 
     // Try to get organization from login response first
     const orgFromLogin = this.authService.getOrganizationInfo();
@@ -140,18 +134,16 @@ export class HeaderMenuComponent implements OnInit {
       // Use branches from login response
       this.branches = branchesFromLogin;
       this.setSelectedBranch(branchesFromLogin);
-      console.log('Loaded branches from login response:', branchesFromLogin.length);
       return;
     }
     
     // Fallback: Fetch branches from API if not available from login
-    console.log('Branches not available from login, fetching from API...');
     this.branchService.getBranches().subscribe({
       next: (branches) => {
         this.branches = branches;
         this.setSelectedBranch(branches);
       },
-      error: (error) => {
+      error: (_error) => {
         // Try alternative endpoint
         this.branchService.getBranchesList().subscribe({
           next: (branches) => {
@@ -293,7 +285,6 @@ export class HeaderMenuComponent implements OnInit {
         replaceUrl: true  // Replace the current page instead of stacking
       }).then((success) => {
         if (success) {
-          console.log('Navigated to:', route);
           // Force change detection after navigation
           this.ngZone.run(() => {
             setTimeout(() => {

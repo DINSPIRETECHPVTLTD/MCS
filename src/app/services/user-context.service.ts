@@ -56,18 +56,6 @@ export class UserContextService {
     this._lastName = lastName || '';
     this._userName = userName || '';
     
-    console.log('UserContext.initialize called with:', {
-      userId: this._userId,
-      organizationId: this._organizationId,
-      branchId: this._branchId,
-      role: this._role,
-      level: this._level,
-      email: this._email,
-      firstName: this._firstName,
-      lastName: this._lastName,
-      userName: this._userName
-    });
-    
     // Persist to localStorage
     this.saveToStorage();
   }
@@ -108,25 +96,11 @@ export class UserContextService {
         this._firstName = data.firstName || '';
         this._lastName = data.lastName || '';
         this._userName = data.userName || '';
-        
-        console.log('UserContext loaded from storage:', {
-          userId: this._userId,
-          organizationId: this._organizationId,
-          branchId: this._branchId,
-          role: this._role,
-          level: this._level,
-          email: this._email,
-          firstName: this._firstName,
-          lastName: this._lastName,
-          userName: this._userName
-        });
       } catch (error) {
         console.error('Error loading user context from storage:', error);
         // Clear corrupted data
         localStorage.removeItem('user_context');
       }
-    } else {
-      console.log('No user context found in storage');
     }
   }
 
@@ -147,7 +121,6 @@ export class UserContextService {
     };
     try {
       localStorage.setItem('user_context', JSON.stringify(data));
-      console.log('UserContext saved to storage:', data);
     } catch (error) {
       console.error('Error saving user context to storage:', error);
     }

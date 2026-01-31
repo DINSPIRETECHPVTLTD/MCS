@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { AddLoanPage } from './add-loan.page';
+import { AddLoanComponent } from './add-loan.page';
 
 const routes: Routes = [
   {
     path: '',
-    component: AddLoanPage
+    component: AddLoanComponent
   }
 ];
 

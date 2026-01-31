@@ -4,8 +4,6 @@ import { ModalController, LoadingController, ToastController } from '@ionic/angu
 import { BranchService } from '../../services/branch.service';
 import { CreateBranchRequest } from '../../models/branch.models';
 import { UserContextService } from '../../services/user-context.service';
-import { Subject, takeUntil } from 'rxjs';
-import { Branch } from '../../models/branch.models';
 
 
 @Component({
@@ -54,7 +52,6 @@ ngOnInit(): void {
   this.branchService.getBranches().subscribe({
     next: (data) => {
       this.branches = data; // <-- branch array with only id & name
-      console.log('Branches loaded:', this.branches); // Step 1 debug
     },
     error: (err) => console.error('Failed to load branches', err)
   });
@@ -87,7 +84,6 @@ ngOnInit(): void {
           phoneNumber: branch['phoneNumber'],
           organizationId: branch['organizationId'] || this.userContext.organizationId
         });
-        console.log('Branch details loaded:', branch);
       },
       error: async (error) => {
         await loading.dismiss();

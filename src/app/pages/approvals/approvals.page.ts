@@ -2,15 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService } from '../../services/branch.service';
-import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-approvals',
   templateUrl: './approvals.page.html',
   styleUrls: ['./approvals.page.scss']
 })
-export class ApprovalsPage implements OnInit, ViewWillEnter {
+export class ApprovalsComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'Approvals';
 
   constructor(
@@ -37,8 +35,8 @@ export class ApprovalsPage implements OnInit, ViewWillEnter {
     this.activeMenu = menu;
   }
 
-  onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
+  onBranchChange(_branch: Branch): void {
+    // Handle branch change if needed
   }
 }
 

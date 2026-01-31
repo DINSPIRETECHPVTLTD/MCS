@@ -38,16 +38,12 @@ export class AuthService {
       payload.username = credentials.username;
     }
 
-    console.log('Login request payload:', payload);
-
     return this.http.post<LoginResponse>(
       `${this.apiUrl}/Auth/login`,
       payload,
       { headers }
     ).pipe(
       tap(response => {
-        console.log('Raw login response:', response);
-        
         // Handle both PascalCase (from C# API) and camelCase properties
         const token = response.token || response.Token || '';
         const userId = response.userId ?? response.UserId ?? null;
@@ -67,20 +63,6 @@ export class AuthService {
         const branches = organization?.branches || orgAny?.Branches || [];
         const branchId = branches.length > 0 ? (branches[0]?.id ?? (branches[0] as any)?.Id ?? null) : null;
         
-        console.log('Extracted values:', {
-          token: token ? 'present' : 'missing',
-          userId,
-          userName,
-          firstName,
-          lastName,
-          organizationId,
-          organizationName,
-          branchId,
-          branchesCount: branches.length,
-          role,
-          userType
-        });
-        
         // Store token
         if (token) {
           localStorage.setItem('auth_token', token);
@@ -98,8 +80,6 @@ export class AuthService {
           branchId: branchId,
           email: credentials.email || userName
         };
-        
-        console.log('User info from login:', userInfo);
         
         // Store user info (for backward compatibility)
         localStorage.setItem('user_info', JSON.stringify(userInfo));
@@ -133,8 +113,6 @@ export class AuthService {
           lastName,
           userName
         );
-        
-        console.log('UserContext initialized:', this.userContext.getAll());
       })
     );
   }

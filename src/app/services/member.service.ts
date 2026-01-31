@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { Observable, BehaviorSubject, catchError, of } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import {
@@ -102,8 +102,6 @@ export class MemberService {
     headers: this.getHeaders()
   }).pipe(
     map(response => {
-      console.log('Centers API RAW Response:', response);
-
       const centersRaw =
         response?.$values ??
         response?.data?.$values ??
@@ -142,12 +140,10 @@ export class MemberService {
    * Get centers by branch - filters from all centers
    */
   getCentersByBranch(branchId: number): Observable<CenterOption[]> {
-    console.log('Fetching centers for branchId:', branchId);
     return this.http.get<any[]>('/Centers', {
       headers: this.getHeaders()
     }).pipe(
       map(data => {
-        console.log('Centers by Branch API Response:', data);
         // Map API response to CenterOption interface
         return data
           .filter(center => center.branchId === branchId)

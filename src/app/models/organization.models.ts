@@ -5,5 +5,5 @@ export interface Organization {
   city?: string;
   email?: string;
   address?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

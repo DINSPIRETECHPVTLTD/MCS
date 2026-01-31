@@ -2,15 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService } from '../../services/branch.service';
-import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-pocs',
   templateUrl: './pocs.page.html',
   styleUrls: ['./pocs.page.scss']
 })
-export class PocsPage implements OnInit, ViewWillEnter {
+export class PocsComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'POCs';
   pocs: any[] = [];
 
@@ -40,7 +38,6 @@ export class PocsPage implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
   }
 }
 

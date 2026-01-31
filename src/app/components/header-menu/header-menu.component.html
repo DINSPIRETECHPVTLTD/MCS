@@ -12,7 +12,13 @@
     <div class="user-section">
       <!-- Branch Dropdown (if multiple branches and Org Owner) -->
       <div class="branch-section" *ngIf="branches.length > 1 && isOrgOwner">
-        <div class="branch-dropdown" (click)="toggleBranchDropdown()">
+        <div class="branch-dropdown" 
+             (click)="toggleBranchDropdown()" 
+             (keydown.enter)="toggleBranchDropdown()"
+             (keydown.space)="toggleBranchDropdown()"
+             tabindex="0"
+             role="button"
+             [attr.aria-expanded]="showBranchDropdown">
           <ion-icon name="business-outline" class="branch-icon"></ion-icon>
           <span class="branch-name">{{ selectedBranch?.name || 'Select Branch' }}</span>
           <ion-icon name="chevron-down-outline" class="dropdown-icon"></ion-icon>
