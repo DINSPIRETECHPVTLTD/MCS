@@ -58,7 +58,44 @@ ngOnInit(): void {
     },
     error: (err) => console.error('Failed to load branches', err)
   });
+
+  // If editing, load the branch details
+  if (this.isEditing && this.editingBranchId) {
+    this.loadBranchDetails(this.editingBranchId);
+  }
 }
+
+  async loadBranchDetails(branchId: number): Promise<void> {
+    const loading = await this.loadingController.create({
+      message: 'Loading branch details...',
+      spinner: 'crescent'
+    });
+    await loading.present();
+
+    this.branchService.getBranchById(branchId).subscribe({
+      next: async (branch) => {
+        await loading.dismiss();
+        // Populate form with branch details
+        this.branchForm.patchValue({
+          name: branch.name,
+          address1: branch['address1'] || branch.address || '',
+          address2: branch['address2'] || '',
+          city: branch.city,
+          state: branch['state'],
+          country: branch.country || 'India',
+          zipCode: branch['zipCode'],
+          phoneNumber: branch['phoneNumber'],
+          organizationId: branch['organizationId'] || this.userContext.organizationId
+        });
+        console.log('Branch details loaded:', branch);
+      },
+      error: async (error) => {
+        await loading.dismiss();
+        console.error('Error loading branch details:', error);
+        this.showToast('Failed to load branch details', 'danger');
+      }
+    });
+  }
 
   onNameInput(event: any): void {
     const raw = event?.detail?.value ?? '';
@@ -104,7 +141,12 @@ ngOnInit(): void {
       organizationId: this.branchForm.value.organizationId
     } as CreateBranchRequest;
 
-    this.branchService.createBranch(branchData).subscribe({
+    // Call update or create based on editing mode
+    const serviceCall = this.isEditing && this.editingBranchId
+      ? this.branchService.updateBranch(this.editingBranchId, branchData)
+      : this.branchService.createBranch(branchData);
+
+    serviceCall.subscribe({
       next: async (branch) => {
         await loading.dismiss();
         this.showToast(
@@ -116,9 +158,10 @@ ngOnInit(): void {
       },
       error: async (error) => {
         await loading.dismiss();
-        const errorMessage = error.error?.message || error.message || 'Failed to create branch. Please try again.';
+        const errorMessage = error.error?.message || error.message || 
+          (this.isEditing ? 'Failed to update branch. Please try again.' : 'Failed to create branch. Please try again.');
         this.showToast(errorMessage, 'danger');
-        console.error('Error creating branch:', error);
+        console.error(this.isEditing ? 'Error updating branch:' : 'Error creating branch:', error);
       }
     });
   }
