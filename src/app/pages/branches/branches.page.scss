@@ -24,44 +24,6 @@
   }
 }
 
-.branch-item {
-  margin-bottom: 8px;
-  border-radius: 8px;
-  --background: var(--ion-color-light);
-  --padding-start: 16px;
-  --padding-end: 16px;
-  --inner-padding-end: 0;
-
-  ion-avatar {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--ion-color-primary);
-    color: white;
-
-    ion-icon {
-      font-size: 32px;
-    }
-  }
-
-  ion-label {
-    h2 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      color: var(--ion-color-dark);
-    }
-
-    p {
-      font-size: 14px;
-      color: var(--ion-color-medium);
-      margin: 2px 0;
-    }
-  }
-}
-
 // AG Grid column borders
 ::ng-deep {
   .branches-grid {

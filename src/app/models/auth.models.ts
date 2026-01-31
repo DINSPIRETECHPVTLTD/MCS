@@ -14,6 +14,7 @@ export interface BranchInfoDto {
   country?: string;
   zipCode?: string;
   phoneNumber?: string;
+  orgId?: number;
 }
 
 export interface OrganizationWithBranchDto {

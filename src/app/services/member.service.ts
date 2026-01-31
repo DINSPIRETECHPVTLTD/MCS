@@ -89,8 +89,7 @@ export class MemberService {
         const branches = '$values' in response && response.$values ? response.$values : response as Branch[];
         return branches.map((branch: Branch) => ({
           id: branch.id,
-          name: branch.name,
-          code: branch.code || ''
+          name: branch.name
         }));
       })
     );

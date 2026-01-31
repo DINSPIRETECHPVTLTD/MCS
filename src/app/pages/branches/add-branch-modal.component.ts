@@ -75,14 +75,14 @@ ngOnInit(): void {
         // Populate form with branch details
         this.branchForm.patchValue({
           name: branch.name,
-          address1: branch['address1'] || branch.address || '',
-          address2: branch['address2'] || '',
+          address1: branch.address1 || '',
+          address2: branch.address2 || '',
           city: branch.city,
-          state: branch['state'],
+          state: branch.state,
           country: branch.country || 'India',
-          zipCode: branch['zipCode'],
-          phoneNumber: branch['phoneNumber'],
-          organizationId: branch['organizationId'] || this.userContext.organizationId
+          zipCode: branch.zipCode,
+          phoneNumber: branch.phoneNumber,
+          organizationId: branch.orgId || this.userContext.organizationId
         });
       },
       error: async (error) => {
