@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { BranchDashboardPage } from './branch-dashboard.page';
+import { BranchDashboardComponent } from './branch-dashboard.page';
 
 const routes: Routes = [
   {
     path: '',
-    component: BranchDashboardPage
+    component: BranchDashboardComponent
   }
 ];
 

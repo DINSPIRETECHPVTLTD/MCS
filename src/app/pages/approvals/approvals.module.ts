@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { ApprovalsPageRoutingModule } from './approvals-routing.module';
-import { ApprovalsPage } from './approvals.page';
+import { ApprovalsComponent } from './approvals.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 
 @NgModule({
@@ -14,7 +14,7 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     ApprovalsPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [ApprovalsPage]
+  declarations: [ApprovalsComponent]
 })
 export class ApprovalsPageModule {}
 

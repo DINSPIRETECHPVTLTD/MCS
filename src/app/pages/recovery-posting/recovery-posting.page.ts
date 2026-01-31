@@ -2,10 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService } from '../../services/branch.service';
-import { Branch } from '../../models/branch.models';
 import { ColDef, GridApi, GridReadyEvent, RowSelectionOptions } from 'ag-grid-community';
 import { ToastController, LoadingController } from '@ionic/angular';
+import { Branch } from '../../models/branch.models';
 
 export interface RecoveryPostingRow {
   selected?: boolean;
@@ -33,7 +32,7 @@ export interface RecoveryPostingRow {
   templateUrl: './recovery-posting.page.html',
   styleUrls: ['./recovery-posting.page.scss']
 })
-export class RecoveryPostingPage implements OnInit, ViewWillEnter {
+export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'Recovery Posting';
   
   // Filters
@@ -618,6 +617,6 @@ export class RecoveryPostingPage implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
+    // Handle branch change if needed
   }
 }

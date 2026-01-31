@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 export class AuthInterceptor implements HttpInterceptor {
   constructor(private auth: AuthService, private router: Router) {}
 
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const token = this.auth.getToken();
     let authReq = req;
     if (token) {

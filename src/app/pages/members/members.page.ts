@@ -17,7 +17,7 @@ import { AddMemberModalComponent } from './add-member-modal.component';
   templateUrl: './members.page.html',
   styleUrls: ['./members.page.scss']
 })
-export class MembersPage implements OnInit, ViewWillEnter, AfterViewInit {
+export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   activeMenu: string = 'Members';
   isLoading: boolean = false;
   isLoadingMembers: boolean = false;
@@ -359,7 +359,6 @@ export class MembersPage implements OnInit, ViewWillEnter, AfterViewInit {
       // Show success message
       this.showToast('Member added successfully!', 'success');
       // TODO: Reload members list when API is ready
-      console.log('Member created:', data.member);
     }
   }
 

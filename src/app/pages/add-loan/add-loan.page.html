@@ -71,47 +71,47 @@
       <ion-card-content>
         <div class="member-details-grid">
           <div class="detail-item">
-            <label>Member ID:</label>
+            <div class="detail-label">Member ID:</div>
             <span>{{ selectedMember.memberId || selectedMember.id || 'N/A' }}</span>
           </div>
           <div class="detail-item">
-            <label>First Name:</label>
+            <div class="detail-label">First Name:</div>
             <span>{{ selectedMember.firstName || 'N/A' }}</span>
           </div>
           <div class="detail-item">
-            <label>Middle Name:</label>
+            <div class="detail-label">Middle Name:</div>
             <span>{{ selectedMember.middleName || 'N/A' }}</span>
           </div>
           <div class="detail-item">
-            <label>Last Name:</label>
+            <div class="detail-label">Last Name:</div>
             <span>{{ selectedMember.lastName || 'N/A' }}</span>
           </div>
           <div class="detail-item">
-            <label>Age:</label>
+            <div class="detail-label">Age:</div>
             <span>{{ selectedMember.age || 'N/A' }}</span>
           </div>
           <div class="detail-item" *ngIf="selectedMember.phone || selectedMember.phoneNumber">
-            <label>Phone:</label>
+            <div class="detail-label">Phone:</div>
             <span>{{ selectedMember.phone || selectedMember.phoneNumber }}</span>
           </div>
           <div class="detail-item" *ngIf="selectedMember.email">
-            <label>Email:</label>
+            <div class="detail-label">Email:</div>
             <span>{{ selectedMember.email }}</span>
           </div>
           <div class="detail-item" *ngIf="selectedMember.address || selectedMember.address1 || selectedMember.address2">
-            <label>Address:</label>
+            <div class="detail-label">Address:</div>
             <span>{{ selectedMember.address || selectedMember.address1 || '' }}{{ selectedMember.address2 ? (', ' + selectedMember.address2) : '' }}</span>
           </div>
           <div class="detail-item" *ngIf="selectedMember.city">
-            <label>City:</label>
+            <div class="detail-label">City:</div>
             <span>{{ selectedMember.city }}</span>
           </div>
           <div class="detail-item" *ngIf="selectedMember.dateOfBirth || selectedMember.dob">
-            <label>Date of Birth:</label>
+            <div class="detail-label">Date of Birth:</div>
             <span>{{ selectedMember.dateOfBirth || selectedMember.dob }}</span>
           </div>
           <div class="detail-item" *ngIf="selectedMember.gender">
-            <label>Gender:</label>
+            <div class="detail-label">Gender:</div>
             <span>{{ selectedMember.gender }}</span>
           </div>
         </div>
