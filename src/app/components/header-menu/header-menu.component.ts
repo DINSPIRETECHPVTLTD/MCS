@@ -29,7 +29,6 @@ export class HeaderMenuComponent implements OnInit {
   showLoanSubmenu: boolean = false;
   branches: Branch[] = [];
   selectedBranch: Branch | null = null;
-  showBranchDropdown: boolean = false;
   
   // User role and level
   userRole: string = '';
@@ -53,22 +52,7 @@ export class HeaderMenuComponent implements OnInit {
   ngOnInit(): void {
     this.initializeHeader();
     
-    // Show Users submenu if active menu is related to Users
-    if (this.activeMenu === 'Users' || this.activeMenu === 'All Users' || this.activeMenu === 'Approvals') {
-      this.showUsersSubmenu = true;
-    }
-    
-    // Show Branches submenu if active menu is related to Branches
-    if (this.activeMenu === 'Branches' || this.activeMenu === 'All Branches' || 
-        this.activeMenu === 'Centers' || this.activeMenu === 'POCs' || 
-        this.activeMenu === 'Staff' || this.activeMenu === 'Members' ||
-        this.activeMenu === 'Loan' || this.activeMenu === 'Add Loan' || 
-        this.activeMenu === 'Manage Loan' || this.activeMenu === 'Preclose Loan' ||
-        this.activeMenu === 'Recovery Posting') {
-      this.showBranchesSubmenu = true;
-    }
-    
-    // Show Loan submenu if active menu is related to Loan
+    // Show Loan submenu if active menu is related to Loan (Branch User only)
     if (this.activeMenu === 'Loan' || this.activeMenu === 'Add Loan' || 
         this.activeMenu === 'Manage Loan' || this.activeMenu === 'Preclose Loan') {
       this.showLoanSubmenu = true;
@@ -102,7 +86,7 @@ export class HeaderMenuComponent implements OnInit {
       this.loadOrganizationDetails();
     }
 
-    // Load branches
+    // Load branches (for branch users: show branch label; owner has no dropdown)
     this.loadBranches();
   }
 
@@ -160,7 +144,7 @@ export class HeaderMenuComponent implements OnInit {
   }
 
   private setSelectedBranch(branches: Branch[]): void {
-    // For branch level users, set their branch from user context
+    // Only set selected branch for branch-level users (owner has no branch dropdown)
     if (this.isBranchUser) {
       const userBranchId = this.userContext.branchId;
       if (userBranchId) {
@@ -173,46 +157,25 @@ export class HeaderMenuComponent implements OnInit {
       } else if (branches.length > 0) {
         this.selectedBranch = branches[0];
       }
-    } else {
-      // For org level users
-      if (branches.length === 1) {
-        this.selectedBranch = branches[0];
-      } else if (branches.length > 1) {
-        // Set first branch as default or get from localStorage
-        const savedBranchId = localStorage.getItem('selected_branch_id');
-        if (savedBranchId) {
-          const savedBranch = branches.find(b => b.id.toString() === savedBranchId);
-          this.selectedBranch = savedBranch || branches[0];
-        } else {
-          this.selectedBranch = branches[0];
-        }
-      }
     }
-  }
-
-  toggleBranchDropdown(): void {
-    this.showBranchDropdown = !this.showBranchDropdown;
-  }
-
-  selectBranch(branch: Branch): void {
-    this.selectedBranch = branch;
-    this.showBranchDropdown = false;
-    localStorage.setItem('selected_branch_id', branch.id.toString());
-    this.branchChange.emit(branch);
+    // Org owner: no selectedBranch, no branch dropdown in header
   }
 
   setActiveMenu(menu: string): void {
     if (menu === 'Users' && this.isOrgOwner) {
-      this.showUsersSubmenu = !this.showUsersSubmenu;
+      this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
       this.showLoanSubmenu = false;
-    } else if (menu === 'Branches') {
-      if (this.isOrgOwner) {
-        // For Org Owner, toggle submenu
-        this.showUsersSubmenu = false;
-        this.showBranchesSubmenu = !this.showBranchesSubmenu;
-        this.showLoanSubmenu = false;
-      }
+      this.activeMenu = 'Users';
+      this.menuChange.emit('Users');
+      setTimeout(() => this.navigateToRoute('/users'), 0);
+    } else if (menu === 'Branches' && this.isOrgOwner) {
+      this.showUsersSubmenu = false;
+      this.showBranchesSubmenu = false;
+      this.showLoanSubmenu = false;
+      this.activeMenu = 'Branches';
+      this.menuChange.emit('Branches');
+      setTimeout(() => this.navigateToRoute('/branches'), 0);
     } else if (menu === 'Loan') {
       // Toggle Loan submenu
       this.showUsersSubmenu = false;
