@@ -27,6 +27,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
   editingUserId: number | null = null;
   activeMenu: string = 'All Users';
   isLoading: boolean = false;
+  selectedBranch: Branch | null = null;
 
   private gridApi?: GridApi;
 
@@ -202,8 +203,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
-    // Handle branch change if needed
-    console.log('Branch changed to:', branch);
+   this.selectedBranch = branch;
   }
 
   onGridReady(params: GridReadyEvent) {
