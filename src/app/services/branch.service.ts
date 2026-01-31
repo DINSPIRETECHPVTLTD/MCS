@@ -45,6 +45,26 @@ export class BranchService {
     return this.http.get<Branch[]>(`${this.apiUrl}/Branch/List`, { headers });
   }
 
+  getBranchById(id: number): Observable<Branch> {
+    const token = this.authService.getToken();
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+    
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    return this.http.get<Branch>(`${this.apiUrl}/Branches/${id}`, { headers }).pipe(
+      catchError((err) => {
+        if (err.status === 404) {
+          return this.http.get<Branch>(`${this.apiUrl}/Branch/${id}`, { headers });
+        }
+        return throwError(() => err);
+      })
+    );
+  }
+
   createBranch(branch: CreateBranchRequest): Observable<Branch> {
     const token = this.authService.getToken();
     let headers = new HttpHeaders({
@@ -61,6 +81,26 @@ export class BranchService {
         if (err.status === 404) {
           // Try alternative endpoint(s)
           return this.http.post<Branch>(`${this.apiUrl}/Branch/Create`, branch, { headers });
+        }
+        return throwError(() => err);
+      })
+    );
+  }
+
+  updateBranch(id: number, branch: CreateBranchRequest): Observable<Branch> {
+    const token = this.authService.getToken();
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+    
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    return this.http.put<Branch>(`${this.apiUrl}/Branches/${id}`, branch, { headers }).pipe(
+      catchError((err) => {
+        if (err.status === 404) {
+          return this.http.put<Branch>(`${this.apiUrl}/Branch/Update/${id}`, branch, { headers });
         }
         return throwError(() => err);
       })
