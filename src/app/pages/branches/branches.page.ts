@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter, ModalController, AlertController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
+import { UserContextService } from '../../services/user-context.service';
 import { BranchService } from '../../services/branch.service';
 import { Branch } from '../../models/branch.models';
 import { AddBranchModalComponent } from './add-branch-modal.component';
@@ -41,18 +42,21 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
     {
       headerName: 'Actions',
       field: 'actions',
-      width: 160,
+      width: 260,
       cellRenderer: (params: ICellRendererParams<Branch>) => {
         const container = document.createElement('div');
         container.className = 'actions-cell';
         container.innerHTML = `
           <button class="ag-btn ag-edit">Edit</button>
           <button class="ag-btn ag-delete">Delete</button>
+          <button class="ag-btn ag-navigate">Navigate</button>
         `;
         const editBtn = container.querySelector('.ag-edit');
         const delBtn = container.querySelector('.ag-delete');
+        const navBtn = container.querySelector('.ag-navigate');
         if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editBranch(params.data));
         if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.deleteBranch(params.data));
+        if (navBtn) navBtn.addEventListener('click', () => params.context.componentParent.navigateToBranch(params.data));
         return container;
       }
     }
@@ -67,6 +71,7 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
     private formBuilder: FormBuilder,
     private branchService: BranchService,
     private authService: AuthService,
+    private userContext: UserContextService,
     private router: Router,
     private loadingController: LoadingController,
     private toastController: ToastController,
@@ -287,6 +292,13 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
 
   onBranchChange(branch: Branch): void {
     this.selectedBranch = branch;
+  }
+
+  /** Navigate to branch dashboard for the selected branch (owner only) */
+  navigateToBranch(branch: Branch): void {
+    this.userContext.setBranchId(branch.id);
+    localStorage.setItem('selected_branch_id', branch.id.toString());
+    this.router.navigate(['/branch-dashboard']);
   }
 }
 

@@ -139,6 +139,14 @@ export class UserContextService {
     return this._branchId;
   }
 
+  /**
+   * Set branch context (e.g. when owner selects a branch to navigate to from Branches page)
+   */
+  setBranchId(branchId: number | null): void {
+    this._branchId = branchId && branchId !== 0 ? branchId : null;
+    this.saveToStorage();
+  }
+
   get role(): string {
     return this._role;
   }
