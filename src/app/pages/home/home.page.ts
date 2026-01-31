@@ -4,6 +4,7 @@ import { ViewWillEnter, LoadingController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService } from '../../services/organization.service';
 import { Organization } from '../../models/organization.models';
+import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-home',

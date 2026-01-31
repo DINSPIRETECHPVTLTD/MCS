@@ -6,6 +6,7 @@ import { MemberService } from '../../services/member.service';
 import { Member } from '../../models/member.models';
 import { ColDef, GridApi, GridReadyEvent, RowSelectionOptions } from 'ag-grid-community';
 import { ToastController, LoadingController } from '@ionic/angular';
+import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-add-loan',

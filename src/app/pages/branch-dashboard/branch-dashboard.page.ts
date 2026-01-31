@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
+import { Branch } from '../../models/branch.models';
 
 export interface MemberDetail {
   memberId: string;

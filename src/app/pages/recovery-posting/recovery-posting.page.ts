@@ -4,6 +4,7 @@ import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { ColDef, GridApi, GridReadyEvent, RowSelectionOptions } from 'ag-grid-community';
 import { ToastController, LoadingController } from '@ionic/angular';
+import { Branch } from '../../models/branch.models';
 
 export interface RecoveryPostingRow {
   selected?: boolean;

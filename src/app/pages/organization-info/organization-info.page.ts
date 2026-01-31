@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { OrganizationService } from '../../services/organization.service';
 import { Organization } from '../../models/organization.models';
+import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-organization-info',

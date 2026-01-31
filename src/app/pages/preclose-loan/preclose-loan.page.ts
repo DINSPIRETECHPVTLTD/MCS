@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
+import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-preclose-loan',
