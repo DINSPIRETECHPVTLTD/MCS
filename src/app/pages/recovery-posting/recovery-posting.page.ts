@@ -61,6 +61,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   private gridApi?: GridApi;
   selectAllChecked: boolean = false;
   isLoading: boolean = false;
+  gridOptions = { theme: 'legacy' as const };
 
   constructor(
     private authService: AuthService,

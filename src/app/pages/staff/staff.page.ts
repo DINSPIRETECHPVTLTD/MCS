@@ -57,8 +57,8 @@ export class StaffComponent implements OnInit, ViewWillEnter {
       phoneNumber: [''],
       role: ['']
     });
-    // Grid options with context so cell renderers can call component methods
-    this.gridOptions = { context: { componentParent: this } } as any;
+    // theme: 'legacy' = use v32-style CSS file themes with AG Grid v33+
+    this.gridOptions = { theme: 'legacy', context: { componentParent: this } } as any;
   }
 
   // simple client-side filters
@@ -86,6 +86,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
 
     // grid options with row id resolver and context
     this.gridOptions = {
+      theme: 'legacy',
       context: { componentParent: this },
       getRowNodeId: (data: any) => data.id?.toString()
     } as any;

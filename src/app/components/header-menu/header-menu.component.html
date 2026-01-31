@@ -10,8 +10,16 @@
       </p>
     </div>
     <div class="user-section">
-      <!-- Branch Label (branch-level user only; owner has no branch dropdown) -->
-      <div class="branch-label" *ngIf="(branches.length === 1 || isBranchUser) && selectedBranch">
+      <!-- Mode indicator: Org Mode / Branch Mode -->
+      <span class="mode-badge" [class.mode-org]="isOrgMode" [class.mode-branch]="isBranchMode">
+        {{ isOrgMode ? 'Org Mode' : 'Branch Mode' }}
+      </span>
+      <!-- Return back to Org Mode (owner only, when in Branch Mode) -->
+      <a *ngIf="isOrgOwner && isBranchMode" class="return-to-org" (click)="returnToOrgMode()" href="javascript:void(0)">
+        Return back to Org Mode
+      </a>
+      <!-- Branch Label when in Branch Mode -->
+      <div class="branch-label" *ngIf="isBranchMode && selectedBranch">
         <ion-icon name="business-outline" class="branch-icon"></ion-icon>
         <span class="branch-name">{{ selectedBranch.name }}</span>
       </div>
@@ -32,8 +40,8 @@
 <!-- Layout: left sidebar + main content -->
 <div class="app-layout">
   <aside class="sidebar">
-    <!-- Navigation Menu for Org Owner: Dashboard, Org Info, Users, Branches only -->
-    <nav class="nav-sidebar" *ngIf="isOrgOwner">
+    <!-- Navigation Menu for Org Mode (owner, no branch selected) -->
+    <nav class="nav-sidebar" *ngIf="isOrgMode">
       <button 
         class="nav-item" 
         [class.active]="activeMenu === 'Dashboard'"
@@ -60,8 +68,8 @@
       </button>
     </nav>
 
-    <!-- Navigation Menu for Branch Admin & Staff: Dashboard, Centers, POCs, Staff, Members, Loans, Recovery Posting -->
-    <nav class="nav-sidebar" *ngIf="isBranchUser">
+    <!-- Navigation Menu for Branch Mode (branch admin/staff, or owner viewing a branch) -->
+    <nav class="nav-sidebar" *ngIf="isBranchMode">
       <button 
         class="nav-item" 
         [class.active]="activeMenu === 'Dashboard' || activeMenu === 'My View'"

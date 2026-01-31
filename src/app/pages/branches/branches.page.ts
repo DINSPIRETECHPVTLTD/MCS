@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter, ModalController, AlertController } from '@ionic/angular';
@@ -73,6 +73,7 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
     private authService: AuthService,
     private userContext: UserContextService,
     private router: Router,
+    private ngZone: NgZone,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private modalController: ModalController,
@@ -89,7 +90,9 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
     });
 
     // Grid options with context so cell renderers can call component methods
+    // theme: 'legacy' = use v32-style CSS file themes (ag-grid.css / ag-theme-alpine.css) with AG Grid v33+
     this.gridOptions = {
+      theme: 'legacy',
       context: { componentParent: this }
     };
   }
@@ -296,9 +299,15 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
 
   /** Navigate to branch dashboard for the selected branch (owner only) */
   navigateToBranch(branch: Branch): void {
+    // Blur focused element to avoid aria-hidden on focused element when Ionic hides the page
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     this.userContext.setBranchId(branch.id);
     localStorage.setItem('selected_branch_id', branch.id.toString());
-    this.router.navigate(['/branch-dashboard']);
+    this.ngZone.run(() => {
+      this.router.navigate(['/branch-dashboard']);
+    });
   }
 }
 

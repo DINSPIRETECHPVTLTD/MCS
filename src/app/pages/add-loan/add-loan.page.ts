@@ -71,6 +71,7 @@ export class AddLoanComponent implements OnInit, ViewWillEnter {
   };
   
   private gridApi?: GridApi;
+  gridOptions = { theme: 'legacy' as const };
 
   constructor(
     private authService: AuthService,

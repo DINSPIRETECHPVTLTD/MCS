@@ -60,9 +60,14 @@ export class AuthService {
         const organizationId = organization?.id ?? orgAny?.Id ?? null;
         const organizationName = organization?.name || orgAny?.Name || '';
         
-        // Extract branch data - use first branch if available
+        // Extract branch data - use first branch only for branch-level users (owner starts in Org Mode with no branch)
         const branches = organization?.branches || orgAny?.Branches || [];
-        const branchId = branches.length > 0 ? (branches[0]?.id ?? (branches[0] as any)?.Id ?? null) : null;
+        const roleLower = (role || '').toLowerCase();
+        const userTypeLower = (userType || '').toLowerCase();
+        const isOrgOwner = userTypeLower === 'organization' && roleLower === 'owner';
+        const branchId = isOrgOwner
+          ? null
+          : (branches.length > 0 ? (branches[0]?.id ?? (branches[0] as any)?.Id ?? null) : null);
         
         // Store token
         if (token) {
@@ -100,6 +105,13 @@ export class AuthService {
             phoneNumber: organization.phoneNumber || orgAny.PhoneNumber,
             branches: branches
           }));
+        }
+        
+        // Owner starts in Org Mode: clear any previous branch selection from localStorage
+        if (isOrgOwner) {
+          try {
+            localStorage.removeItem('selected_branch_id');
+          } catch (_) {}
         }
         
         // Initialize UserContext service with user information

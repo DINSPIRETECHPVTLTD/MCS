@@ -29,6 +29,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
   isLoading: boolean = false;
 
   private gridApi?: GridApi;
+  gridOptions = { theme: 'legacy' as const };
 
   public constructor(
     private formBuilder: FormBuilder,
