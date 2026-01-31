@@ -224,10 +224,15 @@ export class HeaderMenuComponent implements OnInit {
       this.showLoanSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
-      // Branch Mode -> branch dashboard; Org Mode (owner) -> home
+      // Branch Mode -> branch dashboard with branch id; Org Mode (owner) -> home
       setTimeout(() => {
         if (this.isBranchMode) {
-          this.navigateToRoute('/branch-dashboard');
+          const branchId = this.selectedBranch?.id ?? this.userContext.branchId;
+          if (branchId != null) {
+            this.navigateToRoute(`/branch-dashboard/${branchId}`);
+          } else {
+            this.navigateToRoute('/home');
+          }
         } else {
           this.navigateToRoute('/home');
         }
@@ -315,8 +320,9 @@ export class HeaderMenuComponent implements OnInit {
     } else if (submenu === 'All Branches') {
       route = '/branches';
     } else if (submenu === 'Dashboard') {
-      // Dashboard from Branches submenu goes to branch dashboard
-      route = '/branch-dashboard';
+      // Dashboard from Branches submenu goes to branch dashboard with branch id
+      const branchId = this.selectedBranch?.id ?? this.userContext.branchId;
+      route = branchId != null ? `/branch-dashboard/${branchId}` : '/home';
     } else if (submenu === 'Centers') {
       route = '/centers';
     } else if (submenu === 'POCs') {

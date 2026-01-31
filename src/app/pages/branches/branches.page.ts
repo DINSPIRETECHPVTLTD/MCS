@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, NgZone, ApplicationRef } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter, ModalController, AlertController } from '@ionic/angular';
@@ -74,6 +74,7 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
     private userContext: UserContextService,
     private router: Router,
     private ngZone: NgZone,
+    private appRef: ApplicationRef,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private modalController: ModalController,
@@ -299,14 +300,20 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
 
   /** Navigate to branch dashboard for the selected branch (owner only) */
   navigateToBranch(branch: Branch): void {
-    // Blur focused element to avoid aria-hidden on focused element when Ionic hides the page
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
+    // Blur the button so focus is not inside an aria-hidden ancestor when Ionic hides the page
+    const active = document.activeElement as HTMLElement | null;
+    if (active && typeof active.blur === 'function') {
+      active.blur();
     }
     this.userContext.setBranchId(branch.id);
     localStorage.setItem('selected_branch_id', branch.id.toString());
+    // Navigate to branch dashboard with branch id in URL so the route is distinct and the page refreshes
     this.ngZone.run(() => {
-      this.router.navigate(['/branch-dashboard']);
+      this.router.navigate(['/branch-dashboard', branch.id], { replaceUrl: true }).then((success) => {
+        if (success) {
+          this.ngZone.run(() => this.appRef.tick());
+        }
+      });
     });
   }
 }
