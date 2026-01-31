@@ -8,6 +8,7 @@ import { UserContextService } from '../../services/user-context.service';
 import { User } from '../../models/user.models';
 import { AddUserModalComponent } from './add-user-modal.component';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
+import { Branch } from 'src/app/models/branch.models';
 
 @Component({
   selector: 'app-users',
