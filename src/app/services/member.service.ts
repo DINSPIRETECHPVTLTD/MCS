@@ -12,9 +12,11 @@ import {
   POCOption,
   AadhaarValidationResponse
 } from '../models/member.models';
+import { Branch } from '../models/branch.models';
 
 export type { Member } from '../models/member.models';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 @Injectable({
   providedIn: 'root'
 })
@@ -80,12 +82,12 @@ export class MemberService {
    * Get all branches for dropdown
    */
   getBranchOptions(): Observable<BranchOption[]> {
-    return this.http.get<any>('/Branches', {
+    return this.http.get<{ $values?: Branch[] } | Branch[]>('/Branches', {
       headers: this.getHeaders()
     }).pipe(
       map(response => {
-        const branches = response.$values ?? response;
-        return branches.map((branch: any) => ({
+        const branches = '$values' in response && response.$values ? response.$values : response as Branch[];
+        return branches.map((branch: Branch) => ({
           id: branch.id,
           name: branch.name,
           code: branch.code || ''
@@ -101,7 +103,7 @@ export class MemberService {
   return this.http.get<any>('/Centers', {
     headers: this.getHeaders()
   }).pipe(
-    map(response => {
+    map((response: any) => {
       const centersRaw =
         response?.$values ??
         response?.data?.$values ??
@@ -257,11 +259,11 @@ export class MemberService {
         this.getAllMembers().pipe(
           map((members) =>
             (members ?? []).filter((m) => {
-              const id = String((m as any)?.id ?? '');
-              const phone = String((m as any)?.phoneNumber ?? '');
-              const firstName = String((m as any)?.firstName ?? '').toLowerCase();
-              const middleName = String((m as any)?.middleName ?? '').toLowerCase();
-              const lastName = String((m as any)?.lastName ?? '').toLowerCase();
+              const id = String(m?.id ?? '');
+              const phone = String(m?.phoneNumber ?? '');
+              const firstName = String(m?.firstName ?? '').toLowerCase();
+              const middleName = String(m?.middleName ?? '').toLowerCase();
+              const lastName = String(m?.lastName ?? '').toLowerCase();
               const fullName = `${firstName} ${middleName} ${lastName}`.replace(/\s+/g, ' ').trim();
 
               return (
@@ -297,7 +299,7 @@ export class MemberService {
   /**
    * Delete member
    */
-  deleteMember(memberId: number): Observable<any> {
+  deleteMember(memberId: number): Observable<unknown> {
     return this.http.delete(`${this.apiUrl}/${memberId}`, {
       headers: this.getHeaders()
     });

@@ -617,6 +617,6 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
+    // Handle branch change if needed
   }
 }

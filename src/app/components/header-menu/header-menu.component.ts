@@ -120,7 +120,7 @@ export class HeaderMenuComponent implements OnInit {
         this.organization = org;
         localStorage.setItem('organization_info', JSON.stringify(org));
       },
-      error: (error: any) => {
+      error: (error: string) => {
         console.error('Error loading organization:', error);
       }
     });

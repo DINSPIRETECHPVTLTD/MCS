@@ -76,13 +76,11 @@ export class LoginComponent implements OnInit {
           this.router.navigate(['/home'], { replaceUrl: true }).then(
             (success) => {
               if (success) {
-                console.log('Navigation successful');
                 // Show toast after navigation
                 setTimeout(() => {
                   this.showToast('Login successful!', 'success');
                 }, 300);
               } else {
-                console.log('Navigation returned false, using fallback');
                 window.location.href = '/home';
               }
             },

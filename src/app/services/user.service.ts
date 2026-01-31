@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { User, CreateUserRequest } from '../models/user.models';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 @Injectable({
   providedIn: 'root'
 })
@@ -62,7 +63,7 @@ export class UserService {
     return this.http.put<User>(`${this.apiUrl}/Users/${id}`, user, { headers });
   }
 
-  deleteUser(id: number): Observable<any> {
+  deleteUser(id: number): Observable<unknown> {
     const token = this.authService.getToken();
     let headers = new HttpHeaders({
       'Content-Type': 'application/json'

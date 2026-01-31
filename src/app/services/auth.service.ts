@@ -7,6 +7,7 @@ import { UserContextService } from './user-context.service';
 import { LoginRequest, LoginResponse, OrganizationWithBranchDto, BranchInfoDto } from '../models/auth.models';
 import { Branch } from '../models/branch.models';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 @Injectable({
   providedIn: 'root'
 })

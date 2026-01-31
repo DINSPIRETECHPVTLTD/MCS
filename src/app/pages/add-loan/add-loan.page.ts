@@ -34,7 +34,7 @@ export class AddLoanComponent implements OnInit, ViewWillEnter {
       headerName: 'Member ID',
       valueGetter: (params) => {
         const data = params.data as Member;
-        return (data as any)?.memberId ?? (data as any)?.id ?? '';
+        return (data as Member)?.memberId ?? (data as Member)?.id ?? '';
       },
       width: 150,
       sortable: true,

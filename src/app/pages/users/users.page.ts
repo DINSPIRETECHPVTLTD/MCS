@@ -74,7 +74,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
         sortable: false,
         filter: false,
         resizable: false,
-        cellRenderer: (_params: any) => {
+        cellRenderer: () => {
           return `
             <div class="action-buttons">
               <button class="ag-action ag-edit" title="Edit">Edit</button>

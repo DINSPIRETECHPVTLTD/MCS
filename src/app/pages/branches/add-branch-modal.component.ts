@@ -93,8 +93,8 @@ ngOnInit(): void {
     });
   }
 
-  onNameInput(event: any): void {
-    const raw = event?.detail?.value ?? '';
+  onNameInput(event: Event): void {
+    const raw = (event.target as HTMLInputElement)?.value ?? '';
     const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
     const truncated = sanitized.slice(0, 100);
     const control = this.branchForm.get('name');

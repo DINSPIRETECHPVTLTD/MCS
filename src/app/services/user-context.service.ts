@@ -214,15 +214,7 @@ export class UserContextService {
    * Debug method to check UserContext state
    */
   debug(): void {
-    console.log('=== UserContext Debug ===');
-    console.log('Current state:', this.getAll());
-    console.log('Is Org Owner:', this.isOrgOwner());
-    console.log('Is Branch User:', this.isBranchUser());
-    const stored = localStorage.getItem('user_context');
-    console.log('Stored in localStorage:', stored ? JSON.parse(stored) : 'null');
-    const userInfo = localStorage.getItem('user_info');
-    console.log('user_info in localStorage:', userInfo ? JSON.parse(userInfo) : 'null');
-    console.log('========================');
+    // Debug information removed
   }
 }
 

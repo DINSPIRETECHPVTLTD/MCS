@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { UserContextService } from '../../services/user-context.service';
+import { CreateUserRequest } from 'src/app/models/user.models';
 
 @Component({
   selector: 'app-add-user-modal',
@@ -71,7 +72,7 @@ export class AddUserModalComponent implements OnInit {
     });
     await loading.present();
 
-    const userData: any = {
+    const userData: CreateUserRequest = {
       firstName: this.userForm.value.firstName.trim(),
       middleName: this.userForm.value.middleName?.trim() || '',
       lastName: this.userForm.value.lastName.trim(),
@@ -82,7 +83,7 @@ export class AddUserModalComponent implements OnInit {
       state: this.userForm.value.state?.trim() || '',
       pinCode: this.userForm.value.pinCode?.trim() || '',
       email: this.userForm.value.email?.trim() || '',
-      password: this.userForm.value.password,
+     // password: this.userForm.value.password,
       level: this.userForm.value.level,
       role: this.userForm.value.role,
       organizationId: this.userForm.value.organizationId,
