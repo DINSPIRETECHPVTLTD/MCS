@@ -9,20 +9,19 @@
         <span *ngIf="organization.city">{{ organization.city }}</span>
       </p>
     </div>
+    <!-- Branch name in center (Branch Mode only); Org Mode leaves center empty -->
+    <div class="header-center">
+      <h2 class="header-branch-name" *ngIf="isBranchMode && selectedBranch">{{ selectedBranch.name }}</h2>
+    </div>
     <div class="user-section">
-      <!-- Mode indicator: Org Mode / Branch Mode -->
-      <span class="mode-badge" [class.mode-org]="isOrgMode" [class.mode-branch]="isBranchMode">
+      <!-- Mode indicator: Org Mode / Branch Mode (owner login only) -->
+      <span *ngIf="isOrgOwner" class="mode-badge" [class.mode-org]="isOrgMode" [class.mode-branch]="isBranchMode">
         {{ isOrgMode ? 'Org Mode' : 'Branch Mode' }}
       </span>
       <!-- Return back to Org Mode (owner only, when in Branch Mode) -->
       <a *ngIf="isOrgOwner && isBranchMode" class="return-to-org" (click)="returnToOrgMode()" href="javascript:void(0)">
         Return back to Org Mode
       </a>
-      <!-- Branch Label when in Branch Mode -->
-      <div class="branch-label" *ngIf="isBranchMode && selectedBranch">
-        <ion-icon name="business-outline" class="branch-icon"></ion-icon>
-        <span class="branch-name">{{ selectedBranch.name }}</span>
-      </div>
 
       <div class="user-info">
         <ion-icon name="person-circle-outline" class="user-icon"></ion-icon>
