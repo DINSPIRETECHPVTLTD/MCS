@@ -2,17 +2,15 @@
   [activeMenu]="activeMenu"
   (menuChange)="onMenuChange($event)"
   (branchChange)="onBranchChange($event)">
-</app-header-menu>
-
-<ion-content [fullscreen]="true" class="ion-padding">
-  <div class="content-container">
-    <h1>User Approvals</h1>
-    <p>Pending user approval requests will be displayed here.</p>
-    
-    <div class="empty-state">
-      <ion-icon name="checkmark-circle-outline" size="large"></ion-icon>
-      <p>No pending approvals</p>
+  <ion-content [fullscreen]="true" class="ion-padding">
+    <div class="content-container">
+      <h1>User Approvals</h1>
+      <p>Pending user approval requests will be displayed here.</p>
+      
+      <div class="empty-state">
+        <ion-icon name="checkmark-circle-outline" size="large"></ion-icon>
+        <p>No pending approvals</p>
+      </div>
     </div>
-  </div>
-</ion-content>
-
+  </ion-content>
+</app-header-menu>
