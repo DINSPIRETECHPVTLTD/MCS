@@ -5,6 +5,7 @@ import { IonicModule } from '@ionic/angular';
 import { MembersPageRoutingModule } from './members-routing.module';
 import { MembersPage } from './members.page';
 import { AddMemberModalComponent } from './add-member-modal.component';
+import { EditMemberModalComponent } from './edit-member-modal.component';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
@@ -17,6 +18,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
+import { AgGridAngular } from 'ag-grid-angular';
 
 @NgModule({
   imports: [
@@ -36,9 +38,10 @@ import { MatIconModule } from '@angular/material/icon';
     MatNativeDateModule,
     MatIconModule,
     MembersPageRoutingModule,
-    HeaderMenuComponent
+    HeaderMenuComponent,
+    AgGridAngular
   ],
-  declarations: [MembersPage, AddMemberModalComponent]
+  declarations: [MembersPage, AddMemberModalComponent, EditMemberModalComponent]
 })
 export class MembersPageModule {}
 

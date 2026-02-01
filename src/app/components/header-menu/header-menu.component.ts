@@ -196,6 +196,16 @@ export class HeaderMenuComponent implements OnInit {
         }
       }
     }
+    // Persist and notify listeners about the selected branch on initial load
+    if (this.selectedBranch) {
+      try {
+        localStorage.setItem('selected_branch_id', this.selectedBranch.id.toString());
+      } catch (e) {
+        // ignore storage errors
+      }
+      this.branchChange.emit(this.selectedBranch);
+      console.log('Selected Branch set to header:', this.selectedBranch);
+    }
   }
 
   toggleBranchDropdown(): void {
