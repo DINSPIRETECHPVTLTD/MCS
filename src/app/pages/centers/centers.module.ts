@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { CentersPageRoutingModule } from './centers-routing.module';
-import { CentersPage } from './centers.page';
+import { CentersComponent } from './centers.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 
 @NgModule({
@@ -14,7 +14,7 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     CentersPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [CentersPage]
+  declarations: [CentersComponent]
 })
 export class CentersPageModule {}
 

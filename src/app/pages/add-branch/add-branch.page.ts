@@ -11,7 +11,7 @@ import { Branch } from '../../models/branch.models';
   templateUrl: './add-branch.page.html',
   styleUrls: ['./add-branch.page.scss']
 })
-export class AddBranchPage implements OnInit, ViewWillEnter {
+export class AddBranchComponent implements OnInit, ViewWillEnter {
   branchForm: FormGroup;
   activeMenu: string = 'Add new branch';
   submitted: boolean = false;
@@ -43,8 +43,8 @@ export class AddBranchPage implements OnInit, ViewWillEnter {
     }
   }
 
-  onNameInput(event: any): void {
-    const raw = event?.detail?.value ?? '';
+  onNameInput(event: Event): void {
+    const raw = (event as CustomEvent)?.detail?.value ?? '';
     const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
     const truncated = sanitized.slice(0, 100);
     const control = this.branchForm.get('name');
@@ -101,8 +101,8 @@ export class AddBranchPage implements OnInit, ViewWillEnter {
     this.activeMenu = menu;
   }
 
-  onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
+  onBranchChange(_branch: Branch): void {
+    // Handle branch change if needed
   }
 
   getFieldError(fieldName: string): string {

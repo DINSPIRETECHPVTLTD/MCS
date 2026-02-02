@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { BranchService } from '../../services/branch.service';
 import { UserContextService } from '../../services/user-context.service';
 import { Branch } from '../../models/branch.models';
 
@@ -26,7 +26,7 @@ export interface POCData {
   templateUrl: './branch-dashboard.page.html',
   styleUrls: ['./branch-dashboard.page.scss']
 })
-export class BranchDashboardPage implements OnInit, ViewWillEnter {
+export class BranchDashboardComponent implements OnInit, OnDestroy, ViewWillEnter {
   activeMenu: string = 'Dashboard';
   isStaff: boolean = false;
   pocsData: POCData[] = [];
@@ -34,12 +34,37 @@ export class BranchDashboardPage implements OnInit, ViewWillEnter {
   selectedDate: 'today' | 'tomorrow' = 'today';
   todayDate: string = '';
   tomorrowDate: string = '';
+  private paramSub?: Subscription;
 
   constructor(
     private authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private userContext: UserContextService
   ) { }
+
+  /** Get branch id from route (parent has :branchId) */
+  private getBranchIdFromRoute(): number | null {
+    const parent = this.route.parent;
+    if (!parent) return null;
+    const id = parent.snapshot.paramMap.get('branchId');
+    if (id == null || id === '') return null;
+    const num = Number(id);
+    return Number.isNaN(num) ? null : num;
+  }
+
+  private syncBranchAndRefresh(): void {
+    const branchId = this.getBranchIdFromRoute();
+    if (branchId != null) {
+      this.userContext.setBranchId(branchId);
+      try {
+        localStorage.setItem('selected_branch_id', String(branchId));
+      } catch (_) {}
+    }
+    if (this.isStaff) {
+      this.loadPOCsData();
+    }
+  }
 
   ngOnInit(): void {
     if (!this.authService.isAuthenticated()) {
@@ -68,23 +93,26 @@ export class BranchDashboardPage implements OnInit, ViewWillEnter {
     
     // Check if user is staff
     this.isStaff = this.userContext.role?.toLowerCase() === 'staff';
-    
     if (this.isStaff) {
       this.activeMenu = 'My View';
-      this.loadPOCsData();
     }
+    
+    // Sync branch from URL and refresh when route param changes (e.g. navigate from branch 5 to 7)
+    this.syncBranchAndRefresh();
+    this.paramSub = this.route.parent?.paramMap?.subscribe(() => this.syncBranchAndRefresh());
+  }
+
+  ngOnDestroy(): void {
+    this.paramSub?.unsubscribe();
   }
 
   ionViewWillEnter(): void {
-    // Reload data when page becomes active
+    // Reload when page becomes active so navigating from Branches grid refreshes the view
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
     }
-    
-    if (this.isStaff) {
-      this.loadPOCsData();
-    }
+    this.syncBranchAndRefresh();
   }
 
   loadPOCsData(): void {
@@ -593,8 +621,8 @@ export class BranchDashboardPage implements OnInit, ViewWillEnter {
     this.activeMenu = menu;
   }
 
-  onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
+  onBranchChange(_branch: Branch): void {
+    // Handle branch change if needed
   }
 }
 

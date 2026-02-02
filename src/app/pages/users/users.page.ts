@@ -5,16 +5,16 @@ import { LoadingController, ToastController, ViewWillEnter, ModalController } fr
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
-import { User, CreateUserRequest } from '../../models/user.models';
-import { Branch } from '../../models/branch.models';
+import { User } from '../../models/user.models';
 import { AddUserModalComponent } from './add-user-modal.component';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
+import { Branch } from 'src/app/models/branch.models';
 
 @Component({
   selector: 'app-users',
   templateUrl: './users.page.html',
 })
-export class UsersPage implements OnInit, ViewWillEnter {
+export class UsersComponent implements OnInit, ViewWillEnter {
   users: User[] = [];
   rowData: User[] = []; // <-- added
   columnDefs: ColDef[] = [];
@@ -29,6 +29,7 @@ export class UsersPage implements OnInit, ViewWillEnter {
   isLoading: boolean = false;
 
   private gridApi?: GridApi;
+  gridOptions = { theme: 'legacy' as const };
 
   public constructor(
     private formBuilder: FormBuilder,
@@ -58,15 +59,12 @@ export class UsersPage implements OnInit, ViewWillEnter {
   }
 
   ngOnInit(): void {
-    console.log('UsersPage ngOnInit called');
     // Check authentication
     if (!this.authService.isAuthenticated()) {
-      console.log('Not authenticated, redirecting to login');
       this.router.navigate(['/login']);
       return;
     }
     
-    console.log('Setting organization ID');
     this.setOrganizationId();
     // set up grid columns
     this.columnDefs = [
@@ -77,7 +75,7 @@ export class UsersPage implements OnInit, ViewWillEnter {
         sortable: false,
         filter: false,
         resizable: false,
-        cellRenderer: (params: any) => {
+        cellRenderer: () => {
           return `
             <div class="action-buttons">
               <button class="ag-action ag-edit" title="Edit">Edit</button>
@@ -90,10 +88,8 @@ export class UsersPage implements OnInit, ViewWillEnter {
   }
 
   ionViewWillEnter(): void {
-    console.log('UsersPage ionViewWillEnter called');
     // Reload users when page becomes active (Ionic lifecycle hook)
     if (this.authService.isAuthenticated()) {
-      console.log('Loading users on view enter');
       this.loadUsers();
     }
   }
@@ -122,8 +118,6 @@ export class UsersPage implements OnInit, ViewWillEnter {
         this.isLoading = false;
         this.users = users || [];
         this.rowData = [...this.users]; // Create new array reference for change detection
-        console.log('Users loaded:', this.users);
-        console.log('RowData set:', this.rowData);
 
         // Update grid if it's already initialized
         if (this.gridApi) {
@@ -131,10 +125,6 @@ export class UsersPage implements OnInit, ViewWillEnter {
           setTimeout(() => {
             this.gridApi?.sizeColumnsToFit();
           }, 100);
-        }
-
-        if (this.users.length === 0) {
-          console.log('No users found - array is empty');
         }
       },
       error: (error) => {
@@ -145,8 +135,6 @@ export class UsersPage implements OnInit, ViewWillEnter {
         console.error('Error loading users:', error);
         if (error.status !== 404) {
           this.showToast('Error loading users: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
-        } else {
-          console.log('No users endpoint found or no users exist yet');
         }
       }
     });

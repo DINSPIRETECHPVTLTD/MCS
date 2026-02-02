@@ -9,14 +9,15 @@ import { BranchService } from '../../services/branch.service';
 import { User } from '../../models/user.models';
 import { Branch } from '../../models/branch.models';
 import { AddStaffModalComponent } from './add-staff-modal.component';
-import { ColDef, GridReadyEvent } from 'ag-grid-community';
+import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
+import { POCData } from '../branch-dashboard/branch-dashboard.page';
 
 @Component({
   selector: 'app-staff',
   templateUrl: './staff.page.html',
   styleUrls: ['./staff.page.scss']
 })
-export class StaffPage implements OnInit, ViewWillEnter {
+export class StaffComponent implements OnInit, ViewWillEnter {
   staff: User[] = [];
   displayedStaff: User[] = [];
   rowData: User[] = [];
@@ -35,7 +36,7 @@ export class StaffPage implements OnInit, ViewWillEnter {
   gridOptions: any;
   // track editing state per-row
   editingRowIds: Set<number> = new Set<number>();
-  originalRowData: Map<number, any> = new Map<number, any>();
+  originalRowData: Map<number, POCData> = new Map<number, POCData>();
 
   constructor(
     private formBuilder: FormBuilder,
@@ -56,8 +57,8 @@ export class StaffPage implements OnInit, ViewWillEnter {
       phoneNumber: [''],
       role: ['']
     });
-    // Grid options with context so cell renderers can call component methods
-    this.gridOptions = { context: { componentParent: this } } as any;
+    // theme: 'legacy' = use v32-style CSS file themes with AG Grid v33+
+    this.gridOptions = { theme: 'legacy', context: { componentParent: this } } as any;
   }
 
   // simple client-side filters
@@ -74,10 +75,8 @@ export class StaffPage implements OnInit, ViewWillEnter {
   };
 
   ngOnInit(): void {
-    console.log('StaffPage ngOnInit called');
     // Check authentication
     if (!this.authService.isAuthenticated()) {
-      console.log('Not authenticated, redirecting to login');
       this.router.navigate(['/login']);
       return;
     }
@@ -87,6 +86,7 @@ export class StaffPage implements OnInit, ViewWillEnter {
 
     // grid options with row id resolver and context
     this.gridOptions = {
+      theme: 'legacy',
       context: { componentParent: this },
       getRowNodeId: (data: any) => data.id?.toString()
     } as any;
@@ -186,10 +186,8 @@ export class StaffPage implements OnInit, ViewWillEnter {
   }
 
   ionViewWillEnter(): void {
-    console.log('StaffPage ionViewWillEnter called');
     // Reload staff when page becomes active
     if (this.authService.isAuthenticated()) {
-      console.log('Loading staff on view enter');
       // Reload selected branch and then load staff
       this.loadSelectedBranch();
     }
@@ -255,8 +253,6 @@ export class StaffPage implements OnInit, ViewWillEnter {
         console.error('Error loading staff:', error);
         if (error.status !== 404) {
           this.showToast('Error loading staff: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
-        } else {
-          console.log('No users endpoint found or no staff exist yet');
         }
       }
     });
@@ -554,7 +550,6 @@ export class StaffPage implements OnInit, ViewWillEnter {
 
   onBranchChange(branch: Branch): void {
     // Handle branch change - update selected branch and reload staff
-    console.log('Branch changed to:', branch);
     this.selectedBranch = branch;
     this.loadStaff(); // Reload staff for the new branch
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone, ApplicationRef } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter, ModalController, AlertController } from '@ionic/angular';
@@ -7,14 +7,14 @@ import { UserContextService } from '../../services/user-context.service';
 import { BranchService } from '../../services/branch.service';
 import { Branch } from '../../models/branch.models';
 import { AddBranchModalComponent } from './add-branch-modal.component';
-import { ColDef } from 'ag-grid-community';
+import { ColDef, ValueGetterParams, ICellRendererParams, GridOptions } from 'ag-grid-community';
 
 @Component({
   selector: 'app-branches',
   templateUrl: './branches.page.html',
   styleUrls: ['./branches.page.scss'],
 })
-export class BranchesPage implements OnInit, ViewWillEnter {
+export class BranchesComponent implements OnInit, ViewWillEnter {
   branches: Branch[] = [];
   branchForm: FormGroup;
   showAddForm: boolean = false;
@@ -22,6 +22,7 @@ export class BranchesPage implements OnInit, ViewWillEnter {
   editingBranchId: number | null = null;
   activeMenu: string = 'All Branches';
   isLoading: boolean = false;
+  selectedBranch: Branch | null = null;
 
   // AG Grid configuration
   rowData: Branch[] = [];
@@ -30,8 +31,8 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     { field: 'name', headerName: 'Name', sortable: true, filter: true, flex: 1 },
     { field: 'city', headerName: 'City', sortable: true, filter: true, width: 150 },
     { field: 'state', headerName: 'State', sortable: true, filter: true, width: 120 },
-    { headerName: 'Address', valueGetter: (params: any) => {
-        const a1 = params.data?.address1 || params.data?.address || '';
+    { headerName: 'Address', valueGetter: (params: ValueGetterParams<Branch>) => {
+        const a1 = params.data?.address1 || '';
         const a2 = params.data?.address2 || '';
         return [a1, a2].filter(Boolean).join(' ');
       }, sortable: true, filter: true, flex: 1 },
@@ -41,18 +42,21 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     {
       headerName: 'Actions',
       field: 'actions',
-      width: 160,
-      cellRenderer: (params: any) => {
+      width: 260,
+      cellRenderer: (params: ICellRendererParams<Branch>) => {
         const container = document.createElement('div');
         container.className = 'actions-cell';
         container.innerHTML = `
           <button class="ag-btn ag-edit">Edit</button>
           <button class="ag-btn ag-delete">Delete</button>
+          <button class="ag-btn ag-navigate">Navigate</button>
         `;
         const editBtn = container.querySelector('.ag-edit');
         const delBtn = container.querySelector('.ag-delete');
+        const navBtn = container.querySelector('.ag-navigate');
         if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editBranch(params.data));
         if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.deleteBranch(params.data));
+        if (navBtn) navBtn.addEventListener('click', () => params.context.componentParent.navigateToBranch(params.data));
         return container;
       }
     }
@@ -62,8 +66,6 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     sortable: true, 
     filter: true 
   };
-  pagination: boolean = true;
-  paginationPageSize: number = 10;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -71,6 +73,8 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     private authService: AuthService,
     private userContext: UserContextService,
     private router: Router,
+    private ngZone: NgZone,
+    private appRef: ApplicationRef,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private modalController: ModalController,
@@ -87,28 +91,26 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     });
 
     // Grid options with context so cell renderers can call component methods
+    // theme: 'legacy' = use v32-style CSS file themes (ag-grid.css / ag-theme-alpine.css) with AG Grid v33+
     this.gridOptions = {
+      theme: 'legacy',
       context: { componentParent: this }
-    } as any;
+    };
   }
 
-  gridOptions: any;
+  gridOptions: GridOptions;
 
   ngOnInit(): void {
-    console.log('BranchesPage ngOnInit called');
     // Check authentication
     if (!this.authService.isAuthenticated()) {
-      console.log('Not authenticated, redirecting to login');
       this.router.navigate(['/login']);
       return;
     }
   }
 
   ionViewWillEnter(): void {
-    console.log('BranchesPage ionViewWillEnter called');
     // Reload branches when page becomes active
     if (this.authService.isAuthenticated()) {
-      console.log('Loading branches on view enter');
       this.loadBranches();
     }
   }
@@ -123,11 +125,9 @@ export class BranchesPage implements OnInit, ViewWillEnter {
       this.branches = normalized;
       this.rowData = normalized;
       this.isLoading = false;
-      console.log('Loaded branches from login response:', branchesFromLogin.length);
       return;
     }
-    
-    // Fallback: Fetch branches from API if not available from login
+
     this.isLoading = true;
     const loading = await this.loadingController.create({
       message: 'Loading branches...',
@@ -142,12 +142,8 @@ export class BranchesPage implements OnInit, ViewWillEnter {
         const normalized = this.normalizeBranches(branches);
         this.branches = normalized;
         this.rowData = normalized;
-        console.log('Branches loaded from API (normalized):', this.branches.length);
-        if (this.branches.length === 0) {
-          console.log('No branches found - array is empty');
-        }
       },
-      error: (error) => {
+      error: (_error) => {
         // Try alternative endpoint
         this.branchService.getBranchesList().subscribe({
           next: (branches) => {
@@ -156,7 +152,6 @@ export class BranchesPage implements OnInit, ViewWillEnter {
             const normalized = this.normalizeBranches(branches);
             this.branches = normalized;
             this.rowData = normalized;
-            console.log('Branches loaded from alternative endpoint (normalized):', this.branches.length);
           },
           error: (err) => {
             loading.dismiss();
@@ -166,8 +161,6 @@ export class BranchesPage implements OnInit, ViewWillEnter {
             console.error('Error loading branches:', err);
             if (err.status !== 404) {
               this.showToast('Error loading branches: ' + (err.error?.message || err.message || 'Unknown error'), 'danger');
-            } else {
-              console.log('No branches endpoint found or no branches exist yet');
             }
           }
         });
@@ -175,38 +168,37 @@ export class BranchesPage implements OnInit, ViewWillEnter {
     });
   }
 
-  private normalizeBranches(raw: any): Branch[] {
+  private normalizeBranches(raw: Branch[] | { data?: Branch[]; items?: Branch[]; rows?: Branch[]; branches?: Branch[]; value?: Branch[]; result?: Branch[] } | Branch): Branch[] {
     if (!raw) return [];
 
-    let list: any[] = raw;
-    if (!Array.isArray(raw)) {
-      if (raw.data && Array.isArray(raw.data)) list = raw.data;
-      else if (raw.items && Array.isArray(raw.items)) list = raw.items;
-      else if (raw.rows && Array.isArray(raw.rows)) list = raw.rows;
-      else if (raw.branches && Array.isArray(raw.branches)) list = raw.branches;
-      else if (raw.value && Array.isArray(raw.value)) list = raw.value;
-      else if (raw.result && Array.isArray(raw.result)) list = raw.result;
-      else list = [raw];
+    // Extract array from different response formats
+    let list: Branch[];
+    if (Array.isArray(raw)) {
+      list = raw;
+    } else {
+      const response = raw as { data?: Branch[]; items?: Branch[]; rows?: Branch[]; branches?: Branch[]; value?: Branch[]; result?: Branch[] };
+      if (response.data && Array.isArray(response.data)) list = response.data;
+      else if (response.items && Array.isArray(response.items)) list = response.items;
+      else if (response.rows && Array.isArray(response.rows)) list = response.rows;
+      else if (response.branches && Array.isArray(response.branches)) list = response.branches;
+      else if (response.value && Array.isArray(response.value)) list = response.value;
+      else if (response.result && Array.isArray(response.result)) list = response.result;
+      else list = [raw as Branch];
     }
 
-    return list.map((b: any) => {
-      const address1 = b.address1 ?? b.addressLine1 ?? '';
-      const address2 = b.address2 ?? b.addressLine2 ?? '';
-      const combined = b.address ?? [address1, address2].filter(Boolean).join(' ');
-      return {
-        id: b.id ?? b.branchId ?? 0,
-        name: b.name ?? b.branchName ?? '',
-        address1: address1,
-        address2: address2,
-        address: combined,
-        city: b.city ?? b.town ?? '',
-        state: b.state ?? '',
-        country: b.country ?? b.countryName ?? '',
-        zipCode: b.zipCode ?? b.postalCode ?? b.zip ?? '',
-        phoneNumber: b.phoneNumber ?? b.phone ?? b.contact ?? '',
-        ...b
-      } as Branch;
-    });
+    // Map to ensure all Branch DTO properties are present
+    return list.map((branch: Branch) => ({
+      id: branch.id ?? 0,
+      name: branch.name ?? '',
+      address1: branch.address1 ?? '',
+      address2: branch.address2 ?? '',
+      city: branch.city ?? '',
+      state: branch.state ?? '',
+      country: branch.country ?? '',
+      zipCode: branch.zipCode ?? '',
+      phoneNumber: branch.phoneNumber ?? '',
+      orgId: branch.orgId ?? 0
+    }));
   }
 
   async toggleAddForm(): Promise<void> {
@@ -303,8 +295,26 @@ export class BranchesPage implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
-    // Handle branch change if needed
-    console.log('Branch changed to:', branch);
+    this.selectedBranch = branch;
+  }
+
+  /** Navigate to branch dashboard for the selected branch (owner only) */
+  navigateToBranch(branch: Branch): void {
+    // Blur the button so focus is not inside an aria-hidden ancestor when Ionic hides the page
+    const active = document.activeElement as HTMLElement | null;
+    if (active && typeof active.blur === 'function') {
+      active.blur();
+    }
+    this.userContext.setBranchId(branch.id);
+    localStorage.setItem('selected_branch_id', branch.id.toString());
+    // Navigate to branch dashboard with branch id in URL so the route is distinct and the page refreshes
+    this.ngZone.run(() => {
+      this.router.navigate(['/branch-dashboard', branch.id], { replaceUrl: true }).then((success) => {
+        if (success) {
+          this.ngZone.run(() => this.appRef.tick());
+        }
+      });
+    });
   }
 }
 

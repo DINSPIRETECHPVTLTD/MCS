@@ -14,6 +14,7 @@ export interface BranchInfoDto {
   country?: string;
   zipCode?: string;
   phoneNumber?: string;
+  orgId?: number;
 }
 
 export interface OrganizationWithBranchDto {
@@ -47,5 +48,5 @@ export interface LoginResponse {
   LastName?: string;
   Organization?: OrganizationWithBranchDto;
   Role?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

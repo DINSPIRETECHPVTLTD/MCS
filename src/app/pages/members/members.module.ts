@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { MembersPageRoutingModule } from './members-routing.module';
-import { MembersPage } from './members.page';
+import { MembersComponent } from './members.page';
 import { AddMemberModalComponent } from './add-member-modal.component';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 import { MatTableModule } from '@angular/material/table';
@@ -38,7 +38,7 @@ import { MatIconModule } from '@angular/material/icon';
     MembersPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [MembersPage, AddMemberModalComponent]
+  declarations: [MembersComponent, AddMemberModalComponent]
 })
 export class MembersPageModule {}
 

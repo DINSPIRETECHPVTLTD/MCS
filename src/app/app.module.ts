@@ -22,7 +22,6 @@ import {
   checkmarkOutline
 } from 'ionicons/icons';
 import { AppComponent } from './app.component';
-import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { AppRoutingModule } from './app-routing.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
