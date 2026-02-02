@@ -87,7 +87,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('password')">
-      <ion-label position="stacked">Password <span class="required">*</span></ion-label>
+      <ion-label position="stacked">Password <span *ngIf="!isEditing" class="required">*</span></ion-label>
       <ion-input
         formControlName="password"
         placeholder="Enter password"
@@ -184,11 +184,6 @@
       </div>
 
       <div class="right-actions">
-        <ion-button *ngIf="isEditing" class="delete-btn" color="danger" fill="outline" (click)="onDelete()">
-          <ion-icon slot="start" name="trash-outline"></ion-icon>
-          <span class="btn-text">Delete</span>
-        </ion-button>
-
         <ion-button class="cancel-btn" type="button" fill="outline" (click)="closeModal()">Cancel</ion-button>
       </div>
     </div>

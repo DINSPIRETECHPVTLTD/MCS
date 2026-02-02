@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ModalController, LoadingController, ToastController, AlertController } from '@ionic/angular';
+import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { CreateUserRequest } from '../../models/user.models';
 import { UserContextService } from '../../services/user-context.service';
@@ -25,8 +25,6 @@ export class AddStaffModalComponent implements OnInit {
     private userContext: UserContextService,
     private loadingController: LoadingController,
     private toastController: ToastController
-    ,
-    private alertController: AlertController
   ) {
     this.staffForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
@@ -151,6 +149,16 @@ export class AddStaffModalComponent implements OnInit {
         pwdControl.updateValueAndValidity();
       }
 
+      // Relax validators for non-essential fields during edit so partial updates work
+      const relaxFields = ['middleName', 'phoneNumber', 'address1', 'address2', 'city', 'state', 'pinCode'];
+      relaxFields.forEach(fn => {
+        const c = this.staffForm.get(fn);
+        if (c) {
+          c.clearValidators();
+          c.updateValueAndValidity();
+        }
+      });
+
       this.userService.getUser(this.editingStaffId).subscribe({
         next: (user) => {
           this.staffForm.patchValue({
@@ -218,7 +226,27 @@ export class AddStaffModalComponent implements OnInit {
       if (!this.staffForm.value.password) {
         delete staffData.password;
       }
-      this.userService.updateUser(this.editingStaffId, staffData).subscribe({
+      // Map to backend column names requested by user for PUT (preserve other required metadata)
+      const putPayload: any = {
+        FirstName: staffData.firstName,
+        MiddleName: staffData.middleName,
+        LastName: staffData.lastName,
+        Email: staffData.email,
+        PhoneNumber: staffData.phoneNumber,
+        Address1: staffData.address1,
+        Address2: staffData.address2,
+        City: staffData.city,
+        State: staffData.state,
+        ZipCode: staffData.pinCode,
+        role: staffData.role,
+        level: staffData.level,
+        organizationId: staffData.organizationId,
+        branchId: staffData.branchId
+      };
+      if (staffData.password) {
+        putPayload.Password = staffData.password;
+      }
+      this.userService.updateUser(this.editingStaffId, putPayload).subscribe({
         next: async (staff) => {
           await loading.dismiss();
           this.showToast('Staff updated successfully!', 'success');
@@ -248,38 +276,7 @@ export class AddStaffModalComponent implements OnInit {
     }
   }
 
-  async onDelete(): Promise<void> {
-    if (!this.isEditing || !this.editingStaffId) return;
-
-    const alert = await this.alertController.create({
-      header: 'Confirm delete',
-      message: 'Are you sure you want to delete this staff member?',
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        {
-          text: 'Delete',
-          role: 'destructive',
-          handler: async () => {
-            const loading = await this.loadingController.create({ message: 'Deleting staff...', spinner: 'crescent' });
-            await loading.present();
-            this.userService.deleteUser(this.editingStaffId!).subscribe({
-              next: async () => {
-                await loading.dismiss();
-                this.showToast('Staff deleted', 'success');
-                await this.modalController.dismiss({ success: true, deleted: true });
-              },
-              error: async (err) => {
-                await loading.dismiss();
-                this.showToast(err.error?.message || 'Failed to delete staff', 'danger');
-                console.error('Delete staff error', err);
-              }
-            });
-          }
-        }
-      ]
-    });
-    await alert.present();
-  }
+  
 
   async closeModal(): Promise<void> {
     await this.modalController.dismiss({ success: false });
