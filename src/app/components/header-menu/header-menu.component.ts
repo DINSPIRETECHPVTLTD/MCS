@@ -29,7 +29,6 @@ export class HeaderMenuComponent implements OnInit {
   showLoanSubmenu: boolean = false;
   branches: Branch[] = [];
   selectedBranch: Branch | null = null;
-  showBranchDropdown: boolean = false;
   
   // User role and level
   userRole: string = '';
@@ -37,6 +36,10 @@ export class HeaderMenuComponent implements OnInit {
   isOrgOwner: boolean = false;
   isBranchUser: boolean = false;
   isStaff: boolean = false;
+
+  // Org Mode vs Branch Mode: owner default = Org Mode; owner after "Navigate to Branch" = Branch Mode; branch admin/staff = Branch Mode
+  isOrgMode: boolean = false;
+  isBranchMode: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -53,22 +56,7 @@ export class HeaderMenuComponent implements OnInit {
   ngOnInit(): void {
     this.initializeHeader();
     
-    // Show Users submenu if active menu is related to Users
-    if (this.activeMenu === 'Users' || this.activeMenu === 'All Users' || this.activeMenu === 'Approvals') {
-      this.showUsersSubmenu = true;
-    }
-    
-    // Show Branches submenu if active menu is related to Branches
-    if (this.activeMenu === 'Branches' || this.activeMenu === 'All Branches' || 
-        this.activeMenu === 'Centers' || this.activeMenu === 'POCs' || 
-        this.activeMenu === 'Staff' || this.activeMenu === 'Members' ||
-        this.activeMenu === 'Loan' || this.activeMenu === 'Add Loan' || 
-        this.activeMenu === 'Manage Loan' || this.activeMenu === 'Preclose Loan' ||
-        this.activeMenu === 'Recovery Posting') {
-      this.showBranchesSubmenu = true;
-    }
-    
-    // Show Loan submenu if active menu is related to Loan
+    // Show Loan submenu if active menu is related to Loan (Branch User only)
     if (this.activeMenu === 'Loan' || this.activeMenu === 'Add Loan' || 
         this.activeMenu === 'Manage Loan' || this.activeMenu === 'Preclose Loan') {
       this.showLoanSubmenu = true;
@@ -87,12 +75,11 @@ export class HeaderMenuComponent implements OnInit {
     this.isOrgOwner = this.userContext.isOrgOwner();
     this.isBranchUser = this.userContext.isBranchUser();
     this.isStaff = this.userRole?.toLowerCase() === 'staff';
-    console.log('User Context:', this.userContext);
-    console.log('User Role:', this.userRole);
-    console.log('User Level:', this.userLevel);
-    console.log('Is Org Owner:', this.isOrgOwner);
-    console.log('Is Branch User:', this.isBranchUser);
-    console.log('Is Staff:', this.isStaff);
+
+    // Org Mode: owner and no branch selected. Branch Mode: branch user, or owner who navigated to a branch
+    const ownerViewingBranch = this.isOrgOwner && this.userContext.branchId != null;
+    this.isOrgMode = this.isOrgOwner && !ownerViewingBranch;
+    this.isBranchMode = this.isBranchUser || ownerViewingBranch;
 
     // Try to get organization from login response first
     const orgFromLogin = this.authService.getOrganizationInfo();
@@ -108,7 +95,7 @@ export class HeaderMenuComponent implements OnInit {
       this.loadOrganizationDetails();
     }
 
-    // Load branches
+    // Load branches (for branch users: show branch label; owner has no dropdown)
     this.loadBranches();
   }
 
@@ -126,7 +113,7 @@ export class HeaderMenuComponent implements OnInit {
         this.organization = org;
         localStorage.setItem('organization_info', JSON.stringify(org));
       },
-      error: (error: any) => {
+      error: (error: string) => {
         console.error('Error loading organization:', error);
       }
     });
@@ -140,23 +127,24 @@ export class HeaderMenuComponent implements OnInit {
       // Use branches from login response
       this.branches = branchesFromLogin;
       this.setSelectedBranch(branchesFromLogin);
-      console.log('Loaded branches from login response:', branchesFromLogin.length);
+      this.updateModeFlags();
       return;
     }
     
     // Fallback: Fetch branches from API if not available from login
-    console.log('Branches not available from login, fetching from API...');
     this.branchService.getBranches().subscribe({
       next: (branches) => {
         this.branches = branches;
         this.setSelectedBranch(branches);
+        this.updateModeFlags();
       },
-      error: (error) => {
+      error: (_error) => {
         // Try alternative endpoint
         this.branchService.getBranchesList().subscribe({
           next: (branches) => {
             this.branches = branches;
             this.setSelectedBranch(branches);
+            this.updateModeFlags();
           },
           error: (err) => {
             console.error('Error loading branches:', err);
@@ -167,12 +155,18 @@ export class HeaderMenuComponent implements OnInit {
     });
   }
 
+  private updateModeFlags(): void {
+    const ownerViewingBranch = this.isOrgOwner && this.userContext.branchId != null;
+    this.isOrgMode = this.isOrgOwner && !ownerViewingBranch;
+    this.isBranchMode = this.isBranchUser || ownerViewingBranch;
+    this.cdr.markForCheck();
+  }
+
   private setSelectedBranch(branches: Branch[]): void {
-    // For branch level users, set their branch from user context
+    const userBranchId = this.userContext.branchId;
     if (this.isBranchUser) {
-      const userBranchId = this.userContext.branchId;
       if (userBranchId) {
-        const userBranch = branches.find(b => b.id === userBranchId || b.id.toString() === userBranchId.toString());
+        const userBranch = branches.find(b => b.id === userBranchId || b.id?.toString() === userBranchId?.toString());
         if (userBranch) {
           this.selectedBranch = userBranch;
         } else if (branches.length > 0) {
@@ -181,20 +175,20 @@ export class HeaderMenuComponent implements OnInit {
       } else if (branches.length > 0) {
         this.selectedBranch = branches[0];
       }
-    } else {
-      // For org level users
-      if (branches.length === 1) {
-        this.selectedBranch = branches[0];
-      } else if (branches.length > 1) {
-        // Set first branch as default or get from localStorage
-        const savedBranchId = localStorage.getItem('selected_branch_id');
-        if (savedBranchId) {
-          const savedBranch = branches.find(b => b.id.toString() === savedBranchId);
-          this.selectedBranch = savedBranch || branches[0];
-        } else {
-          this.selectedBranch = branches[0];
-        }
+    } else if (this.isOrgOwner && userBranchId != null) {
+      // Owner in Branch Mode: set selectedBranch so header can show branch name
+      const branch = branches.find(b => b.id === userBranchId || b.id?.toString() === userBranchId?.toString());
+      this.selectedBranch = branch || null;
+    }
+    // Persist and notify listeners about the selected branch on initial load
+    if (this.selectedBranch) {
+      try {
+        localStorage.setItem('selected_branch_id', this.selectedBranch.id.toString());
+      } catch (e) {
+        // ignore storage errors
       }
+      this.branchChange.emit(this.selectedBranch);
+      console.log('Selected Branch set to header:', this.selectedBranch);
     }
   }
 
@@ -211,16 +205,19 @@ export class HeaderMenuComponent implements OnInit {
 
   setActiveMenu(menu: string): void {
     if (menu === 'Users' && this.isOrgOwner) {
-      this.showUsersSubmenu = !this.showUsersSubmenu;
+      this.showUsersSubmenu = false;
       this.showBranchesSubmenu = false;
       this.showLoanSubmenu = false;
-    } else if (menu === 'Branches') {
-      if (this.isOrgOwner) {
-        // For Org Owner, toggle submenu
-        this.showUsersSubmenu = false;
-        this.showBranchesSubmenu = !this.showBranchesSubmenu;
-        this.showLoanSubmenu = false;
-      }
+      this.activeMenu = 'Users';
+      this.menuChange.emit('Users');
+      setTimeout(() => this.navigateToRoute('/users'), 0);
+    } else if (menu === 'Branches' && this.isOrgOwner) {
+      this.showUsersSubmenu = false;
+      this.showBranchesSubmenu = false;
+      this.showLoanSubmenu = false;
+      this.activeMenu = 'Branches';
+      this.menuChange.emit('Branches');
+      setTimeout(() => this.navigateToRoute('/branches'), 0);
     } else if (menu === 'Loan') {
       // Toggle Loan submenu
       this.showUsersSubmenu = false;
@@ -247,10 +244,15 @@ export class HeaderMenuComponent implements OnInit {
       this.showLoanSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
-      // For branch users, navigate to branch dashboard; for org owners, navigate to home
+      // Branch Mode -> branch dashboard with branch id; Org Mode (owner) -> home
       setTimeout(() => {
-        if (this.isBranchUser) {
-          this.navigateToRoute('/branch-dashboard');
+        if (this.isBranchMode) {
+          const branchId = this.selectedBranch?.id ?? this.userContext.branchId;
+          if (branchId != null) {
+            this.navigateToRoute(`/branch-dashboard/${branchId}`);
+          } else {
+            this.navigateToRoute('/home');
+          }
         } else {
           this.navigateToRoute('/home');
         }
@@ -293,7 +295,6 @@ export class HeaderMenuComponent implements OnInit {
         replaceUrl: true  // Replace the current page instead of stacking
       }).then((success) => {
         if (success) {
-          console.log('Navigated to:', route);
           // Force change detection after navigation
           this.ngZone.run(() => {
             setTimeout(() => {
@@ -339,8 +340,9 @@ export class HeaderMenuComponent implements OnInit {
     } else if (submenu === 'All Branches') {
       route = '/branches';
     } else if (submenu === 'Dashboard') {
-      // Dashboard from Branches submenu goes to branch dashboard
-      route = '/branch-dashboard';
+      // Dashboard from Branches submenu goes to branch dashboard with branch id
+      const branchId = this.selectedBranch?.id ?? this.userContext.branchId;
+      route = branchId != null ? `/branch-dashboard/${branchId}` : '/home';
     } else if (submenu === 'Centers') {
       route = '/centers';
     } else if (submenu === 'POCs') {
@@ -365,6 +367,18 @@ export class HeaderMenuComponent implements OnInit {
         this.navigateToRoute(route!);
       }, 0);
     }
+  }
+
+  /** Switch back to Organization Mode (owner only, when currently in Branch Mode) */
+  returnToOrgMode(): void {
+    this.userContext.setBranchId(null);
+    try {
+      localStorage.removeItem('selected_branch_id');
+    } catch (_) {}
+    this.selectedBranch = null;
+    this.isOrgMode = true;
+    this.isBranchMode = false;
+    this.navigateToRoute('/home');
   }
 
   async logout(): Promise<void> {

@@ -66,7 +66,6 @@ export interface CreateMemberRequest {
 export interface BranchOption {
   id: number;
   name: string;
-  code: string;
 }
 
 export interface CenterOption {

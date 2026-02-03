@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { PrecloseLoanPageRoutingModule } from './preclose-loan-routing.module';
-import { PrecloseLoanPage } from './preclose-loan.page';
+import { PrecloseLoanComponent } from './preclose-loan.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 
 @NgModule({
@@ -14,6 +14,6 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     PrecloseLoanPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [PrecloseLoanPage]
+  declarations: [PrecloseLoanComponent]
 })
 export class PrecloseLoanPageModule {}

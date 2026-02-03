@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { PocsPageRoutingModule } from './pocs-routing.module';
-import { PocsPage } from './pocs.page';
+import { PocsComponent } from './pocs.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 import { AddPocModalComponent } from './add-poc-modal.component';
 import { AgGridModule } from 'ag-grid-angular';
@@ -18,7 +18,7 @@ import { AgGridModule } from 'ag-grid-angular';
     HeaderMenuComponent,
     AgGridModule
   ],
-  declarations: [PocsPage, AddPocModalComponent]
+  declarations: [PocsComponent]
 })
 export class PocsPageModule {}
 

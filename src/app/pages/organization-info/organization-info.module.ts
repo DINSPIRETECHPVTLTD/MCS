@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { OrganizationInfoPageRoutingModule } from './organization-info-routing.module';
-import { OrganizationInfoPage } from './organization-info.page';
+import { OrganizationInfoComponent } from './organization-info.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 
 @NgModule({
@@ -14,7 +14,7 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     OrganizationInfoPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [OrganizationInfoPage]
+  declarations: [OrganizationInfoComponent]
 })
 export class OrganizationInfoPageModule {}
 

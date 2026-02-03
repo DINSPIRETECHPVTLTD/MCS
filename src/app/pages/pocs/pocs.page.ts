@@ -2,8 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter, ModalController, LoadingController, ToastController, AlertController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService } from '../../services/branch.service';
-import { PocService, Poc } from '../../services/poc.service';
 import { Branch } from '../../models/branch.models';
 import { AddPocModalComponent } from './add-poc-modal.component';
 import { ColDef } from 'ag-grid-community';
@@ -13,7 +11,7 @@ import { ColDef } from 'ag-grid-community';
   templateUrl: './pocs.page.html',
   styleUrls: ['./pocs.page.scss']
 })
-export class PocsPage implements OnInit, ViewWillEnter {
+export class PocsComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'POCs';
   pocs: Poc[] = [];
   selectedBranch: Branch | null = null;

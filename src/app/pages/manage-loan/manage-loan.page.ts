@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService } from '../../services/branch.service';
 import { Branch } from '../../models/branch.models';
 
 @Component({
@@ -10,7 +9,7 @@ import { Branch } from '../../models/branch.models';
   templateUrl: './manage-loan.page.html',
   styleUrls: ['./manage-loan.page.scss']
 })
-export class ManageLoanPage implements OnInit, ViewWillEnter {
+export class ManageLoanComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'Manage Loan';
   loans: any[] = [];
 
@@ -40,6 +39,5 @@ export class ManageLoanPage implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
   }
 }

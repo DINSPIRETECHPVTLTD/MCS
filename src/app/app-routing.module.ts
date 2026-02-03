@@ -37,6 +37,11 @@ const routes: Routes = [
   },
   {
     path: 'branch-dashboard',
+    redirectTo: 'home',
+    pathMatch: 'full'
+  },
+  {
+    path: 'branch-dashboard/:branchId',
     loadChildren: () => import('./pages/branch-dashboard/branch-dashboard.module').then(m => m.BranchDashboardPageModule)
   },
   {
