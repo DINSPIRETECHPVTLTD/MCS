@@ -41,7 +41,7 @@ import { AgGridAngular } from 'ag-grid-angular';
     HeaderMenuComponent,
     AgGridAngular
   ],
-  declarations: [MembersPage, AddMemberModalComponent, EditMemberModalComponent]
+  declarations: [MembersComponent, AddMemberModalComponent, EditMemberModalComponent]
 })
 export class MembersPageModule {}
 
