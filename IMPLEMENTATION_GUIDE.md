@@ -996,7 +996,7 @@ services.AddDbContext<ApplicationDbContext>(options =>
 ---
 
 ## API Base URLs
-- **Development**: `http://localhost:61008/api`
+- **Development**: `http://localhost:5000/api`
 - **Production**: Update in `environment.prod.ts`
 
 ## Form Validation Rules Summary

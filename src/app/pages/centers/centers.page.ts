@@ -21,8 +21,6 @@ import { EditCenterModalComponent } from './edit-center-modal.component';
 export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
   activeMenu: string = 'Centers';
   centers: Center[] = [];
-  branches: Branch[] = [];
-  selectedBranchId: number | null = null;
   isLoading = false;
 
   isViewCentersClicked = false;
@@ -66,19 +64,6 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
         return ((data as Record<string, any>)[key] ?? '').toString().toLowerCase().includes(filters[key].toLowerCase());
       });
     };
-    // Load branches for dropdown
-    this.branchService.getBranches().subscribe({
-      next: branches => {
-        this.branches = branches;
-        // Set default selected branch if available
-        if (branches && branches.length > 0) {
-          this.selectedBranchId = branches[0].id;
-        }
-      },
-      error: () => {
-        this.branches = [];
-      }
-    });
   }
 
   ngAfterViewInit(): void {
@@ -156,27 +141,8 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
     this.activeMenu = menu;
   }
 
-  onBranchChange(branch: Branch | number): void {
-    // Accept either Branch object or branchId
-    let branchId: number | null = null;
-    if (typeof branch === 'number') {
-      branchId = branch;
-    } else if (branch && typeof branch.id === 'number') {
-      branchId = branch.id;
-    }
-    this.selectedBranchId = branchId;
-    this.applyBranchFilter();
-  }
-
-  applyBranchFilter(): void {
-    if (this.selectedBranchId) {
-      this.dataSource.data = this.centers.filter(center => Number(center.branchId) === this.selectedBranchId);
-    } else {
-      this.dataSource.data = this.centers;
-    }
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
+  onBranchChange(branch: Branch): void {
+    console.log('Branch changed to:', branch);
   }
 
   private async loadCenters(): Promise<void> {
@@ -186,23 +152,37 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
     const loading = await this.loadingController.create({ message: 'Loading centers...' });
     await loading.present();
 
-    // Fetch centers only, branches are loaded in ngOnInit
+    // Fetch both centers and branches in parallel
     this.centerService.getAllCenters().subscribe({
       next: async centers => {
-        // Map branch names if branches are loaded
-        const branchMap = new Map((this.branches ?? []).map(b => [Number(b.id), b.name]));
-        this.centers = (centers ?? []).map(center => ({
-          ...center,
-          branchName: branchMap.get(Number((center as any).branchId ?? (center as any).BranchId ?? 0)) || center.branchName || ''
-        }));
-        // Always apply branch filter using selectedBranchId
-        this.applyBranchFilter();
-        setTimeout(() => {
-          this.dataSource.paginator = this.paginator;
-          this.dataSource.sort = this.sort;
-        }, 0);
-        this.isLoading = false;
-        await loading.dismiss();
+        this.branchService.getBranches().subscribe({
+          next: async branches => {
+            const branchMap = new Map(branches.map(b => [Number(b.id), b.name]));
+            this.centers = (centers ?? []).map(center => ({
+              ...center,
+              branchName: branchMap.get(Number((center as any).branchId ?? (center as any).BranchId ?? 0)) || center.branchName || ''
+            }));
+            this.dataSource.data = this.centers;
+            // Wire paginator/sort after view updates (they are inside *ngIf)
+            setTimeout(() => {
+              this.dataSource.paginator = this.paginator;
+              this.dataSource.sort = this.sort;
+            }, 0);
+            this.isLoading = false;
+            await loading.dismiss();
+          },
+          error: async () => {
+            this.centers = centers ?? [];
+            this.dataSource.data = this.centers;
+            setTimeout(() => {
+              this.dataSource.paginator = this.paginator;
+              this.dataSource.sort = this.sort;
+            }, 0);
+            this.isLoading = false;
+            await loading.dismiss();
+            await this.showToast('Failed to load branches.', 'danger');
+          }
+        });
       },
       error: async () => {
         this.centers = [];
