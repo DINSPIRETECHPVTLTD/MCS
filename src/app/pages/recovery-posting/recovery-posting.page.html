@@ -2,9 +2,7 @@
   [activeMenu]="activeMenu"
   (menuChange)="onMenuChange($event)"
   (branchChange)="onBranchChange($event)">
-</app-header-menu>
-
-<ion-content [fullscreen]="true" class="ion-padding">
+  <ion-content [fullscreen]="true" class="ion-padding">
   <div class="content-container">
     <div class="page-header">
       <h1>Recovery Posting</h1>
@@ -20,7 +18,7 @@
         <div class="filter-section">
           <!-- Date Selection -->
           <div class="filter-group">
-            <label class="filter-label">Select Date:</label>
+            <div class="filter-label">Select Date:</div>
             <ion-datetime
               [(ngModel)]="selectedDate"
               (ionChange)="onDateChange()"
@@ -33,7 +31,7 @@
 
           <!-- Payment Type -->
           <div class="filter-group">
-            <label class="filter-label">Payment Type:</label>
+            <div class="filter-label">Payment Type:</div>
             <div class="radio-group">
               <ion-radio-group [(ngModel)]="paymentType" (ionChange)="onPaymentTypeChange()">
                 <ion-item>
@@ -54,7 +52,7 @@
 
           <!-- Select Center -->
           <div class="filter-group">
-            <label class="filter-label">Select Center:</label>
+            <div class="filter-label">Select Center:</div>
             <ion-select 
               [(ngModel)]="selectedCenter" 
               (ionChange)="onCenterChange()"
@@ -86,9 +84,10 @@
       <div class="select-actions">
         <ion-checkbox 
           [(ngModel)]="selectAllChecked" 
-          (ionChange)="selectAllChecked ? selectAll() : deselectAll()">
+          (ionChange)="selectAllChecked ? selectAll() : deselectAll()"
+          aria-label="Select all items">
         </ion-checkbox>
-        <label>Select All</label>
+        <span>Select All</span>
         <ion-button fill="outline" size="small" (click)="deselectAll()">
           Deselect All
         </ion-button>
@@ -114,6 +113,7 @@
         <ag-grid-angular
           class="ag-theme-alpine"
           style="width: 100%; height: 60vh;"
+          [gridOptions]="gridOptions"
           [rowData]="rowData"
           [columnDefs]="columnDefs"
           [defaultColDef]="defaultColDef"
@@ -126,4 +126,5 @@
       </div>
     </div>
   </div>
-</ion-content>
+  </ion-content>
+</app-header-menu>

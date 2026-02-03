@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { ManageLoanPageRoutingModule } from './manage-loan-routing.module';
-import { ManageLoanPage } from './manage-loan.page';
+import { ManageLoanComponent } from './manage-loan.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 
 @NgModule({
@@ -14,6 +14,6 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     ManageLoanPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [ManageLoanPage]
+  declarations: [ManageLoanComponent]
 })
 export class ManageLoanPageModule {}

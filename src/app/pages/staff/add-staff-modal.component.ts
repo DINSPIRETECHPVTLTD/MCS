@@ -2,7 +2,6 @@ import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController, AlertController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
-import { CreateUserRequest } from '../../models/user.models';
 import { UserContextService } from '../../services/user-context.service';
 
 @Component({
@@ -29,17 +28,17 @@ export class AddStaffModalComponent implements OnInit {
     private alertController: AlertController
   ) {
     this.staffForm = this.formBuilder.group({
-      email: ['', [Validators.email, Validators.maxLength(100)]],
+      email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
       password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(12)]],
       firstName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
-      middleName: ['', [Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
+      middleName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       lastName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
-      phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-      address1: ['', [Validators.maxLength(100)]],
-      address2: ['', [Validators.maxLength(100)]],
-      city: ['', [Validators.maxLength(100)]],
-      state: ['', [Validators.maxLength(100)]],
-      pinCode: ['', [Validators.pattern(/^[0-9]{6}$/), Validators.maxLength(6)]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      address1: ['', [Validators.required, Validators.maxLength(100)]],
+      address2: ['', [Validators.required, Validators.maxLength(100)]],
+      city: ['', [Validators.required, Validators.maxLength(100)]],
+      state: ['', [Validators.required, Validators.maxLength(100)]],
+      pinCode: ['', [Validators.required, Validators.pattern(/^[0-9]{6}$/), Validators.maxLength(6)]],
       organizationId: [0],
       branchId: [null],
       role: ['Staff', [Validators.required]]

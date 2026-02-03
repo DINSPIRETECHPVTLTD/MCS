@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { UsersPageRoutingModule } from './users-routing.module';
-import { UsersPage } from './users.page';
+import { UsersComponent } from './users.page';
 import { AddUserModalComponent } from './add-user-modal.component';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 import { AgGridModule } from 'ag-grid-angular';
@@ -18,7 +18,7 @@ import { AgGridModule } from 'ag-grid-angular';
     HeaderMenuComponent,
     AgGridModule
   ],
-  declarations: [UsersPage, AddUserModalComponent]
+  declarations: [UsersComponent, AddUserModalComponent]
 })
 export class UsersPageModule {}
 

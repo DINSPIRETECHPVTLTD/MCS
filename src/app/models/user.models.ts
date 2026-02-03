@@ -14,7 +14,7 @@ export interface User {
   role?: string;
   organizationId?: number;
   branchId?: number | null;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface CreateUserRequest {

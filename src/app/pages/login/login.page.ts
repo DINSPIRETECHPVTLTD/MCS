@@ -10,7 +10,7 @@ import { LoginRequest } from '../../models/auth.models';
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
 })
-export class LoginPage implements OnInit {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   showPassword = false;
 
@@ -71,13 +71,11 @@ export class LoginPage implements OnInit {
           this.router.navigate(['/home'], { replaceUrl: true }).then(
             (success) => {
               if (success) {
-                console.log('Navigation successful');
                 // Show toast after navigation
                 setTimeout(() => {
                   this.showToast('Login successful!', 'success');
                 }, 300);
               } else {
-                console.log('Navigation returned false, using fallback');
                 window.location.href = '/home';
               }
             },

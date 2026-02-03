@@ -7,6 +7,7 @@ import { UserContextService } from './user-context.service';
 import { LoginRequest, LoginResponse, OrganizationWithBranchDto, BranchInfoDto } from '../models/auth.models';
 import { Branch } from '../models/branch.models';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 @Injectable({
   providedIn: 'root'
 })
@@ -38,16 +39,12 @@ export class AuthService {
       payload.username = credentials.username;
     }
 
-    console.log('Login request payload:', payload);
-
     return this.http.post<LoginResponse>(
       `${this.apiUrl}/Auth/login`,
       payload,
       { headers }
     ).pipe(
       tap(response => {
-        console.log('Raw login response:', response);
-        
         // Handle both PascalCase (from C# API) and camelCase properties
         const token = response.token || response.Token || '';
         const userId = response.userId ?? response.UserId ?? null;
@@ -63,23 +60,14 @@ export class AuthService {
         const organizationId = organization?.id ?? orgAny?.Id ?? null;
         const organizationName = organization?.name || orgAny?.Name || '';
         
-        // Extract branch data - use first branch if available
+        // Extract branch data - use first branch only for branch-level users (owner starts in Org Mode with no branch)
         const branches = organization?.branches || orgAny?.Branches || [];
-        const branchId = branches.length > 0 ? (branches[0]?.id ?? (branches[0] as any)?.Id ?? null) : null;
-        
-        console.log('Extracted values:', {
-          token: token ? 'present' : 'missing',
-          userId,
-          userName,
-          firstName,
-          lastName,
-          organizationId,
-          organizationName,
-          branchId,
-          branchesCount: branches.length,
-          role,
-          userType
-        });
+        const roleLower = (role || '').toLowerCase();
+        const userTypeLower = (userType || '').toLowerCase();
+        const isOrgOwner = userTypeLower === 'organization' && roleLower === 'owner';
+        const branchId = isOrgOwner
+          ? null
+          : (branches.length > 0 ? (branches[0]?.id ?? (branches[0] as any)?.Id ?? null) : null);
         
         // Store token
         if (token) {
@@ -98,8 +86,6 @@ export class AuthService {
           branchId: branchId,
           email: credentials.email || userName
         };
-        
-        console.log('User info from login:', userInfo);
         
         // Store user info (for backward compatibility)
         localStorage.setItem('user_info', JSON.stringify(userInfo));
@@ -121,6 +107,13 @@ export class AuthService {
           }));
         }
         
+        // Owner starts in Org Mode: clear any previous branch selection from localStorage
+        if (isOrgOwner) {
+          try {
+            localStorage.removeItem('selected_branch_id');
+          } catch (_) {}
+        }
+        
         // Initialize UserContext service with user information
         this.userContext.initialize(
           userId,
@@ -133,8 +126,6 @@ export class AuthService {
           lastName,
           userName
         );
-        
-        console.log('UserContext initialized:', this.userContext.getAll());
       })
     );
   }

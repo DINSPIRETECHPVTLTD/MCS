@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { Observable, BehaviorSubject, catchError, of } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import {
@@ -12,9 +12,11 @@ import {
   POCOption,
   AadhaarValidationResponse
 } from '../models/member.models';
+import { Branch } from '../models/branch.models';
 
 export type { Member } from '../models/member.models';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 @Injectable({
   providedIn: 'root'
 })
@@ -80,15 +82,14 @@ export class MemberService {
    * Get all branches for dropdown
    */
   getBranchOptions(): Observable<BranchOption[]> {
-    return this.http.get<any>('/Branches', {
+    return this.http.get<{ $values?: Branch[] } | Branch[]>('/Branches', {
       headers: this.getHeaders()
     }).pipe(
       map(response => {
-        const branches = response.$values ?? response;
-        return branches.map((branch: any) => ({
+        const branches = '$values' in response && response.$values ? response.$values : response as Branch[];
+        return branches.map((branch: Branch) => ({
           id: branch.id,
-          name: branch.name,
-          code: branch.code || ''
+          name: branch.name
         }));
       })
     );
@@ -101,9 +102,7 @@ export class MemberService {
   return this.http.get<any>('/Centers', {
     headers: this.getHeaders()
   }).pipe(
-    map(response => {
-      console.log('Centers API RAW Response:', response);
-
+    map((response: any) => {
       const centersRaw =
         response?.$values ??
         response?.data?.$values ??
@@ -142,12 +141,10 @@ export class MemberService {
    * Get centers by branch - filters from all centers
    */
   getCentersByBranch(branchId: number): Observable<CenterOption[]> {
-    console.log('Fetching centers for branchId:', branchId);
     return this.http.get<any[]>('/Centers', {
       headers: this.getHeaders()
     }).pipe(
       map(data => {
-        console.log('Centers by Branch API Response:', data);
         // Map API response to CenterOption interface
         return data
           .filter(center => center.branchId === branchId)
@@ -261,11 +258,11 @@ export class MemberService {
         this.getAllMembers().pipe(
           map((members) =>
             (members ?? []).filter((m) => {
-              const id = String((m as any)?.id ?? '');
-              const phone = String((m as any)?.phoneNumber ?? '');
-              const firstName = String((m as any)?.firstName ?? '').toLowerCase();
-              const middleName = String((m as any)?.middleName ?? '').toLowerCase();
-              const lastName = String((m as any)?.lastName ?? '').toLowerCase();
+              const id = String(m?.id ?? '');
+              const phone = String(m?.phoneNumber ?? '');
+              const firstName = String(m?.firstName ?? '').toLowerCase();
+              const middleName = String(m?.middleName ?? '').toLowerCase();
+              const lastName = String(m?.lastName ?? '').toLowerCase();
               const fullName = `${firstName} ${middleName} ${lastName}`.replace(/\s+/g, ' ').trim();
 
               return (
@@ -301,7 +298,7 @@ export class MemberService {
   /**
    * Delete member
    */
-  deleteMember(memberId: number): Observable<any> {
+  deleteMember(memberId: number): Observable<unknown> {
     return this.http.delete(`${this.apiUrl}/${memberId}`, {
       headers: this.getHeaders()
     });

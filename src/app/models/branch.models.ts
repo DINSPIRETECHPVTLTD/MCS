@@ -1,11 +1,14 @@
 export interface Branch {
   id: number;
   name: string;
-  country?: string;
-  code?: string;
-  address?: string;
+  address1?: string;
+  address2?: string;
   city?: string;
-  [key: string]: any;
+  state?: string;
+  country?: string;
+  zipCode?: string;
+  phoneNumber?: string;
+  orgId: number;
 }
 
 export interface CreateBranchRequest {

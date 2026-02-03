@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { AddBranchPageRoutingModule } from './add-branch-routing.module';
-import { AddBranchPage } from './add-branch.page';
+import { AddBranchComponent } from './add-branch.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 
 @NgModule({
@@ -15,7 +15,7 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     AddBranchPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [AddBranchPage]
+  declarations: [AddBranchComponent]
 })
 export class AddBranchPageModule {}
 

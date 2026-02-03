@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { BranchesPageRoutingModule } from './branches-routing.module';
-import { BranchesPage } from './branches.page';
+import { BranchesComponent } from './branches.page';
 import { AddBranchModalComponent } from './add-branch-modal.component';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 import { AgGridModule } from 'ag-grid-angular';
@@ -18,7 +18,7 @@ import { AgGridModule } from 'ag-grid-angular';
     HeaderMenuComponent,
     AgGridModule
   ],
-  declarations: [BranchesPage, AddBranchModalComponent]
+  declarations: [BranchesComponent, AddBranchModalComponent]
 })
 export class BranchesPageModule {}
 

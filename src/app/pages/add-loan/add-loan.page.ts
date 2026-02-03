@@ -2,19 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService } from '../../services/branch.service';
 import { MemberService } from '../../services/member.service';
 import { Member } from '../../models/member.models';
-import { Branch } from '../../models/branch.models';
 import { ColDef, GridApi, GridReadyEvent, RowSelectionOptions } from 'ag-grid-community';
 import { ToastController, LoadingController } from '@ionic/angular';
+import { Branch } from '../../models/branch.models';
 
 @Component({
   selector: 'app-add-loan',
   templateUrl: './add-loan.page.html',
   styleUrls: ['./add-loan.page.scss']
 })
-export class AddLoanPage implements OnInit, ViewWillEnter {
+export class AddLoanComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'Add Loan';
   
   // Step management
@@ -35,7 +34,7 @@ export class AddLoanPage implements OnInit, ViewWillEnter {
       headerName: 'Member ID',
       valueGetter: (params) => {
         const data = params.data as Member;
-        return (data as any)?.memberId ?? (data as any)?.id ?? '';
+        return (data as Member)?.memberId ?? (data as Member)?.id ?? '';
       },
       width: 150,
       sortable: true,
@@ -72,6 +71,7 @@ export class AddLoanPage implements OnInit, ViewWillEnter {
   };
   
   private gridApi?: GridApi;
+  gridOptions = { theme: 'legacy' as const };
 
   constructor(
     private authService: AuthService,
@@ -99,8 +99,8 @@ export class AddLoanPage implements OnInit, ViewWillEnter {
     this.activeMenu = menu;
   }
 
-  onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
+  onBranchChange(_branch: Branch): void {
+    // Handle branch change if needed
   }
 
   toggleStep(step: number): void {
