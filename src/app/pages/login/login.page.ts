@@ -97,15 +97,9 @@ export class LoginComponent implements OnInit {
         error: async (error) => {
           try {
             await loading.dismiss();
-            const errorMessage = this.getLoginErrorMessage(error);
+            const errorMessage = error.error?.message || error.message || 'Login failed. Please try again.';
             this.showToast(errorMessage, 'danger');
-            console.error('Login error:', {
-              status: error?.status,
-              statusText: error?.statusText,
-              message: error?.message,
-              backendError: error?.error,
-              url: error?.url
-            });
+            console.error('Login error:', error);
           } catch (err) {
             console.error('Error in login error handler:', err);
           }
@@ -114,38 +108,6 @@ export class LoginComponent implements OnInit {
     } catch (error) {
       console.error('Error in onSubmit:', error);
       // Silently handle extension-related errors
-    }
-  }
-
-  /**
-   * Derive a user-friendly message from the login HTTP error.
-   */
-  private getLoginErrorMessage(error: any): string {
-    if (!error) return 'Login failed. Please try again.';
-    const status = error.status;
-    const backend = error.error;
-    const backendMsg =
-      (typeof backend === 'string' ? backend : null) ||
-      backend?.message ||
-      backend?.Message ||
-      backend?.error ||
-      backend?.Error;
-    if (backendMsg) return backendMsg;
-    switch (status) {
-      case 0:
-        return 'Cannot reach server. Check that the API is running at ' + (error.url || 'configured URL') + ' and CORS/SSL are correct.';
-      case 400:
-        return 'Invalid email or password.';
-      case 401:
-        return 'Invalid email or password.';
-      case 403:
-        return 'Access denied.';
-      case 404:
-        return 'Login endpoint not found. Check API URL and route (e.g. /api/Auth/login).';
-      case 500:
-        return 'Server error. Please try again later.';
-      default:
-        return error.message || 'Login failed. Please try again.';
     }
   }
 

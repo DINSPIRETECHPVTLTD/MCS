@@ -64,17 +64,12 @@ mat-paginator {
 }
 
 .table-scroll {
-  height: calc(100vh - 320px);
+  height: calc(100vh - 320px); /* Adjust 320px as needed for header, toolbar, paginator, etc. */
   min-height: 300px;
   overflow-x: auto;
   overflow-y: auto;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-.centers-table {
-  min-width: 800px;
-  width: 100%;
 }
 
 .centers-table th,
@@ -139,43 +134,20 @@ mat-paginator {
   text-overflow: ellipsis;
   cursor: pointer;
 }
-/* Action column - enough width for Edit + Delete icon buttons, no clipping */
+/* Action column */
 .centers-table .mat-column-actions,
 .centers-table th.mat-header-cell.mat-column-actions {
   text-align: center;
-  min-width: 110px;
-  width: 110px;
-  max-width: none;
+  min-width: 90px;
+  max-width: 120px;
   position: sticky;
   right: 0;
   background: #fff;
   z-index: 3;
-  overflow: visible;
-  white-space: nowrap;
-  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.08);
-}
-
-.centers-table th.mat-header-cell.mat-column-actions {
-  background: var(--ion-color-primary-shade);
-  z-index: 4;
-  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.12);
-}
-
-.centers-table td.mat-cell.mat-column-actions {
-  overflow: visible;
-  text-overflow: clip;
 }
 
 .centers-table .mat-column-actions button {
-  margin: 0 4px;
-  flex-shrink: 0;
-}
-
-/* Align filter row actions cell with actions column width */
-.centers-table .filter-row th.filter-actions-cell {
-  min-width: 110px;
-  width: 110px;
-  box-sizing: border-box;
+  margin: 0 2px;
 }
 
 .truncate--address {
@@ -207,12 +179,6 @@ mat-paginator {
   .centers-table .mat-column-branchName {
     display: none;
   }
-  .centers-table .mat-column-actions,
-  .centers-table th.mat-header-cell.mat-column-actions,
-  .centers-table .filter-row th.filter-actions-cell {
-    min-width: 110px;
-    width: 110px;
-  }
 }
 
 @media (max-width: 600px) {
@@ -223,12 +189,6 @@ mat-paginator {
   }
   .centers-table .mat-column-city {
     display: none;
-  }
-  .centers-table .mat-column-actions,
-  .centers-table th.mat-header-cell.mat-column-actions,
-  .centers-table .filter-row th.filter-actions-cell {
-    min-width: 100px;
-    width: 100px;
   }
 }
 
