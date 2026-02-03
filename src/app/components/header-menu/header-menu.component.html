@@ -1,5 +1,5 @@
 <ion-header [translucent]="false">
-  <!-- Organization Header -->
+  <!-- Organization Header (top bar only) -->
   <div class="org-header">
     <div class="org-info">
       <h2 class="org-name">{{ organization?.name || 'Navya Micro Credit Services' }}</h2>
@@ -9,30 +9,19 @@
         <span *ngIf="organization.city">{{ organization.city }}</span>
       </p>
     </div>
+    <!-- Branch name in center (Branch Mode only); Org Mode leaves center empty -->
+    <div class="header-center">
+      <h2 class="header-branch-name" *ngIf="isBranchMode && selectedBranch">{{ selectedBranch.name }}</h2>
+    </div>
     <div class="user-section">
-      <!-- Branch Dropdown (if multiple branches and Org Owner) -->
-      <div class="branch-section" *ngIf="branches.length > 1 && isOrgOwner">
-        <div class="branch-dropdown" (click)="toggleBranchDropdown()">
-          <ion-icon name="business-outline" class="branch-icon"></ion-icon>
-          <span class="branch-name">{{ selectedBranch?.name || 'Select Branch' }}</span>
-          <ion-icon name="chevron-down-outline" class="dropdown-icon"></ion-icon>
-        </div>
-        <div class="branch-dropdown-menu" *ngIf="showBranchDropdown">
-          <button 
-            class="branch-item" 
-            *ngFor="let branch of branches"
-            [class.active]="selectedBranch?.id === branch.id"
-            (click)="selectBranch(branch)">
-            {{ branch.name }}
-          </button>
-        </div>
-      </div>
-      
-      <!-- Branch Label (if single branch OR branch level user) -->
-      <div class="branch-label" *ngIf="(branches.length === 1 || isBranchUser) && selectedBranch">
-        <ion-icon name="business-outline" class="branch-icon"></ion-icon>
-        <span class="branch-name">{{ selectedBranch.name }}</span>
-      </div>
+      <!-- Mode indicator: Org Mode / Branch Mode (owner login only) -->
+      <span *ngIf="isOrgOwner" class="mode-badge" [class.mode-org]="isOrgMode" [class.mode-branch]="isBranchMode">
+        {{ isOrgMode ? 'Org Mode' : 'Branch Mode' }}
+      </span>
+      <!-- Return back to Org Mode (owner only, when in Branch Mode) -->
+      <a *ngIf="isOrgOwner && isBranchMode" class="return-to-org" (click)="returnToOrgMode()" href="javascript:void(0)">
+        Return back to Org Mode
+      </a>
 
       <div class="user-info">
         <ion-icon name="person-circle-outline" class="user-icon"></ion-icon>
@@ -45,258 +34,74 @@
       </ion-button>
     </div>
   </div>
+</ion-header>
 
-  <!-- Navigation Menu for Org Owner -->
-  <ion-toolbar class="nav-toolbar" *ngIf="isOrgOwner">
-    <div class="nav-menu">
-      <!-- Dashboard - Show for all users -->
+<!-- Layout: left sidebar + main content -->
+<div class="app-layout">
+  <aside class="sidebar">
+    <!-- Navigation Menu for Org Mode (owner, no branch selected) -->
+    <nav class="nav-sidebar" *ngIf="isOrgMode">
       <button 
         class="nav-item" 
         [class.active]="activeMenu === 'Dashboard'"
         (click)="setActiveMenu('Dashboard')">
         Dashboard
       </button>
-      
-      <!-- Organization Info - Only for Org Owner -->
       <button 
         class="nav-item" 
         [class.active]="activeMenu === 'Info'"
         (click)="setActiveMenu('Info')">
-        Organization Info
+        Org Info
       </button>
-      
-      <!-- Users - Only for Org Owner -->
-      <div class="nav-item-container">
-        <button 
-          class="nav-item" 
-          [class.active]="activeMenu === 'Users' || activeMenu === 'All Users' || activeMenu === 'Approvals'"
-          (click)="setActiveMenu('Users')">
-          Users
-          <ion-icon 
-            [name]="showUsersSubmenu ? 'chevron-up-outline' : 'chevron-down-outline'" 
-            class="submenu-icon">
-          </ion-icon>
-        </button>
-      </div>
-      
-      <!-- Branches - Show for Org Owner -->
-      <div class="nav-item-container">
-        <button 
-          class="nav-item" 
-          [class.active]="activeMenu === 'Branches' || activeMenu === 'All Branches' || activeMenu === 'Dashboard' || activeMenu === 'Centers' || activeMenu === 'POCs' || activeMenu === 'Staff' || activeMenu === 'Members' || activeMenu === 'Loan' || activeMenu === 'Add Loan' || activeMenu === 'Manage Loan' || activeMenu === 'Preclose Loan' || activeMenu === 'Recovery Posting'"
-          (click)="setActiveMenu('Branches')">
-          Branches
-          <ion-icon 
-            [name]="showBranchesSubmenu ? 'chevron-up-outline' : 'chevron-down-outline'" 
-            class="submenu-icon">
-          </ion-icon>
-        </button>
-      </div>
-    </div>
-  </ion-toolbar>
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Users' || activeMenu === 'All Users' || activeMenu === 'Approvals'"
+        (click)="setActiveMenu('Users')">
+        Users
+      </button>
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Branches' || activeMenu === 'All Branches'"
+        (click)="setActiveMenu('Branches')">
+        Branches
+      </button>
+    </nav>
 
-  <!-- Navigation Menu for Branch User (submenu items as main menu) -->
-  <ion-toolbar class="nav-toolbar" *ngIf="isBranchUser">
-    <div class="nav-menu">
-      <!-- Dashboard / My View -->
+    <!-- Navigation Menu for Branch Mode (branch admin/staff, or owner viewing a branch) -->
+    <nav class="nav-sidebar" *ngIf="isBranchMode">
       <button 
         class="nav-item" 
         [class.active]="activeMenu === 'Dashboard' || activeMenu === 'My View'"
         (click)="setActiveMenu(isStaff ? 'My View' : 'Dashboard')">
-        {{ isStaff ? 'My View' : 'Dashboard' }}
+        Dashboard
       </button>
-      
-      <!-- Centers -->
-      <button 
-        class="nav-item" 
-        [class.active]="activeMenu === 'Centers'"
-        (click)="setActiveMenu('Centers')">
-        Centers
-      </button>
-      
-      <!-- POCs -->
-      <button 
-        class="nav-item" 
-        [class.active]="activeMenu === 'POCs'"
-        (click)="setActiveMenu('POCs')">
-        POCs
-      </button>
-      
-      <!-- Staff -->
-      <button 
-        class="nav-item" 
-        [class.active]="activeMenu === 'Staff'"
-        (click)="setActiveMenu('Staff')">
-        Staff
-      </button>
-      
-      <!-- Members -->
-      <button 
-        class="nav-item" 
-        [class.active]="activeMenu === 'Members'"
-        (click)="setActiveMenu('Members')">
-        Members
-      </button>
-      
-      <!-- Loan - Expandable menu for Branch Users -->
+      <button class="nav-item" [class.active]="activeMenu === 'Centers'" (click)="setActiveMenu('Centers')">Centers</button>
+      <button class="nav-item" [class.active]="activeMenu === 'POCs'" (click)="setActiveMenu('POCs')">POCs</button>
+      <button class="nav-item" [class.active]="activeMenu === 'Staff'" (click)="setActiveMenu('Staff')">Staff</button>
+      <button class="nav-item" [class.active]="activeMenu === 'Members'" (click)="setActiveMenu('Members')">Members</button>
       <div class="nav-item-container">
         <button 
           class="nav-item" 
           [class.active]="activeMenu === 'Loan' || activeMenu === 'Add Loan' || activeMenu === 'Manage Loan' || activeMenu === 'Preclose Loan'"
           (click)="setActiveMenu('Loan')">
-          Loan
-          <ion-icon 
-            [name]="showLoanSubmenu ? 'chevron-up-outline' : 'chevron-down-outline'" 
-            class="submenu-icon">
-          </ion-icon>
+          <span>Loans</span>
+          <ion-icon [name]="showLoanSubmenu ? 'chevron-forward-outline' : 'chevron-down-outline'" class="submenu-icon"></ion-icon>
         </button>
+        <div class="submenu-vertical" *ngIf="showLoanSubmenu">
+          <button class="submenu-item" [class.active]="activeMenu === 'Add Loan'" (click)="selectSubmenu('Add Loan')">Add Loan</button>
+          <button class="submenu-item" [class.active]="activeMenu === 'Manage Loan'" (click)="selectSubmenu('Manage Loan')">Manage Loan</button>
+          <button class="submenu-item" [class.active]="activeMenu === 'Preclose Loan'" (click)="selectSubmenu('Preclose Loan')">Preclose Loan</button>
+        </div>
       </div>
-      
-      <!-- Recovery Posting -->
       <button 
         class="nav-item" 
         [class.active]="activeMenu === 'Recovery Posting'"
         (click)="setActiveMenu('Recovery Posting')">
         Recovery Posting
       </button>
-    </div>
-  </ion-toolbar>
-  
-  <!-- Submenu for Loan (Branch User only) -->
-  <div class="submenu-container" *ngIf="showLoanSubmenu && isBranchUser">
-    <div class="submenu">
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'Add Loan'"
-        (click)="selectSubmenu('Add Loan')">
-        Add Loan
-      </button>
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'Manage Loan'"
-        (click)="selectSubmenu('Manage Loan')">
-        Manage Loan
-      </button>
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'Preclose Loan'"
-        (click)="selectSubmenu('Preclose Loan')">
-        Preclose Loan
-      </button>
-    </div>
-  </div>
-  
-  <!-- Submenu for Users (Org Owner only) -->
-  <div class="submenu-container" *ngIf="showUsersSubmenu && isOrgOwner">
-    <div class="submenu">
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'All Users'"
-        (click)="selectSubmenu('All Users')">
-        All Users
-      </button>
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'Approvals'"
-        (click)="selectSubmenu('Approvals')">
-        Approvals
-      </button>
-    </div>
-  </div>
-  
-  <!-- Submenu for Branches (Org Owner only) -->
-  <div class="submenu-container" *ngIf="showBranchesSubmenu && isOrgOwner">
-    <div class="submenu">
-      <!-- All Branches - Only for Org Owner -->
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'All Branches'"
-        (click)="selectSubmenu('All Branches')">
-        All Branches
-      </button>
-      
-      <!-- Dashboard - Show for all users -->
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'Dashboard'"
-        (click)="selectSubmenu('Dashboard')">
-        Dashboard
-      </button>
-      
-      <!-- Centers - Show for all users -->
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'Centers'"
-        (click)="selectSubmenu('Centers')">
-        Centers
-      </button>
-      
-      <!-- POCs - Show for all users -->
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'POCs'"
-        (click)="selectSubmenu('POCs')">
-        POCs
-      </button>
-      
-      <!-- Staff - Show for all users -->
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'Staff'"
-        (click)="selectSubmenu('Staff')">
-        Staff
-      </button>
-      
-      <!-- Members - Show for all users -->
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'Members'"
-        (click)="selectSubmenu('Members')">
-        Members
-      </button>
-      
-      <!-- Loan - Expandable submenu item -->
-      <button 
-        class="submenu-item submenu-item-expandable" 
-        [class.active]="activeMenu === 'Loan' || activeMenu === 'Add Loan' || activeMenu === 'Manage Loan' || activeMenu === 'Preclose Loan'"
-        (click)="toggleLoanSubmenu()">
-        Loan
-        <ion-icon 
-          [name]="showLoanSubmenu ? 'chevron-up-outline' : 'chevron-down-outline'" 
-          class="submenu-icon">
-        </ion-icon>
-      </button>
-      
-      <!-- Recovery Posting -->
-      <button 
-        class="submenu-item" 
-        [class.active]="activeMenu === 'Recovery Posting'"
-        (click)="selectSubmenu('Recovery Posting')">
-        Recovery Posting
-      </button>
-    </div>
-    <!-- Nested submenu for Loan (appears below main submenu) -->
-    <div class="nested-submenu-container" *ngIf="showLoanSubmenu && isOrgOwner">
-      <div class="nested-submenu">
-        <button 
-          class="nested-submenu-item" 
-          [class.active]="activeMenu === 'Add Loan'"
-          (click)="selectSubmenu('Add Loan')">
-          Add Loan
-        </button>
-        <button 
-          class="nested-submenu-item" 
-          [class.active]="activeMenu === 'Manage Loan'"
-          (click)="selectSubmenu('Manage Loan')">
-          Manage Loan
-        </button>
-        <button 
-          class="nested-submenu-item" 
-          [class.active]="activeMenu === 'Preclose Loan'"
-          (click)="selectSubmenu('Preclose Loan')">
-          Preclose Loan
-        </button>
-      </div>
-    </div>
-  </div>
-</ion-header>
+    </nav>
+  </aside>
+  <main class="main-content">
+    <ng-content></ng-content>
+  </main>
+</div>

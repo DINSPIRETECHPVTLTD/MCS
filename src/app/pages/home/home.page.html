@@ -2,12 +2,11 @@
   [activeMenu]="activeMenu"
   (menuChange)="onMenuChange($event)"
   (branchChange)="onBranchChange($event)">
+  <ion-content [fullscreen]="true" class="ion-padding">
+    <div class="content-container">
+      <h1>Welcome to {{ organization?.name || 'MCS' }}!</h1>
+      <p>You have successfully logged in.</p>
+      <p *ngIf="activeMenu">Current section: <strong>{{ activeMenu }}</strong></p>
+    </div>
+  </ion-content>
 </app-header-menu>
-
-<ion-content [fullscreen]="true" class="ion-padding">
-  <div class="content-container">
-    <h1>Welcome to {{ organization?.name || 'MCS' }}!</h1>
-    <p>You have successfully logged in.</p>
-    <p *ngIf="activeMenu">Current section: <strong>{{ activeMenu }}</strong></p>
-  </div>
-</ion-content>

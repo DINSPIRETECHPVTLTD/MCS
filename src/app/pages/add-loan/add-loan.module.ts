@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { AddLoanPageRoutingModule } from './add-loan-routing.module';
-import { AddLoanPage } from './add-loan.page';
+import { AddLoanComponent } from './add-loan.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 import { AgGridModule } from 'ag-grid-angular';
 
@@ -16,6 +16,6 @@ import { AgGridModule } from 'ag-grid-angular';
     HeaderMenuComponent,
     AgGridModule
   ],
-  declarations: [AddLoanPage]
+  declarations: [AddLoanComponent]
 })
 export class AddLoanPageModule {}

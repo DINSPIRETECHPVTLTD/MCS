@@ -4,7 +4,6 @@ import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { OrganizationService } from '../../services/organization.service';
-import { BranchService } from '../../services/branch.service';
 import { Organization } from '../../models/organization.models';
 import { Branch } from '../../models/branch.models';
 
@@ -13,7 +12,7 @@ import { Branch } from '../../models/branch.models';
   templateUrl: './organization-info.page.html',
   styleUrls: ['./organization-info.page.scss']
 })
-export class OrganizationInfoPage implements OnInit, ViewWillEnter {
+export class OrganizationInfoComponent implements OnInit, ViewWillEnter {
   organization: Organization | null = null;
   activeMenu: string = 'Info';
 
@@ -76,7 +75,6 @@ export class OrganizationInfoPage implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
   }
 }
 

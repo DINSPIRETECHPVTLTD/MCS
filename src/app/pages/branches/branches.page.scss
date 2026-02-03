@@ -24,44 +24,6 @@
   }
 }
 
-.branch-item {
-  margin-bottom: 8px;
-  border-radius: 8px;
-  --background: var(--ion-color-light);
-  --padding-start: 16px;
-  --padding-end: 16px;
-  --inner-padding-end: 0;
-
-  ion-avatar {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--ion-color-primary);
-    color: white;
-
-    ion-icon {
-      font-size: 32px;
-    }
-  }
-
-  ion-label {
-    h2 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      color: var(--ion-color-dark);
-    }
-
-    p {
-      font-size: 14px;
-      color: var(--ion-color-medium);
-      margin: 2px 0;
-    }
-  }
-}
-
 // AG Grid column borders
 ::ng-deep {
   .branches-grid {
@@ -98,6 +60,57 @@
     // Ensure the grid itself has borders
     .ag-root-wrapper {
       border: 1px solid #d0d0d0 !important;
+    }
+
+    // Actions cell and buttons
+    .actions-cell {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      flex-wrap: wrap;
+    }
+
+    .ag-btn {
+      appearance: none;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .ag-edit {
+      background: var(--ion-color-primary);
+      color: white;
+    }
+
+    .ag-edit:hover {
+      background: var(--ion-color-primary-shade);
+      transform: translateY(-1px);
+    }
+
+    .ag-delete {
+      background: var(--ion-color-danger);
+      color: white;
+    }
+
+    .ag-delete:hover {
+      background: var(--ion-color-danger-shade);
+      transform: translateY(-1px);
+    }
+
+    .ag-navigate {
+      background: var(--ion-color-tertiary, #5260ff);
+      color: white;
+    }
+
+    .ag-navigate:hover {
+      background: var(--ion-color-tertiary-shade, #4854e6);
+      transform: translateY(-1px);
     }
   }
 }
