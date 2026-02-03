@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { Branch } from '../../models/branch.models';
 import { AddPocModalComponent } from './add-poc-modal.component';
 import { ColDef } from 'ag-grid-community';
+import { Poc, PocService } from '../../services/poc.service';
 
 @Component({
   selector: 'app-pocs',
@@ -227,7 +228,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
                 this.showToast('POC deleted successfully', 'success');
                 this.loadPocs();
               },
-              error: async (err) => {
+              error: async (err: any) => {
                 await loading.dismiss();
                 console.error('Delete error', err);
                 this.showToast('Failed to delete POC', 'danger');

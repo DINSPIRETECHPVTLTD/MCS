@@ -18,7 +18,7 @@ import { AgGridModule } from 'ag-grid-angular';
     HeaderMenuComponent,
     AgGridModule
   ],
-  declarations: [PocsComponent]
+  declarations: [PocsComponent, AddPocModalComponent]
 })
 export class PocsPageModule {}
 
