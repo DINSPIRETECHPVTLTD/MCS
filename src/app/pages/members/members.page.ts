@@ -129,7 +129,8 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     private router: Router,
     private modalController: ModalController,
     private toastController: ToastController,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+    private alertController: AlertController
   ) {
     // Fetch all branches for mapping
     this.branchService.getBranches().subscribe(branches => {
