@@ -180,7 +180,27 @@ export class HeaderMenuComponent implements OnInit {
       const branch = branches.find(b => b.id === userBranchId || b.id?.toString() === userBranchId?.toString());
       this.selectedBranch = branch || null;
     }
-    // Org owner in Org Mode: no selectedBranch
+    // Persist and notify listeners about the selected branch on initial load
+    if (this.selectedBranch) {
+      try {
+        localStorage.setItem('selected_branch_id', this.selectedBranch.id.toString());
+      } catch (e) {
+        // ignore storage errors
+      }
+      this.branchChange.emit(this.selectedBranch);
+      console.log('Selected Branch set to header:', this.selectedBranch);
+    }
+  }
+
+  toggleBranchDropdown(): void {
+    this.showBranchDropdown = !this.showBranchDropdown;
+  }
+
+  selectBranch(branch: Branch): void {
+    this.selectedBranch = branch;
+    this.showBranchDropdown = false;
+    localStorage.setItem('selected_branch_id', branch.id.toString());
+    this.branchChange.emit(branch);
   }
 
   setActiveMenu(menu: string): void {
