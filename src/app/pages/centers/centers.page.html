@@ -5,47 +5,17 @@
 </app-header-menu>
 
 <ion-content [fullscreen]="true" class="ion-padding">
-  <div class="users-list-container">
-    <div class="centers-toolbar">
-      <div class="centers-toolbar-left">
-        <h2>All Centers</h2>
-      </div>
-
-      <div class="centers-actions">
-        <ion-button (click)="onViewCenters()">
-          <ion-icon name="list-outline" slot="start"></ion-icon>
-          View Centers
-        </ion-button>
-        <ion-button (click)="openAddCenterModal()">
-          <ion-icon name="add-outline" slot="start"></ion-icon>
-          Add Center
-        </ion-button>
-      </div>
+  <div class="content-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h1>Centers</h1>
+      <ion-button (click)="onViewCenters()">
+        View Centers
+      </ion-button>
     </div>
-
-    <mat-card class="filter-card">
-      <div class="filter-row">
-        <mat-form-field *ngIf="showSearch" appearance="outline" class="filter-field filter-field--search">
-          <mat-label>Search centers</mat-label>
-          <input matInput (input)="onFilterChange($event)" [disabled]="!isViewCentersClicked" />
-        </mat-form-field>
-      </div>
-    </mat-card>
-
-    <div *ngIf="!isViewCentersClicked && !isLoading" class="empty-state">
-      <ion-icon name="location-outline" size="large"></ion-icon>
-      <p>Click "View Centers" to preview data</p>
-      <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
-        Or click "Add Center" to create a new center
-      </p>
-    </div>
-
-    <div *ngIf="isViewCentersClicked && centers.length === 0 && !isLoading" class="empty-state">
+    
+    <div *ngIf="isViewCentersClicked && centers.length === 0" class="empty-state">
       <ion-icon name="location-outline" size="large"></ion-icon>
       <p>No centers found</p>
-      <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
-        Click "Add Center" to create a new center
-      </p>
     </div>
 
     <div *ngIf="isViewCentersClicked && centers.length > 0" class="centers-table-wrapper">

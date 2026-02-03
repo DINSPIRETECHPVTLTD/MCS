@@ -1,39 +1,25 @@
+.content-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  h1 {
+    color: var(--ion-color-primary);
+    margin-bottom: 16px;
+  }
+}
+
 mat-paginator {
   margin-top: 16px;
   background: #fff;
   z-index: 2;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
+
 /* Centers page aligned with Members page layout */
 .users-list-container {
   margin-top: 16px;
-}
-
-.centers-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.centers-toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.centers-actions {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-
-  ion-button {
-    font-size: 14px;
-    font-weight: 600;
-    text-transform: none;
-  }
 }
 
 .filter-card {
@@ -191,4 +177,3 @@ mat-paginator {
     display: none;
   }
 }
-

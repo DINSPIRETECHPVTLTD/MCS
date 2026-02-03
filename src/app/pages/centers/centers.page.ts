@@ -1,24 +1,26 @@
-// ...existing code...
 import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { LoadingController, ModalController, ToastController, ViewWillEnter } from '@ionic/angular';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { MatTableDataSource } from '@angular/material/table';
+import {
+  ViewWillEnter,
+  ModalController,
+  ToastController,
+  LoadingController
+} from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
+import { BranchService } from '../../services/branch.service';
 import { Branch } from '../../models/branch.models';
 import { CenterService } from '../../services/center.service';
-import { BranchService } from '../../services/branch.service';
 import { Center } from '../../models/center.models';
-import { AddCenterModalComponent } from './add-center-modal.component';
 import { EditCenterModalComponent } from './edit-center-modal.component';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
 
 @Component({
   selector: 'app-centers',
   templateUrl: './centers.page.html',
   styleUrls: ['./centers.page.scss']
 })
-
 export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
   activeMenu: string = 'Centers';
   centers: Center[] = [];
@@ -186,30 +188,6 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
       }
     });
   }
-
-  async openAddCenterModal(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: AddCenterModalComponent,
-      cssClass: 'add-center-modal',
-      breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 1
-    });
-
-    await modal.present();
-    const { data } = await modal.onWillDismiss();
-
-    if (data && data.success) {
-      await this.showToast('Center added successfully', 'success');
-      this.isViewCentersClicked = true;
-      this.showSearch = true;
-      // Reset all filters
-      Object.keys(this.filters).forEach(key => this.filters[key] = '');
-      this.dataSource.filter = '';
-      await this.loadCenters();
-    }
-  }
-
-
   async editCenter(row: Center): Promise<void> {
     const modal = await this.modalController.create({
       component: EditCenterModalComponent,

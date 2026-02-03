@@ -1,11 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { CentersPageRoutingModule } from './centers-routing.module';
-import { CentersComponent } from './centers.page';
+import { CentersPage } from './centers.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
-import { AddCenterModalComponent } from './add-center-modal.component';
 import { EditCenterModalComponent } from './edit-center-modal.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -22,7 +21,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
     IonicModule,
     MatFormFieldModule,
     MatInputModule,
@@ -37,7 +35,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     CentersPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [CentersPage, AddCenterModalComponent, EditCenterModalComponent]
+  declarations: [CentersPage, EditCenterModalComponent]
 })
 export class CentersPageModule {}
 
