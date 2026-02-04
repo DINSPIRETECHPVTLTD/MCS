@@ -1,16 +1,19 @@
 import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
-import { ViewWillEnter, ModalController, ToastController, LoadingController } from '@ionic/angular';
+import { ViewWillEnter, ModalController, ToastController, LoadingController, AlertController } from '@ionic/angular';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
+import { ColDef, GridReadyEvent } from 'ag-grid-community';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { MemberService } from '../../services/member.service';
 import { Branch } from '../../models/branch.models';
 import { CenterOption, Member, POCOption } from '../../models/member.models';
+import { BranchService } from '../../services/branch.service';
 import { AddMemberModalComponent } from './add-member-modal.component';
+import { EditMemberModalComponent } from './edit-member-modal.component';
 
 @Component({
   selector: 'app-members',
@@ -33,6 +36,64 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
 
   // AG Grid
   rowData: Array<Record<string, any>> = [];
+  columnDefs: ColDef[] = [
+    {field: 'memberId', headerName: 'Member ID/Code', width: 200 },
+    { field: 'memberFirstName', headerName: 'Member First Name', width: 200 },
+    { field: 'memberMiddleName', headerName: 'Member Middle Name', width: 200 },
+    { field: 'memberLastName', headerName: 'Member Last Name', width: 200 },
+    { field: 'memberDob', headerName: 'Member DOB', width: 200 },
+    { field: 'memberAge', headerName: 'Member Age', width: 200 },
+    { field: 'memberPhone', headerName: 'Member Phone ', width: 200 },
+    { field: 'memberAddress', headerName: 'Member Address', width: 200 },
+    { field: 'memberAadhaar', headerName: 'Member Aadhaar', width: 200 },
+    { field: 'memberOccupation', headerName: 'Member Occupation', width: 200 },
+    { field: 'memberStatus', headerName: 'Member Status', width: 200 },
+    { field: 'guardianName', headerName: 'Husband/Guardian Name', width: 200 },
+    { field: 'guardianAge', headerName: 'Husband/Guardian Age', width: 200 },
+    { field: 'branch', headerName: 'Branch', width: 120 },
+    { field: 'center', headerName: 'Center', width: 150 },
+    { field: 'poc', headerName: 'POC', width: 150 },
+    {
+      headerName: 'Actions',
+      width: 300,
+      filter: false,
+      sortable: false,
+      cellRenderer: (params: any) => {
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.gap = '8px';
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.className = 'btn btn-sm btn-primary edit-btn';
+        editBtn.addEventListener('click', () => this.openEditMemberModal(params.data));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'btn btn-sm btn-danger delete-btn';
+        deleteBtn.addEventListener('click', () => this.deleteRow(params.data));
+
+        const loanBtn = document.createElement('button');
+        loanBtn.textContent = 'Add/View Loan';
+        loanBtn.className = 'btn btn-sm btn-loan loan-btn';
+        loanBtn.addEventListener('click', () => console.log('Loan action:', params.data));
+
+        container.appendChild(editBtn);
+        container.appendChild(deleteBtn);
+        container.appendChild(loanBtn);
+
+        return container;
+      }
+    }
+  ];
+  defaultColDef: ColDef = {
+    sortable: true,
+    filter: true,
+    resizable: true
+  };
+  pagination = true;
+  paginationPageSize = 10;
+
   displayedColumns: string[] = [
     'memberFirstName',
     'memberMiddleName',
@@ -48,28 +109,45 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     'guardianAge',
     'branch',
     'center',
-    'poc'
+    'poc',
+    'edit',
+    'delete'
   ];
   dataSource = new MatTableDataSource<Record<string, any>>([]);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
+  branches: Branch[] = [];
+  branchMap: Map<number, string> = new Map();
+ 
+
   constructor(
     private authService: AuthService,
     private userContext: UserContextService,
     private memberService: MemberService,
+    private branchService: BranchService,
     private router: Router,
     private modalController: ModalController,
     private toastController: ToastController,
-    private loadingController: LoadingController
-  ) { }
+    private loadingController: LoadingController,
+    private alertController: AlertController
+  ) {
+    // Fetch all branches for mapping
+    this.branchService.getBranches().subscribe(branches => {
+      this.branches = branches ?? [];
+      this.branchMap = new Map(this.branches.map(b => [Number(b.id), b.name]));
+    });
+  }
 
   ngOnInit(): void {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
     }
+
+    console.log('Selected Branch:', this.selectedBranch);
+
 
     this.dataSource.filterPredicate = (data: Record<string, any>, filter: string) => {
       const normalized = filter.trim().toLowerCase();
@@ -102,14 +180,35 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     }
   }
 
+  onGridReady(params: GridReadyEvent): void {
+    // Grid is ready - can be used for any initialization if needed
+    console.log('AG Grid is ready', params);
+  }
+
   onMenuChange(menu: string): void {
     this.activeMenu = menu;
   }
 
   onBranchChange(branch: Branch): void {
+    console.log('MembersPage: onBranchChange called with branch ->', branch);
     this.selectedBranch = branch;
     this.selectedCenterId = null;
     this.rowData = [];
+
+    // Load centers for this branch so the centers dropdown is populated
+    if (branch && (branch.id || branch.id === 0)) {
+      const id = Number(branch.id);
+      if (!Number.isNaN(id) && id > 0) {
+        this.loadCentersForBranch(id);
+      }
+    } else {
+      // Fallback: try reading selected branch id from localStorage
+      const saved = localStorage.getItem('selected_branch_id');
+      const savedId = saved ? Number(saved) : 0;
+      if (savedId && !Number.isNaN(savedId)) {
+        this.loadCentersForBranch(savedId);
+      }
+    }
   }
 
   onCenterChange(centerId: any): void {
@@ -149,6 +248,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
 
 
   private loadCentersForBranch(branchId: number): void {
+    console.log('MembersPage: loadCentersForBranch branchId =', branchId);
     this.isLoading = true;
     this.memberService.getAllCenters().subscribe({
       next: centers => {
@@ -180,6 +280,14 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       return;
     }
 
+    const branchId = this.selectedBranch?.id;
+    console.log('MembersPage: refreshMembers branchId =', branchId, 'centerId =', centerId);
+    if (!branchId) {
+      this.rowData = [];
+      this.dataSource.data = [];
+      return;
+    }
+
     this.isLoadingMembers = true;
 
     const loading = await this.loadingController.create({ message: 'Loading members...' });
@@ -188,7 +296,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     forkJoin({
       centers: this.memberService.getAllCenters(),
       pocs: this.memberService.getAllPOCs(),
-      members: this.memberService.getAllMembers()
+      members: this.memberService.getMembersByBranch(branchId)
     }).subscribe({
       next: ({ centers, pocs, members }) => {
         loading.dismiss();
@@ -248,7 +356,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       .filter(Boolean)
       .join(' ')
       .trim();
-
+    const memberId = Number(m.id ?? m.Id ?? 0);
     const firstName = (m.firstName ?? m.FirstName ?? '').toString();
     const middleName = (m.middleName ?? m.MiddleName ?? '').toString();
     const lastName = (m.lastName ?? m.LastName ?? '').toString();
@@ -264,6 +372,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     );
 
     return {
+      memberId,
       memberFirstName: firstName,
       memberMiddleName: middleName,
       memberLastName: lastName,
@@ -273,13 +382,77 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       memberAddress: this.formatAddress(m),
       memberAadhaar: m.aadhaar ?? m.Aadhaar ?? '',
       memberOccupation: m.occupation ?? m.Occupation ?? '',
-      memberStatus: m.status ?? m.Status ?? '',
+      memberStatus: m.isDeleted ? 'Inactive' : 'Active',
       guardianName,
       guardianAge: m.guardianAge ?? m.GuardianAge ?? '',
-      branch: this.selectedBranch?.name ?? '',
+      branch: this.branchMap.get(Number(m.branchId ?? m.BranchId ?? 0)) ?? '',
       center: centerMap.get(centerId) ?? '',
       poc: pocDisplay
     };
+  }
+
+  onCellClicked(event: any) {
+    // Event handling is now done in cellRenderer with direct addEventListener
+    // This method is kept for potential future use
+  }
+
+  private async deleteRow(row: any): Promise<void> {
+    console.log('Delete clicked:', row);
+    const alert = await this.alertController.create({
+      header: 'Delete Member',
+      message: `Are you sure you want to delete ${row.memberFirstName} ${row.memberLastName}?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          cssClass: 'secondary',
+          handler: () => {
+            console.log('Delete cancelled');
+          }
+        },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            console.log('Delete confirmed for:', row);
+            await this.confirmDeleteMember(row);
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  private async confirmDeleteMember(row: any): Promise<void> {
+    const loading = await this.loadingController.create({
+      message: 'Deleting member...'
+    });
+    await loading.present();
+
+    this.memberService.deleteMember(row.memberId).subscribe({
+      next: async () => {
+        await loading.dismiss();
+        const toast = await this.toastController.create({
+          message: 'Member deleted successfully.',
+          duration: 2000,
+          color: 'success',
+          position: 'top'
+        });
+        await toast.present();
+        this.refreshMembers();
+      },
+      error: async (error) => {
+        await loading.dismiss();
+        console.error('Error deleting member:', error);
+        const toast = await this.toastController.create({
+          message: 'Failed to delete member.',
+          duration: 2000,
+          color: 'danger',
+          position: 'top'
+        });
+        await toast.present();
+      }
+    });
   }
 
   private formatAddress(m: any): string {
@@ -370,6 +543,21 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       position: 'top'
     });
     await toast.present();
+  }
+
+  async openEditMemberModal(row: any): Promise<void> {
+    const modal = await this.modalController.create({
+      component: EditMemberModalComponent,
+      cssClass: 'edit-member-modal',
+      breakpoints: [0, 0.5, 1],
+      initialBreakpoint: 1,
+      componentProps: {
+        memberData: row
+      }
+    });
+
+    await modal.present();
+
   }
 }
 

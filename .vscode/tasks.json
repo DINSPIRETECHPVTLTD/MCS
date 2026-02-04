@@ -33,6 +33,13 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "ng serve",
+			"type": "shell",
+			"command": "npx ng serve",
+			"isBackground": true,
+			"group": "build"
 		}
 	]
 }

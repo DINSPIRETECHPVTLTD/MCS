@@ -1,6 +1,11 @@
 /* Members page aligned with Users page layout */
 .users-list-container {
   margin-top: 16px;
+  overflow-x: auto;
+  width: 100vw;
+}
+ion-content {
+  overflow-x: auto !important;
 }
 
 .members-toolbar {
@@ -44,12 +49,6 @@
   display: flex;
   gap: 16px;
   align-items: center;
-
-  ion-button {
-    font-size: 14px;
-    font-weight: 600;
-    text-transform: none;
-  }
 }
 
 .view-dropdown {
@@ -72,13 +71,18 @@
 }
 
 /* Material table container */
+
 .users-grid {
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  overflow-x: auto;
 }
 
 .table-scroll {
   max-height: 60vh;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 /* Material table styling */
@@ -88,6 +92,33 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
+  table-layout: auto;
+}
+.members-table th.mat-header-cell,
+.members-table td.mat-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+.members-table .mat-column-edit,
+.members-table .mat-column-delete {
+  text-align: center;
+  width: 48px;
+  min-width: 48px;
+  max-width: 56px;
+  position: sticky;
+  right: 0;
+  background: #fff;
+  z-index: 3;
+}
+/* Action buttons column: center and fix width */
+.members-table .mat-column-edit,
+.members-table .mat-column-delete {
+  text-align: center;
+  width: 48px;
+  min-width: 48px;
+  max-width: 56px;
 }
 
 /* Sticky first column */
