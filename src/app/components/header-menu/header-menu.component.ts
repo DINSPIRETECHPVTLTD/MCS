@@ -40,6 +40,7 @@ export class HeaderMenuComponent implements OnInit {
   // Org Mode vs Branch Mode: owner default = Org Mode; owner after "Navigate to Branch" = Branch Mode; branch admin/staff = Branch Mode
   isOrgMode: boolean = false;
   isBranchMode: boolean = false;
+  showBranchDropdown: boolean = false;
 
   constructor(
     private authService: AuthService,
