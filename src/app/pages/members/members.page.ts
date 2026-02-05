@@ -120,6 +120,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
 
   branches: Branch[] = [];
   branchMap: Map<number, string> = new Map();
+ 
 
   constructor(
     private authService: AuthService,
