@@ -49,6 +49,14 @@ mat-paginator {
   width: 100%;
 }
 
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
 /* Column filter row inside the mat-table header */
 tr.table-filter-row {
   display: table-row;
@@ -58,6 +66,13 @@ tr.table-filter-row > th {
   display: table-cell;
   padding: 6px 8px;
   vertical-align: middle;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e0e0e0;
+  border-right: none;
+}
+
+tr.table-filter-row > th:last-child {
+  border-right: none;
 }
 
 .table-scroll {
@@ -67,8 +82,16 @@ tr.table-filter-row > th {
   min-height: 300px;
   overflow-x: auto;
   overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.centers-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 @supports (height: 100dvh) {
@@ -80,12 +103,49 @@ tr.table-filter-row > th {
 .centers-table th,
 .centers-table td {
   padding: 6px 8px;
-  border-bottom: 1px solid #e0e0e0;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: middle;
+}
+
+/* Single source of truth for grid lines (vertical + horizontal) */
+.centers-table th.mat-header-cell,
+.centers-table td.mat-cell {
+  border-bottom: 1px solid #e0e0e0;
+  border-right: none;
+  box-sizing: border-box;
+}
+
+
+.centers-table th.mat-header-cell:last-child,
+.centers-table td.mat-cell:last-child {
+  border-right: none;
+}
+
+/* Divider shadows (right edge) for non-sticky columns only.
+   Exclude:
+   - Center Name: sticky column has its own combined shadow
+   - Branch Name: to avoid double divider with Actions left divider
+   - Actions: uses a left-edge divider
+*/
+.centers-table th.mat-header-cell:not(.mat-column-actions):not(.mat-column-centerName):not(.mat-column-branchName),
+.centers-table td.mat-cell:not(.mat-column-actions):not(.mat-column-centerName):not(.mat-column-branchName) {
+  /* 1px divider line + subtle shadow (prevents double-thick dividers) */
+  box-shadow: inset -1px 0 0 #e0e0e0, inset -2px 0 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Filter-row right dividers for all but the Actions column and the cell before Actions (Branch Name). */
+tr.table-filter-row > th:not(:last-child):not(:nth-last-child(2)) {
+  box-shadow: inset -1px 0 0 #e0e0e0, inset -2px 0 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Actions is the last (sticky) column: show divider shadow on the LEFT edge */
+.centers-table th.mat-header-cell.mat-column-actions,
+.centers-table td.mat-cell.mat-column-actions,
+tr.table-filter-row > th:last-child {
+  box-shadow: inset 1px 0 0 #e0e0e0, inset 2px 0 0 rgba(0, 0, 0, 0.06);
 }
 
 .centers-table tr.mat-row,
@@ -99,7 +159,8 @@ tr.table-filter-row > th {
   left: 0;
   z-index: 3;
   background: #ffffff;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.08);
+  /* Keep sticky-column lift + keep the right-side divider line/shadow */
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.08), inset -1px 0 0 #e0e0e0, inset -2px 0 0 rgba(0, 0, 0, 0.06);
 }
 
 .centers-table th.mat-header-cell.mat-column-centerName {
@@ -111,7 +172,7 @@ tr.table-filter-row > th {
   font-weight: 700;
   color: #ffffff;
   background: var(--ion-color-primary-shade);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid #e0e0e0;
   padding: 12px 14px;
   position: sticky;
   top: 0;
@@ -120,7 +181,6 @@ tr.table-filter-row > th {
 
 .centers-table td.mat-cell {
   color: rgba(0, 0, 0, 0.82);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   padding: 12px 14px;
 }
 
@@ -140,15 +200,34 @@ tr.table-filter-row > th {
   cursor: pointer;
 }
 /* Action column */
-.centers-table .mat-column-actions,
-.centers-table th.mat-header-cell.mat-column-actions {
+.centers-table th.mat-header-cell.mat-column-actions,
+.centers-table td.mat-cell.mat-column-actions {
   text-align: center;
   min-width: 90px;
   max-width: 120px;
   position: sticky;
   right: 0;
-  background: #fff;
   z-index: 3;
+  border-left: none;
+}
+
+
+/* Keep header styling for the Actions header cell */
+.centers-table th.mat-header-cell.mat-column-actions {
+  background: var(--ion-color-primary-shade);
+  color: #ffffff;
+  z-index: 4;
+}
+
+/* Keep body styling for Actions body cells */
+.centers-table td.mat-cell.mat-column-actions {
+  background: #ffffff;
+}
+
+/* Avoid double vertical line (Branch right border + Actions left border) */
+.centers-table th.mat-header-cell.mat-column-branchName,
+.centers-table td.mat-cell.mat-column-branchName {
+  border-right: none;
 }
 
 .centers-table .mat-column-actions button {
