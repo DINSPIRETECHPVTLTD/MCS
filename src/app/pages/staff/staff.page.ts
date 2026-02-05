@@ -23,8 +23,6 @@ export class StaffComponent implements OnInit, ViewWillEnter {
   rowData: User[] = [];
   columnDefs: ColDef[] = [];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
-  pagination: boolean = true;
-  paginationPageSize: number = 10;
   staffForm: FormGroup;
   showAddForm: boolean = false;
   isEditing: boolean = false;
@@ -120,8 +118,8 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         filter: 'agTextColumnFilter'
       },
       { headerName: 'Country', field: 'country', editable: false, width: 140, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.country || 'India') },
-      { headerName: 'Zip', field: 'pinCode', editable: false, width: 120, filter: 'agTextColumnFilter' },
-      { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter' },
+      { headerName: 'Pin Code', field: 'pinCode', editable: false, width: 120, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.pinCode || p.data?.PinCode || '') },
+      { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.phoneNumber || p.data?.PhoneNumber || '') },
       // keep actions column (edit/delete/save) at end
       {
         headerName: 'Actions', field: 'actions', width: 160, cellRenderer: (params: any) => {
