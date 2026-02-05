@@ -274,8 +274,8 @@ export class HeaderMenuComponent implements OnInit {
       this.showLoanSubmenu = false;
       this.activeMenu = menu;
       this.menuChange.emit(menu);
-      // Navigate directly for branch users
-      if (this.isBranchUser) {
+      // Navigate directly for branch users AND org owners in Branch Mode
+      if (this.isBranchUser || this.isBranchMode) {
         setTimeout(() => {
           this.selectSubmenu(menu);
         }, 0);
