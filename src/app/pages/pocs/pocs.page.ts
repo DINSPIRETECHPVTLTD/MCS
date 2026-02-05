@@ -35,6 +35,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
       flex: 1 
     },
     { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 140 },
+    { field: 'altPhone', headerName: 'Phone 2', sortable: true, filter: true, width: 140 },
     { 
       headerName: 'Address', 
       valueGetter: (params: any) => {

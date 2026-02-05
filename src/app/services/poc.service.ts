@@ -10,6 +10,7 @@ export interface Poc {
   middleName?: string;
   lastName: string;
   phoneNumber: string;
+  altPhone?: string;
   address1?: string;
   address2?: string;
   city?: string;
@@ -25,6 +26,7 @@ export interface CreatePocRequest {
   middleName?: string;
   lastName: string;
   phoneNumber: string;
+  altPhone?: string;
   address1?: string;
   address2?: string;
   city?: string;

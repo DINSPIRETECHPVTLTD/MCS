@@ -60,6 +60,17 @@
       <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
     </ion-item>
 
+    <ion-item [class.ion-invalid]="isFieldInvalid('altPhone')">
+      <ion-label position="stacked">Phone 2</ion-label>
+      <ion-input
+        formControlName="altPhone"
+        placeholder="Enter alternate 10-digit phone number"
+        type="tel"
+        maxlength="10">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('altPhone') }}</ion-note>
+    </ion-item>
+
     <!-- Address Fields -->
     <ion-item [class.ion-invalid]="isFieldInvalid('address1')">
       <ion-label position="stacked">Address Line 1</ion-label>

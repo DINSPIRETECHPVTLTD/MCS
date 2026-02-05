@@ -44,6 +44,7 @@ export class AddPocModalComponent implements OnInit {
       middleName: ['', [Validators.maxLength(100), Validators.pattern(/^[a-zA-Z ]+$/)]],
       lastName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z ]+$/)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      altPhone: ['', [Validators.pattern(/^[0-9]{10}$/)]],
       address1: ['', [Validators.maxLength(100)]],
       address2: ['', [Validators.maxLength(100)]],
       city: [''],
@@ -92,6 +93,7 @@ export class AddPocModalComponent implements OnInit {
             middleName: poc.middleName || '',
             lastName: poc.lastName,
             phoneNumber: poc.phoneNumber,
+            altPhone: poc.altPhone || '',
             address1: poc.address1 || '',
             address2: poc.address2 || '',
             city: poc.city || '',
@@ -188,6 +190,7 @@ export class AddPocModalComponent implements OnInit {
       middleName: this.pocForm.value.middleName?.trim() || '',
       lastName: this.pocForm.value.lastName.trim(),
       phoneNumber: this.pocForm.value.phoneNumber?.trim() || '',
+      altPhone: this.pocForm.value.altPhone?.trim() || '',
       address1: this.pocForm.value.address1?.trim() || '',
       address2: this.pocForm.value.address2?.trim() || '',
       city: this.pocForm.value.city?.trim() || '',
@@ -243,6 +246,9 @@ export class AddPocModalComponent implements OnInit {
       }
       if (field.errors['pattern']) {
         if (fieldName === 'phoneNumber') {
+          return 'Please enter a valid 10-digit phone number';
+        }
+        if (fieldName === 'altPhone') {
           return 'Please enter a valid 10-digit phone number';
         }
         if (fieldName === 'zipCode') {
