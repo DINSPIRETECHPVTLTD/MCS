@@ -5,6 +5,7 @@ import { IonicModule } from '@ionic/angular';
 import { CentersPageRoutingModule } from './centers-routing.module';
 import { CentersPage } from './centers.page';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
+import { AddCenterModalComponent } from './add-center-modal.component';
 import { EditCenterModalComponent } from './edit-center-modal.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -36,7 +37,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     CentersPageRoutingModule,
     HeaderMenuComponent
   ],
-  declarations: [CentersPage, EditCenterModalComponent]
+  declarations: [CentersPage, AddCenterModalComponent, EditCenterModalComponent]
 })
 export class CentersPageModule {}
 

@@ -11,10 +11,13 @@ import { BranchService } from '../../services/branch.service';
 import { Branch } from '../../models/branch.models';
 import { CenterService } from '../../services/center.service';
 import { Center } from '../../models/center.models';
+import { UserContextService } from '../../services/user-context.service';
+import { AddCenterModalComponent } from './add-center-modal.component';
 import { EditCenterModalComponent } from './edit-center-modal.component';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
+
 
 @Component({
   selector: 'app-centers',
@@ -26,8 +29,8 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
   centers: Center[] = [];
   isLoading = false;
 
-  isViewCentersClicked = false;
-  showSearch = false;
+  selectedBranchId: number | null = null;
+  selectedBranchName: string = '';
 
   displayedColumns: string[] = ['centerName', 'centerAddress', 'city', 'branchName', 'actions'];
   filterColumns: string[] = ['centerName', 'centerAddress', 'city', 'branchName'];
@@ -48,10 +51,25 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
     private router: Router,
     private centerService: CenterService,
     private branchService: BranchService,
+    private userContext: UserContextService,
     private modalController: ModalController,
     private toastController: ToastController,
     private loadingController: LoadingController
   ) { }
+
+  private getSelectedBranchId(): number | null {
+    const fromContext = this.userContext.branchId;
+    if (fromContext != null) return fromContext;
+
+    try {
+      const raw = localStorage.getItem('selected_branch_id');
+      if (!raw) return null;
+      const num = Number(raw);
+      return Number.isNaN(num) ? null : num;
+    } catch {
+      return null;
+    }
+  }
 
 
   ngOnInit(): void {
@@ -80,7 +98,9 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
       this.router.navigate(['/login']);
       return;
     }
-    // Do not auto-load: user will click "View Centers"
+    // Auto-load filtered centers when user navigates to Centers
+    // (e.g. after clicking Navigate on a branch)
+    void this.loadCenters();
   }
 
 
@@ -128,16 +148,22 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
     win!.close();
   }
 
-  async onViewCenters(): Promise<void> {
-    this.isViewCentersClicked = true;
-    this.showSearch = true;
-    // Reset all filters
-    Object.keys(this.filters).forEach(key => this.filters[key] = '');
-    this.dataSource.filter = '';
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  // Centers are auto-loaded on enter; keep filter fields intact between navigations.
+
+  async openAddCenterModal(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: AddCenterModalComponent,
+      cssClass: 'add-center-modal',
+      breakpoints: [0, 0.5, 1],
+      initialBreakpoint: 1
+    });
+    await modal.present();
+
+    const { data } = await modal.onWillDismiss();
+    if (data && data.created) {
+      await this.loadCenters();
+      await this.showToast('Center created successfully', 'success');
     }
-    await this.loadCenters();
   }
 
   onMenuChange(menu: string): void {
@@ -155,23 +181,48 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
     const loading = await this.loadingController.create({ message: 'Loading centers...' });
     await loading.present();
 
+    const selectedBranchId = this.getSelectedBranchId();
+    this.selectedBranchId = selectedBranchId;
+    this.selectedBranchName = '';
+
     // Fetch both centers and branches in parallel
     this.centerService.getAllCenters().subscribe({
       next: async centers => {
         this.branchService.getBranches().subscribe({
           next: async branches => {
             const branchMap = new Map(branches.map(b => [Number(b.id), b.name]));
-            this.centers = (centers ?? []).map(center => ({
-              ...center,
-              branchName: branchMap.get(Number((center as any).branchId ?? (center as any).BranchId ?? 0)) || center.branchName || ''
-            }));
+            const selectedBranchName = selectedBranchId != null ? (branchMap.get(Number(selectedBranchId)) || '') : '';
+            this.selectedBranchName = selectedBranchName;
+
+            const mapped = (centers ?? []).map(center => {
+              const branchId = Number((center as any).branchId ?? (center as any).BranchId ?? center.branchId ?? 0) || undefined;
+              const branchName = branchMap.get(Number(branchId ?? 0)) || center.branchName || '';
+              return {
+                ...center,
+                branchId,
+                branchName
+              };
+            });
+
+            // If a branch is selected (e.g. user clicked Navigate), show only that branch's centers
+            this.centers = selectedBranchId != null
+              ? mapped.filter(c => Number(c.branchId) === Number(selectedBranchId) || (!!selectedBranchName && c.branchName === selectedBranchName))
+              : mapped;
+
             this.dataSource.data = this.centers;
             this.dataSource.paginator = this.paginator;
             this.isLoading = false;
             await loading.dismiss();
           },
           error: async () => {
-            this.centers = centers ?? [];
+            // If branches fail to load, still filter by branchId if present
+            const mapped = (centers ?? []).map(center => {
+              const branchId = Number((center as any).branchId ?? (center as any).BranchId ?? center.branchId ?? 0) || undefined;
+              return { ...center, branchId };
+            });
+            this.centers = selectedBranchId != null
+              ? mapped.filter(c => Number((c as any).branchId) === Number(selectedBranchId))
+              : mapped;
             this.dataSource.data = this.centers;
             this.isLoading = false;
             await loading.dismiss();
@@ -205,6 +256,17 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
         this.centers[idx] = data.center;
         this.dataSource.data = [...this.centers];
         await this.showToast('Center updated successfully', 'success');
+
+        // Fallback: reload from API so table matches server-calculated values
+        // (and ensures we keep branch mapping in sync).
+        try {
+          const existingFilters = { ...this.filters };
+          await this.loadCenters();
+          this.filters = existingFilters;
+          this.applyColumnFilter();
+        } catch {
+          // Ignore reload errors; the optimistic UI update already shows new values.
+        }
       }
     }
   }
