@@ -23,8 +23,6 @@ export class StaffComponent implements OnInit, ViewWillEnter {
   rowData: User[] = [];
   columnDefs: ColDef[] = [];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
-  pagination: boolean = true;
-  paginationPageSize: number = 10;
   staffForm: FormGroup;
   showAddForm: boolean = false;
   isEditing: boolean = false;
@@ -32,7 +30,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'Staff';
   isLoading: boolean = false;
   selectedBranch: Branch | null = null;
-  private gridApi?: GridApi;
+  private gridApi?: any;
   gridOptions: any;
   // track editing state per-row
   editingRowIds: Set<number> = new Set<number>();
@@ -106,8 +104,8 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         editable: false,
         filter: 'agTextColumnFilter'
       },
-      { headerName: 'City', field: 'city', editable: true, width: 140, filter: 'agTextColumnFilter' },
-      { headerName: 'State', field: 'state', editable: true, width: 140, filter: 'agTextColumnFilter' },
+      { headerName: 'City', field: 'city', editable: false, width: 140, filter: 'agTextColumnFilter' },
+      { headerName: 'State', field: 'state', editable: false, width: 140, filter: 'agTextColumnFilter' },
       {
         headerName: 'Address',
         valueGetter: (p: any) => {
@@ -119,31 +117,22 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         editable: false,
         filter: 'agTextColumnFilter'
       },
-      { headerName: 'Country', field: 'country', editable: true, width: 140, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.country || 'India') },
-      { headerName: 'Zip', field: 'pinCode', editable: true, width: 120, filter: 'agTextColumnFilter' },
-      { headerName: 'Phone', field: 'phoneNumber', editable: true, width: 140, filter: 'agTextColumnFilter' },
+      { headerName: 'Country', field: 'country', editable: false, width: 140, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.country || 'India') },
+      { headerName: 'Pin Code', field: 'pinCode', editable: false, width: 120, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.pinCode || p.data?.PinCode || '') },
+      { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.phoneNumber || p.data?.PhoneNumber || '') },
       // keep actions column (edit/delete/save) at end
       {
         headerName: 'Actions', field: 'actions', width: 160, cellRenderer: (params: any) => {
-          const id = params.data?.id as number | undefined;
           const container = document.createElement('div');
           container.className = 'actions-cell';
-          if (id && this.editingRowIds.has(id)) {
-            container.innerHTML = `
-              <button class="ag-btn ag-save">Save</button>
-              <button class="ag-btn ag-cancel">Cancel</button>
-            `;
-            const saveBtn = container.querySelector('.ag-save');
-            const cancelBtn = container.querySelector('.ag-cancel');
-            if (saveBtn) saveBtn.addEventListener('click', () => params.context.componentParent.saveRow(id, params.node));
-            if (cancelBtn) cancelBtn.addEventListener('click', () => params.context.componentParent.cancelEdit(id, params.node));
-          } else {
-            container.innerHTML = `
-              <button class="ag-btn ag-edit">Edit</button>
-            `;
-            const editBtn = container.querySelector('.ag-edit');
-            if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.startEdit(id, params.node));
-          }
+          container.innerHTML = `
+            <button class="ag-btn ag-edit">Edit</button>
+            <button class="ag-btn ag-delete" style="margin-left:8px;">Delete</button>
+          `;
+          const editBtn = container.querySelector('.ag-edit');
+          const deleteBtn = container.querySelector('.ag-delete');
+          if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editStaff(params.data));
+          if (deleteBtn) deleteBtn.addEventListener('click', () => params.context.componentParent.deleteStaff(params.data));
           return container;
         }
       }
@@ -247,7 +236,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         this.displayedStaff = [...this.staff];
         this.rowData = [...this.staff];
         if (this.gridApi) {
-          this.gridApi.setGridOption('rowData', this.rowData);
+          this.gridApi.setRowData(this.rowData);
           setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
         }
         console.log('Staff loaded:', this.staff.length, 'for branch:', this.selectedBranch?.id);
@@ -341,7 +330,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
   onGridReady(params: GridReadyEvent) {
     this.gridApi = params.api;
     if (this.rowData && this.rowData.length > 0) {
-      this.gridApi.setGridOption('rowData', this.rowData);
+      this.gridApi.setRowData(this.rowData);
     }
     setTimeout(() => {
       this.gridApi?.sizeColumnsToFit();
@@ -416,7 +405,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
           try {
             if (this.gridApi) {
               this.gridApi.stopEditing();
-              (this.gridApi as any).refreshCells({ rowNodes: [node], force: true });
+              this.gridApi.refreshCells({ rowNodes: [node], force: true });
             }
           } catch (e) {
             console.warn('refresh after save failed', e);
@@ -511,8 +500,51 @@ export class StaffComponent implements OnInit, ViewWillEnter {
 
     const { data } = await modal.onWillDismiss();
     if (data && data.success) {
-      // Refresh staff list after successful save
-      this.loadStaff();
+      const returned = data.staff as User | undefined;
+      if (returned && returned.id) {
+        // normalize returned object to ensure branch/organization are present
+        const newUser: User = {
+          ...(returned as User),
+          branchId: returned.branchId ?? this.selectedBranch?.id ?? this.userContext.branchId ?? null,
+          organizationId: returned.organizationId ?? this.userContext.organizationId ?? 0
+        } as User;
+
+        // update existing row in-place if present
+        const idx = this.rowData.findIndex(r => r.id === newUser.id);
+        if (idx >= 0) {
+          this.rowData[idx] = { ...newUser };
+          // keep arrays in sync
+          this.staff = [...this.rowData];
+          this.displayedStaff = [...this.rowData];
+          if (this.gridApi) {
+            const rowNode = this.gridApi.getRowNode(newUser.id!.toString());
+            if (rowNode) rowNode.setData(newUser);
+            else this.gridApi.setRowData(this.rowData);
+          }
+        } else {
+          // new staff created - insert at top
+          this.rowData.unshift(newUser);
+          this.staff = [...this.rowData];
+          this.displayedStaff = [...this.rowData];
+          if (this.gridApi) {
+            // Use transaction add for better UX when AG Grid is available
+            try {
+              if (typeof this.gridApi.applyTransaction === 'function') {
+                this.gridApi.applyTransaction({ add: [newUser], addIndex: 0 });
+              } else {
+                this.gridApi.setRowData(this.rowData);
+              }
+            } catch (e) {
+              this.gridApi.setRowData(this.rowData);
+            }
+          }
+        }
+
+        setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
+      } else {
+        // fallback to full reload
+        this.loadStaff();
+      }
     }
     this.showAddForm = false;
     this.resetForm();
