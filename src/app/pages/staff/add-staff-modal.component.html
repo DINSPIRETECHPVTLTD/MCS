@@ -29,7 +29,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('middleName')">
-      <ion-label position="stacked">Middle Name <span class="required">*</span></ion-label>
+      <ion-label position="stacked">Middle Name</ion-label>
       <ion-input
         formControlName="middleName"
         placeholder="Enter middle name"
@@ -38,7 +38,6 @@
         (ionInput)="onMiddleNameInput($event)">
       </ion-input>
       <ion-note slot="error">
-        <div *ngIf="staffForm.get('middleName')?.errors?.['required']">Middle name is required</div>
         <div *ngIf="staffForm.get('middleName')?.errors?.['maxlength']">Middle name must be at most 100 characters</div>
         <div *ngIf="staffForm.get('middleName')?.errors?.['pattern']">Middle name must be alphanumeric</div>
       </ion-note>
@@ -112,7 +111,7 @@
     </ion-item>
 
     <ion-item>
-      <ion-label position="stacked">Address Line 2 <span class="required">*</span></ion-label>
+      <ion-label position="stacked">Address Line 2</ion-label>
       <ion-input
         formControlName="address2"
         placeholder="Enter address line 2"

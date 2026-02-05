@@ -504,21 +504,45 @@ export class StaffComponent implements OnInit, ViewWillEnter {
     if (data && data.success) {
       const returned = data.staff as User | undefined;
       if (returned && returned.id) {
+        // normalize returned object to ensure branch/organization are present
+        const newUser: User = {
+          ...(returned as User),
+          branchId: returned.branchId ?? this.selectedBranch?.id ?? this.userContext.branchId ?? null,
+          organizationId: returned.organizationId ?? this.userContext.organizationId ?? 0
+        } as User;
+
         // update existing row in-place if present
-        const idx = this.rowData.findIndex(r => r.id === returned.id);
+        const idx = this.rowData.findIndex(r => r.id === newUser.id);
         if (idx >= 0) {
-          this.rowData[idx] = { ...(returned as User) };
+          this.rowData[idx] = { ...newUser };
+          // keep arrays in sync
+          this.staff = [...this.rowData];
+          this.displayedStaff = [...this.rowData];
+          if (this.gridApi) {
+            const rowNode = this.gridApi.getRowNode(newUser.id!.toString());
+            if (rowNode) rowNode.setData(newUser);
+            else this.gridApi.setRowData(this.rowData);
+          }
         } else {
           // new staff created - insert at top
-          this.rowData.unshift(returned as User);
+          this.rowData.unshift(newUser);
+          this.staff = [...this.rowData];
+          this.displayedStaff = [...this.rowData];
+          if (this.gridApi) {
+            // Use transaction add for better UX when AG Grid is available
+            try {
+              if (typeof this.gridApi.applyTransaction === 'function') {
+                this.gridApi.applyTransaction({ add: [newUser], addIndex: 0 });
+              } else {
+                this.gridApi.setRowData(this.rowData);
+              }
+            } catch (e) {
+              this.gridApi.setRowData(this.rowData);
+            }
+          }
         }
-        // keep staff arrays in sync
-        this.staff = [...this.rowData];
-        this.displayedStaff = [...this.rowData];
-        if (this.gridApi) {
-          this.gridApi.setRowData(this.rowData);
-          setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
-        }
+
+        setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
       } else {
         // fallback to full reload
         this.loadStaff();
