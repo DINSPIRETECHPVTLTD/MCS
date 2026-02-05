@@ -12,7 +12,7 @@
         </ion-button>
       </div>
 
-      <p *ngIf="selectedBranchId != null" style="margin: -8px 0 16px; color: var(--ion-color-medium);">
+      <p *ngIf="selectedBranchId !== null" style="margin: -8px 0 16px; color: var(--ion-color-medium);">
         Showing centers for:
         <strong>{{ selectedBranchName || ('Branch #' + selectedBranchId) }}</strong>
       </p>
@@ -34,7 +34,7 @@
           <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8 centers-table">
             <!-- Filter Row -->
             <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-            <tr class="filter-row">
+            <tr class="table-filter-row">
               <th *ngFor="let col of filterColumns">
                 <ng-container [ngSwitch]="col">
                   <input *ngSwitchCase="'centerName'" matInput placeholder="Filter" [(ngModel)]="filters['centerName']" (ngModelChange)="applyColumnFilter()" />

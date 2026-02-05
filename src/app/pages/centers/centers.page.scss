@@ -49,13 +49,32 @@ mat-paginator {
   width: 100%;
 }
 
+/* Column filter row inside the mat-table header */
+tr.table-filter-row {
+  display: table-row;
+}
+
+tr.table-filter-row > th {
+  display: table-cell;
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
 .table-scroll {
-  height: calc(100vh - 320px); /* Adjust 320px as needed for header, toolbar, paginator, etc. */
+  /* Use max-height so the paginator stays reachable/visible on the page */
+  height: auto;
+  max-height: calc(100vh - 360px);
   min-height: 300px;
   overflow-x: auto;
   overflow-y: auto;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+@supports (height: 100dvh) {
+  .table-scroll {
+    max-height: calc(100dvh - 360px);
+  }
 }
 
 .centers-table th,

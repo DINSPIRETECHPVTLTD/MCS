@@ -26,7 +26,8 @@ export class EditCenterModalComponent implements OnInit {
       centerName: [this.center.centerName, [Validators.required, Validators.maxLength(100)]],
       centerAddress: [this.center.centerAddress, [Validators.required]],
       city: [this.center.city, [Validators.required, Validators.maxLength(50)]],
-      branchName: [this.center.branchName, [Validators.required]]
+      // Branch must not be editable during center update.
+      branchName: [{ value: this.center.branchName, disabled: true }]
     });
   }
 
@@ -41,18 +42,21 @@ export class EditCenterModalComponent implements OnInit {
       const centerName = (value.centerName ?? '').toString().trim();
       const centerAddress = (value.centerAddress ?? '').toString();
       const city = (value.city ?? '').toString().trim();
-      const branchName = (value.branchName ?? '').toString().trim();
+      const branchName = (this.center.branchName ?? '').toString().trim();
+
+      type UpdateCenterPayload = Partial<Center> & { name?: string; Name?: string };
 
       // Backend payload keys vary across endpoints in this app (create uses `name`).
       // Send a compatible payload, but return a normalized `Center` back to the page.
-      const payload: any = {
+      const payload: UpdateCenterPayload = {
         ...this.center,
         name: centerName,
         centerName,
         Name: centerName,
         centerAddress,
         city,
-        branchName
+        branchName,
+        branchId: this.center.branchId
       };
 
       await firstValueFrom(this.centerService.updateCenter(this.center.id!, payload));

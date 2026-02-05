@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   ViewWillEnter,
@@ -24,7 +24,8 @@ import { MatSort } from '@angular/material/sort';
   templateUrl: './centers.page.html',
   styleUrls: ['./centers.page.scss']
 })
-export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
+// eslint-disable-next-line @angular-eslint/component-class-suffix
+export class CentersPage implements OnInit, ViewWillEnter {
   activeMenu: string = 'Centers';
   centers: Center[] = [];
   isLoading = false;
@@ -43,8 +44,20 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
     branchName: ''
   };
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  private paginator?: MatPaginator;
+  private sort?: MatSort;
+
+  @ViewChild(MatPaginator)
+  set matPaginator(paginator: MatPaginator) {
+    this.paginator = paginator;
+    this.dataSource.paginator = paginator;
+  }
+
+  @ViewChild(MatSort)
+  set matSort(sort: MatSort) {
+    this.sort = sort;
+    this.dataSource.sort = sort;
+  }
 
   constructor(
     private authService: AuthService,
@@ -79,18 +92,20 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
     }
     // Per-column filter predicate
     this.dataSource.filterPredicate = (data: Center, filter: string) => {
-      const filters = JSON.parse(filter || '{}');
+      const filters = JSON.parse(filter || '{}') as Record<string, string>;
       return Object.keys(this.filters).every(key => {
         if (!filters[key]) return true;
-        return ((data as Record<string, any>)[key] ?? '').toString().toLowerCase().includes(filters[key].toLowerCase());
+
+        const cellValue = (data as unknown as Record<string, unknown>)[key];
+        return (cellValue ?? '')
+          .toString()
+          .toLowerCase()
+          .includes(filters[key].toLowerCase());
       });
     };
   }
 
-  ngAfterViewInit(): void {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-  }
+  // ViewChild setters handle paginator/sort wiring even when the table is created via *ngIf.
 
   ionViewWillEnter(): void {
     // Reload data when page becomes active
@@ -104,8 +119,18 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
   }
 
 
-  onFilterChange(event: any): void {
-    const value = event?.target?.value ?? event?.detail?.value ?? '';
+  private readEventValue(event: unknown): string {
+    if (!event || typeof event !== 'object') return '';
+
+    const eventObj = event as { target?: unknown; detail?: unknown };
+    const target = eventObj.target as { value?: unknown } | undefined;
+    const detail = eventObj.detail as { value?: unknown } | undefined;
+    const value = target?.value ?? detail?.value ?? '';
+    return value.toString();
+  }
+
+  onFilterChange(event: unknown): void {
+    const value = this.readEventValue(event);
     // Legacy global filter (not used with per-column)
     this.dataSource.filter = value.toString().trim().toLowerCase();
     if (this.dataSource.paginator) {
@@ -125,7 +150,14 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
     const headers = this.displayedColumns;
     const rows = this.dataSource.filteredData.length ? this.dataSource.filteredData : this.dataSource.data;
     const csv = [headers.join(',')].concat(
-      rows.map(row => headers.map(h => '"' + ((row as Record<string, any>)[h] ?? '').toString().replace(/"/g, '""') + '"').join(','))
+      rows.map(row =>
+        headers
+          .map(h => {
+            const value = (row as unknown as Record<string, unknown>)[h] ?? '';
+            return '"' + value.toString().replace(/"/g, '""') + '"';
+          })
+          .join(',')
+      )
     ).join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -141,7 +173,22 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
     const rows = this.dataSource.filteredData.length ? this.dataSource.filteredData : this.dataSource.data;
     let html = '<table border="1" style="border-collapse:collapse;width:100%">';
     html += '<thead><tr>' + headers.map(h => `<th style="padding:4px 8px">${h}</th>`).join('') + '</tr></thead>';
-    html += '<tbody>' + rows.map(row => '<tr>' + headers.map(h => `<td style="padding:4px 8px">${(row as Record<string, any>)[h] ?? ''}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
+    html +=
+      '<tbody>' +
+      rows
+        .map(
+          row =>
+            '<tr>' +
+            headers
+              .map(h => {
+                const value = (row as unknown as Record<string, unknown>)[h] ?? '';
+                return `<td style="padding:4px 8px">${value.toString()}</td>`;
+              })
+              .join('') +
+            '</tr>'
+        )
+        .join('') +
+      '</tbody></table>';
     const win = window.open('', '', 'width=900,height=700');
     win!.document.write('<html><head><title>Centers Table</title></head><body>' + html + '</body></html>');
     win!.print();
@@ -171,7 +218,7 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
   }
 
   onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
+    void branch;
   }
 
   private async loadCenters(): Promise<void> {
@@ -187,7 +234,7 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
 
     // Fetch both centers and branches in parallel
     this.centerService.getAllCenters().subscribe({
-      next: async centers => {
+      next: async (centers) => {
         this.branchService.getBranches().subscribe({
           next: async branches => {
             const branchMap = new Map(branches.map(b => [Number(b.id), b.name]));
@@ -195,7 +242,9 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
             this.selectedBranchName = selectedBranchName;
 
             const mapped = (centers ?? []).map(center => {
-              const branchId = Number((center as any).branchId ?? (center as any).BranchId ?? center.branchId ?? 0) || undefined;
+              const centerRec = center as unknown as Record<string, unknown>;
+              const branchId =
+                Number(centerRec['branchId'] ?? centerRec['BranchId'] ?? center.branchId ?? 0) || undefined;
               const branchName = branchMap.get(Number(branchId ?? 0)) || center.branchName || '';
               return {
                 ...center,
@@ -210,18 +259,21 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
               : mapped;
 
             this.dataSource.data = this.centers;
-            this.dataSource.paginator = this.paginator;
+            if (this.paginator) this.dataSource.paginator = this.paginator;
+            if (this.sort) this.dataSource.sort = this.sort;
             this.isLoading = false;
             await loading.dismiss();
           },
           error: async () => {
             // If branches fail to load, still filter by branchId if present
             const mapped = (centers ?? []).map(center => {
-              const branchId = Number((center as any).branchId ?? (center as any).BranchId ?? center.branchId ?? 0) || undefined;
+              const centerRec = center as unknown as Record<string, unknown>;
+              const branchId =
+                Number(centerRec['branchId'] ?? centerRec['BranchId'] ?? center.branchId ?? 0) || undefined;
               return { ...center, branchId };
             });
             this.centers = selectedBranchId != null
-              ? mapped.filter(c => Number((c as any).branchId) === Number(selectedBranchId))
+              ? mapped.filter(c => Number(c.branchId) === Number(selectedBranchId))
               : mapped;
             this.dataSource.data = this.centers;
             this.isLoading = false;
@@ -279,7 +331,7 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
       await new Promise((resolve, reject) => {
         this.centerService.deleteCenter(row.id!).subscribe({
           next: () => resolve(true),
-          error: (err: any) => reject(err)
+          error: (err: unknown) => reject(err)
         });
       });
       this.centers = this.centers.filter(c => c.id !== row.id);
@@ -293,7 +345,7 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
   }
 
   private async showConfirmDialog(message: string): Promise<boolean> {
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
       const alert = document.createElement('ion-alert');
       alert.header = 'Confirm Delete';
       alert.message = message;
@@ -310,7 +362,7 @@ export class CentersPage implements OnInit, ViewWillEnter, AfterViewInit {
         }
       ];
       document.body.appendChild(alert);
-      await alert.present();
+      void alert.present();
     });
   }
 
