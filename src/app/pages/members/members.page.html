@@ -49,124 +49,17 @@
       </p>
     </div>
 
-    <div *ngIf="rowData.length > 0" class="users-grid">
-      <div class="table-scroll">
-        <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8 members-table">
-
-        <ng-container matColumnDef="memberFirstName">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>First Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.memberFirstName }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="memberMiddleName">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Middle Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.memberMiddleName }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="memberLastName">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.memberLastName }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="memberDob">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>DOB</th>
-          <td mat-cell *matCellDef="let row">{{ row.memberDob | date:'dd/MM/yyyy' }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="memberAge">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Age</th>
-          <td mat-cell *matCellDef="let row">{{ row.memberAge }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="memberPhone">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Phone No</th>
-          <td mat-cell *matCellDef="let row">{{ row.memberPhone }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="memberAddress">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Address</th>
-          <td mat-cell *matCellDef="let row">
-            <span class="truncate truncate--address" [title]="row.memberAddress">{{ row.memberAddress }}</span>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="memberAadhaar">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Aadhaar</th>
-          <td mat-cell *matCellDef="let row">
-            <span class="truncate truncate--aadhaar" [title]="row.memberAadhaar">{{ row.memberAadhaar }}</span>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="memberOccupation">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Occupation</th>
-          <td mat-cell *matCellDef="let row">{{ row.memberOccupation }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="memberStatus">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-          <td mat-cell *matCellDef="let row">
-            <span
-              class="status-badge"
-              [ngClass]="row.memberStatus === 'Active' ? 'status-active' : 'status-inactive'">
-              {{ row.memberStatus || 'Inactive' }}
-            </span>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="guardianName">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Husband / Guardian Name</th>
-          <td mat-cell *matCellDef="let row">{{ row.guardianName }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="guardianAge">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Husband / Guardian Age</th>
-          <td mat-cell *matCellDef="let row">{{ row.guardianAge }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="branch">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Branch</th>
-          <td mat-cell *matCellDef="let row">{{ row.branch }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="center">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Center</th>
-          <td mat-cell *matCellDef="let row">{{ row.center }}</td>
-        </ng-container>
-
-
-        <ng-container matColumnDef="poc">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>POC</th>
-          <td mat-cell *matCellDef="let row">
-            <span class="truncate truncate--poc" [title]="row.poc">{{ row.poc }}</span>
-          </td>
-        </ng-container>
-
-        <!-- Edit Button Column -->
-        <ng-container matColumnDef="edit">
-          <th mat-header-cell *matHeaderCellDef>Edit</th>
-          <td mat-cell *matCellDef="let row">
-            <button mat-icon-button type="button" title="Edit">
-              <img src="assets/edit.png" alt="Edit" style="width:24px;height:24px;vertical-align:middle;" />
-            </button>
-          </td>
-        </ng-container>
-
-        <!-- Delete Button Column -->
-        <ng-container matColumnDef="delete">
-          <th mat-header-cell *matHeaderCellDef>Delete</th>
-          <td mat-cell *matCellDef="let row">
-            <button mat-icon-button type="button" title="Delete">
-              <img src="assets/delete.png" alt="Delete" style="width:24px;height:24px;vertical-align:middle;" />
-            </button>
-          </td>
-        </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
-      </div>
-
-      <mat-paginator [pageSizeOptions]="[5, 10, 25]" showFirstLastButtons></mat-paginator>
+    <div *ngIf="rowData.length > 0" class="members-grid">
+      <ag-grid-angular
+        class="ag-theme-alpine"
+        style="width: 100%; height: 60vh;"
+        [rowData]="rowData"
+        [columnDefs]="columnDefs"
+        [defaultColDef]="defaultColDef"
+        [gridOptions]="gridOptions"
+        (gridReady)="onGridReady($event)"
+        >
+      </ag-grid-angular>
     </div>
   </div>
   </ion-content>

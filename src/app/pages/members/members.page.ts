@@ -2,10 +2,7 @@ import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { ViewWillEnter, ModalController, ToastController, LoadingController, AlertController } from '@ionic/angular';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { ColDef, GridReadyEvent } from 'ag-grid-community';
+import { ColDef, GridReadyEvent, GridOptions } from 'ag-grid-community';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { MemberService } from '../../services/member.service';
@@ -36,23 +33,24 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
 
   // AG Grid
   rowData: Array<Record<string, any>> = [];
+  originalRowData: Array<Record<string, any>> = [];
   columnDefs: ColDef[] = [
-    {field: 'memberId', headerName: 'Member ID/Code', width: 200 },
-    { field: 'memberFirstName', headerName: 'Member First Name', width: 200 },
-    { field: 'memberMiddleName', headerName: 'Member Middle Name', width: 200 },
-    { field: 'memberLastName', headerName: 'Member Last Name', width: 200 },
-    { field: 'memberDob', headerName: 'Member DOB', width: 200 },
-    { field: 'memberAge', headerName: 'Member Age', width: 200 },
-    { field: 'memberPhone', headerName: 'Member Phone ', width: 200 },
-    { field: 'memberAddress', headerName: 'Member Address', width: 200 },
-    { field: 'memberAadhaar', headerName: 'Member Aadhaar', width: 200 },
-    { field: 'memberOccupation', headerName: 'Member Occupation', width: 200 },
-    { field: 'memberStatus', headerName: 'Member Status', width: 200 },
-    { field: 'guardianName', headerName: 'Husband/Guardian Name', width: 200 },
-    { field: 'guardianAge', headerName: 'Husband/Guardian Age', width: 200 },
-    { field: 'branch', headerName: 'Branch', width: 120 },
-    { field: 'center', headerName: 'Center', width: 150 },
-    { field: 'poc', headerName: 'POC', width: 150 },
+    {field: 'memberId', headerName: 'Member ID/Code' },
+    { field: 'memberFirstName', headerName: 'Member First Name' },
+    { field: 'memberMiddleName', headerName: 'Member Middle Name' },
+    { field: 'memberLastName', headerName: 'Member Last Name'},
+    { field: 'memberDob', headerName: 'Member DOB'},
+    { field: 'memberAge', headerName: 'Member Age'},
+    { field: 'memberPhone', headerName: 'Member Phone '},
+    { field: 'memberAddress', headerName: 'Member Address' },
+    { field: 'memberAadhaar', headerName: 'Member Aadhaar'},
+    { field: 'memberOccupation', headerName: 'Member Occupation'},
+    { field: 'memberStatus', headerName: 'Member Status'},
+    { field: 'guardianName', headerName: 'Husband/Guardian Name'},
+    { field: 'guardianAge', headerName: 'Husband/Guardian Age'},
+    { field: 'branch', headerName: 'Branch'},
+    { field: 'center', headerName: 'Center'},
+    { field: 'poc', headerName: 'POC'},
     {
       headerName: 'Actions',
       width: 300,
@@ -65,17 +63,17 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
 
         const editBtn = document.createElement('button');
         editBtn.textContent = 'Edit';
-        editBtn.className = 'btn btn-sm btn-primary edit-btn';
+        editBtn.className = 'ag-btn ag-edit';
         editBtn.addEventListener('click', () => this.openEditMemberModal(params.data));
 
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = 'Delete';
-        deleteBtn.className = 'btn btn-sm btn-danger delete-btn';
+        deleteBtn.className = 'ag-btn ag-delete';
         deleteBtn.addEventListener('click', () => this.deleteRow(params.data));
 
         const loanBtn = document.createElement('button');
         loanBtn.textContent = 'Add/View Loan';
-        loanBtn.className = 'btn btn-sm btn-loan loan-btn';
+        loanBtn.className = 'ag-btn ag-loan';
         loanBtn.addEventListener('click', () => console.log('Loan action:', params.data));
 
         container.appendChild(editBtn);
@@ -94,33 +92,10 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   pagination = true;
   paginationPageSize = 10;
 
-  displayedColumns: string[] = [
-    'memberFirstName',
-    'memberMiddleName',
-    'memberLastName',
-    'memberDob',
-    'memberAge',
-    'memberPhone',
-    'memberAddress',
-    'memberAadhaar',
-    'memberOccupation',
-    'memberStatus',
-    'guardianName',
-    'guardianAge',
-    'branch',
-    'center',
-    'poc',
-    'edit',
-    'delete'
-  ];
-  dataSource = new MatTableDataSource<Record<string, any>>([]);
-
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
 
   branches: Branch[] = [];
   branchMap: Map<number, string> = new Map();
- 
+  gridApi: any = null;
 
   constructor(
     private authService: AuthService,
@@ -138,7 +113,17 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       this.branches = branches ?? [];
       this.branchMap = new Map(this.branches.map(b => [Number(b.id), b.name]));
     });
+
+    this.gridOptions = {
+      theme: 'legacy',
+      context: { componentParent: this },
+      onGridReady: (event: GridReadyEvent) => {
+        this.gridApi = event.api;
+      }
+    };
   }
+
+  gridOptions: GridOptions;
 
   ngOnInit(): void {
     if (!this.authService.isAuthenticated()) {
@@ -147,15 +132,6 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     }
 
     console.log('Selected Branch:', this.selectedBranch);
-
-
-    this.dataSource.filterPredicate = (data: Record<string, any>, filter: string) => {
-      const normalized = filter.trim().toLowerCase();
-      if (!normalized) return true;
-      return Object.values(data).some(value =>
-        (value ?? '').toString().toLowerCase().includes(normalized)
-      );
-    };
   }
 
   ionViewWillEnter(): void {
@@ -168,22 +144,10 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
   }
 
-  onFilterChange(event: any): void {
-    const value = event?.target?.value ?? event?.detail?.value ?? '';
-    this.dataSource.filter = value.toString().trim().toLowerCase();
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
-  }
+  
 
-  onGridReady(params: GridReadyEvent): void {
-    // Grid is ready - can be used for any initialization if needed
-    console.log('AG Grid is ready', params);
-  }
 
   onMenuChange(menu: string): void {
     this.activeMenu = menu;
@@ -221,6 +185,48 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     this.lastCenterId = normalizedId;
     this.selectedCenterId = normalizedId;
     this.refreshMembers();
+  }
+
+  onFilterChange(event: any): void {
+    const searchValue = (event.target.value || '').trim().toLowerCase();
+    
+    if (!this.originalRowData || this.originalRowData.length === 0) {
+      console.log('No data to filter');
+      return;
+    }
+
+    // Define searchable fields
+    const searchFields = [
+      'memberId',
+      'memberFirstName',
+      'memberMiddleName',
+      'memberLastName',
+      'memberPhone',
+      'memberAadhaar',
+      'memberAddress'
+    ];
+
+    if (searchValue === '') {
+      // If search is empty, show all data
+      this.rowData = [...this.originalRowData];
+    } else {
+      // Filter from original data and update rowData
+      this.rowData = this.originalRowData.filter(row =>
+        searchFields.some(field =>
+          String(row[field] || '').toLowerCase().includes(searchValue)
+        )
+      );
+    }
+    
+    // Update grid with filtered data
+    if (this.gridApi) {
+      this.gridApi.setRowData(this.rowData);
+    }
+  }
+
+  onGridReady(params: GridReadyEvent): void {
+    this.gridApi = params.api;
+    console.log('Grid API initialized');
   }
 
   async onViewMembers(): Promise<void> {
@@ -276,7 +282,6 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     const centerId = Number(this.selectedCenterId ?? 0);
     if (!centerId) {
       this.rowData = [];
-      this.dataSource.data = [];
       return;
     }
 
@@ -284,7 +289,6 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     console.log('MembersPage: refreshMembers branchId =', branchId, 'centerId =', centerId);
     if (!branchId) {
       this.rowData = [];
-      this.dataSource.data = [];
       return;
     }
 
@@ -322,14 +326,15 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
           if (!mCenter || Number.isNaN(mCenter)) return false;
           return mCenter === centerId;
         });
-        this.rowData = filtered.map(m => this.toGridRow(m as any, centerMap, pocMap));
-        this.dataSource.data = this.rowData;
+        const mappedData = filtered.map(m => this.toGridRow(m as any, centerMap, pocMap));
+        this.rowData = mappedData;
+        console.log('Loaded members:', this.rowData);
+        this.originalRowData = [...mappedData];  // Store original data for filtering
       },
       error: async () => {
         await loading.dismiss();
         this.isLoadingMembers = false;
         this.rowData = [];
-        this.dataSource.data = [];
         const toast = await this.toastController.create({
           message: 'Failed to load members.',
           duration: 2000,
@@ -363,6 +368,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     const dob = (m.dob ?? m.Dob ?? m.DOB ?? m.dateOfBirth ?? m.DateOfBirth ?? '').toString();
     const phoneNumber = (m.phoneNumber ?? m.PhoneNumber ?? '').toString();
     const centerId = Number(m.centerId ?? m.CenterId ?? m.CenterID ?? 0);
+    
 
     const pocId = Number(m.pocId ?? m.POCId ?? 0);
     const pocDisplay = this.normalizeDisplayName(
@@ -385,7 +391,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       memberStatus: m.isDeleted ? 'Inactive' : 'Active',
       guardianName,
       guardianAge: m.guardianAge ?? m.GuardianAge ?? '',
-      branch: this.branchMap.get(Number(m.branchId ?? m.BranchId ?? 0)) ?? '',
+      branch: this.selectedBranch?.name,
       center: centerMap.get(centerId) ?? '',
       poc: pocDisplay
     };
@@ -545,7 +551,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     await toast.present();
   }
 
-  async openEditMemberModal(row: any): Promise<void> {
+  async openEditMemberModal(row: MembersComponent): Promise<void> {
     const modal = await this.modalController.create({
       component: EditMemberModalComponent,
       cssClass: 'edit-member-modal',
