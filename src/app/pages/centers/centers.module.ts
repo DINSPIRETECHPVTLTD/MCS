@@ -13,10 +13,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatSortModule } from '@angular/material/sort';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonModule } from '@angular/material/button';
+import { AgGridModule } from 'ag-grid-angular';
 
 @NgModule({
   imports: [
@@ -30,12 +30,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatCardModule,
     MatDividerModule,
     MatIconModule,
-    MatTableModule,
     MatPaginatorModule,
-    MatSortModule,
     MatTooltipModule,
+    MatButtonModule,
     CentersPageRoutingModule,
-    HeaderMenuComponent
+    HeaderMenuComponent,
+    AgGridModule
   ],
   declarations: [CentersPage, AddCenterModalComponent, EditCenterModalComponent]
 })

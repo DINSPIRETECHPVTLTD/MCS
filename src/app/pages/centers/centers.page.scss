@@ -77,11 +77,9 @@ tr.table-filter-row > th:last-child {
 
 .table-scroll {
   /* Use max-height so the paginator stays reachable/visible on the page */
-  height: auto;
-  max-height: calc(100vh - 360px);
   min-height: 300px;
-  overflow-x: auto;
-  overflow-y: auto;
+  height: auto;
+  overflow: hidden;
   border: 1px solid #e0e0e0;
   background: #fff;
   border-radius: 10px;
@@ -96,7 +94,94 @@ tr.table-filter-row > th:last-child {
 
 @supports (height: 100dvh) {
   .table-scroll {
-    max-height: calc(100dvh - 360px);
+    height: auto;
+  }
+}
+
+/* AG Grid styling for Centers */
+::ng-deep {
+  .centers-grid {
+    .ag-theme-alpine {
+      /* Reduce visual noise: remove vertical separators/lines */
+      --ag-borders: none;
+      --ag-borders-secondary: none;
+      --ag-border-color: transparent;
+      --ag-secondary-border-color: transparent;
+
+      .ag-cell,
+      .ag-header-cell {
+        border-right: none !important;
+      }
+
+      /* Header separators (theme pseudo-elements) */
+      .ag-header-cell::after,
+      .ag-header-group-cell::after {
+        display: none !important;
+      }
+
+      /* Pinned column divider lines */
+      .ag-pinned-left-header,
+      .ag-pinned-left-cols-container {
+        border-right: none !important;
+      }
+
+      .ag-pinned-right-header,
+      .ag-pinned-right-cols-container {
+        border-left: none !important;
+      }
+
+      .ag-header-cell-resize::after {
+        background-color: transparent !important;
+      }
+    }
+
+    .actions-cell {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .ag-icon-btn {
+      appearance: none;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+    }
+
+    .ag-action-icon {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .ag-edit {
+      background: var(--ion-color-primary);
+      color: white;
+    }
+
+    .ag-edit:hover {
+      background: var(--ion-color-primary-shade);
+      transform: translateY(-1px);
+    }
+
+    .ag-delete {
+      background: var(--ion-color-danger);
+      color: white;
+    }
+
+    .ag-delete:hover {
+      background: var(--ion-color-danger-shade);
+      transform: translateY(-1px);
+    }
   }
 }
 
