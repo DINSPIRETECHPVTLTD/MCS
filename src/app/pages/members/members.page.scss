@@ -1,8 +1,11 @@
 /* Members page aligned with Users page layout */
 .users-list-container {
-  margin-top: 16px;
-  overflow-x: auto;
-  width: 100vw;
+  h2 {
+    margin: 0 0 16px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--ion-color-primary);
+  }
 }
 ion-content {
   overflow-x: auto !important;
@@ -45,15 +48,6 @@ ion-content {
   gap: 16px;
 }
 
-.members-actions {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.view-dropdown {
-  max-width: 260px;
-}
 
 .members-search {
   margin: 8px 0 16px;
@@ -70,116 +64,6 @@ ion-content {
   --min-height: 44px;
 }
 
-/* Material table container */
-
-.users-grid {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  overflow-x: auto;
-}
-
-.table-scroll {
-  max-height: 60vh;
-  overflow-x: auto;
-  overflow-y: auto;
-}
-
-/* Material table styling */
-.members-table {
-  width: 100%;
-  background: #ffffff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
-  table-layout: auto;
-}
-.members-table th.mat-header-cell,
-.members-table td.mat-cell {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
-}
-.members-table .mat-column-edit,
-.members-table .mat-column-delete {
-  text-align: center;
-  width: 48px;
-  min-width: 48px;
-  max-width: 56px;
-  position: sticky;
-  right: 0;
-  background: #fff;
-  z-index: 3;
-}
-/* Action buttons column: center and fix width */
-.members-table .mat-column-edit,
-.members-table .mat-column-delete {
-  text-align: center;
-  width: 48px;
-  min-width: 48px;
-  max-width: 56px;
-}
-
-/* Sticky first column */
-.members-table .mat-column-memberFirstName,
-.members-table .mat-header-cell.mat-column-memberFirstName {
-  position: sticky;
-  left: 0;
-  z-index: 3;
-  background: #ffffff;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.08);
-}
-
-.members-table th.mat-header-cell.mat-column-memberFirstName {
-  background: var(--ion-color-primary-shade);
-  z-index: 4;
-}
-
-.members-table th.mat-header-cell {
-  font-weight: 700;
-  color: #ffffff;
-  background: var(--ion-color-primary-shade);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  padding: 12px 14px;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-
-.members-table td.mat-cell {
-  color: rgba(0, 0, 0, 0.82);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 12px 14px;
-}
-
-.members-table tr.mat-row:nth-child(even) td.mat-cell {
-  background: color-mix(in srgb, var(--ion-color-primary) 6%, #ffffff 94%);
-}
-
-.members-table tr.mat-row:hover td.mat-cell {
-  background: color-mix(in srgb, var(--ion-color-primary) 12%, #ffffff 88%);
-}
-
-.truncate {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.truncate--address {
-  max-width: 260px;
-}
-
-.truncate--aadhaar {
-  max-width: 140px;
-}
-
-.truncate--poc {
-  max-width: 160px;
-}
 
 .status-badge {
   display: inline-flex;
@@ -216,11 +100,94 @@ ion-content {
   }
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  .members-table th.mat-header-cell,
-  .members-table td.mat-cell {
-    padding: 10px 12px;
+
+::ng-deep {
+  .members-grid {
+    // Header cells with borders
+    .ag-header-cell {
+      border-right: 1px solid #d0d0d0 !important;
+      border-bottom: 1px solid #d0d0d0 !important;
+      
+      &:first-child {
+        border-left: 1px solid #d0d0d0 !important;
+      }
+    }
+
+    // Data cells with borders
+    .ag-cell {
+      border-right: 1px solid #d0d0d0 !important;
+      border-bottom: 1px solid #d0d0d0 !important;
+      
+      &:first-child {
+        border-left: 1px solid #d0d0d0 !important;
+      }
+    }
+
+    // Top border for header row
+    .ag-header-row {
+      border-top: 1px solid #d0d0d0 !important;
+    }
+
+    // Top border for data rows
+    .ag-row {
+      border-top: 1px solid #d0d0d0 !important;
+    }
+
+    // Ensure the grid itself has borders
+    .ag-root-wrapper {
+      border: 1px solid #d0d0d0 !important;
+    }
+
+    // Actions cell and buttons
+    .actions-cell {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      flex-wrap: wrap;
+    }
+
+    .ag-btn {
+      appearance: none;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .ag-edit {
+      background: var(--ion-color-primary);
+      color: white;
+    }
+
+    .ag-edit:hover {
+      background: var(--ion-color-primary-shade);
+      transform: translateY(-1px);
+    }
+
+    .ag-delete {
+      background: var(--ion-color-danger);
+      color: white;
+    }
+
+    .ag-delete:hover {
+      background: var(--ion-color-danger-shade);
+      transform: translateY(-1px);
+    }
+
+    .ag-loan {
+      background: var(--ion-color-tertiary, #5260ff);
+      color: white;
+    }
+
+    .ag-loan:hover {
+      background: var(--ion-color-tertiary-shade, #4854e6);
+      transform: translateY(-1px);
+    }
   }
 }
 
