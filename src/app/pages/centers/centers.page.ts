@@ -14,9 +14,8 @@ import { Center } from '../../models/center.models';
 import { UserContextService } from '../../services/user-context.service';
 import { AddCenterModalComponent } from './add-center-modal.component';
 import { EditCenterModalComponent } from './edit-center-modal.component';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { ColDef, GridApi, GridOptions, GridReadyEvent, ICellRendererParams } from 'ag-grid-community';
 
 
 @Component({
@@ -28,36 +27,50 @@ import { MatSort } from '@angular/material/sort';
 export class CentersPage implements OnInit, ViewWillEnter {
   activeMenu: string = 'Centers';
   centers: Center[] = [];
+  rowData: Center[] = [];
   isLoading = false;
 
   selectedBranchId: number | null = null;
   selectedBranchName: string = '';
 
-  displayedColumns: string[] = ['centerName', 'centerAddress', 'city', 'branchName', 'actions'];
-  filterColumns: string[] = ['centerName', 'centerAddress', 'city', 'branchName'];
-  dataSource = new MatTableDataSource<Center>([]);
-
-  filters: { [key: string]: string } = {
-    centerName: '',
-    centerAddress: '',
-    city: '',
-    branchName: ''
+  // AG Grid
+  columnDefs: ColDef<Center>[] = [];
+  defaultColDef: ColDef = {
+    sortable: true,
+    resizable: false,
+    filter: false,
+    floatingFilter: false
   };
 
-  private paginator?: MatPaginator;
-  private sort?: MatSort;
+  paginationPageSize = 5;
+  paginatorLength = 0;
+  paginatorPageIndex = 0;
 
-  @ViewChild(MatPaginator)
-  set matPaginator(paginator: MatPaginator) {
-    this.paginator = paginator;
-    this.dataSource.paginator = paginator;
-  }
+  // Dynamic grid height (shrinks when pageSize is small)
+  private readonly gridRowHeightPx = 44;
+  private readonly gridHeaderHeightPx = 44;
+  gridHeightPx = 320;
 
-  @ViewChild(MatSort)
-  set matSort(sort: MatSort) {
-    this.sort = sort;
-    this.dataSource.sort = sort;
-  }
+  private gridApi?: GridApi<Center>;
+  private lastColumnState: unknown = null;
+
+  // theme: 'legacy' = use v32-style CSS file themes with AG Grid v33+
+  gridOptions: GridOptions<Center> = {
+    theme: 'legacy',
+    context: { componentParent: this },
+    suppressPaginationPanel: true,
+
+    // Lock table adjustments from the UI
+    suppressMovableColumns: true,
+    suppressDragLeaveHidesColumns: true,
+    suppressColumnMoveAnimation: true,
+
+    // Keep consistent sizing so we can compute the grid height.
+    rowHeight: 44,
+    headerHeight: 44
+  };
+
+  @ViewChild(MatPaginator) paginator?: MatPaginator;
 
   constructor(
     private authService: AuthService,
@@ -69,6 +82,33 @@ export class CentersPage implements OnInit, ViewWillEnter {
     private toastController: ToastController,
     private loadingController: LoadingController
   ) { }
+
+  private normalizeCenter(raw: unknown, branchName: string, branchId?: number): Center {
+    const rec = (raw ?? {}) as Record<string, unknown>;
+    const idNum = Number(rec['id'] ?? rec['Id'] ?? (raw as any)?.id ?? 0);
+    const id = Number.isFinite(idNum) && idNum > 0 ? idNum : undefined;
+
+    const centerName = (
+      rec['centerName'] ?? rec['CenterName'] ?? rec['name'] ?? rec['Name'] ?? (raw as any)?.centerName ?? (raw as any)?.name ?? ''
+    ).toString();
+
+    const centerAddress = (
+      rec['centerAddress'] ?? rec['CenterAddress'] ?? rec['address'] ?? rec['Address'] ?? (raw as any)?.centerAddress ?? ''
+    ).toString();
+
+    const city = (
+      rec['city'] ?? rec['City'] ?? (raw as any)?.city ?? ''
+    ).toString();
+
+    return {
+      id,
+      centerName,
+      centerAddress,
+      city,
+      branchName: (branchName ?? '').toString(),
+      branchId
+    };
+  }
 
   private getSelectedBranchId(): number | null {
     const fromContext = this.userContext.branchId;
@@ -90,19 +130,66 @@ export class CentersPage implements OnInit, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
-    // Per-column filter predicate
-    this.dataSource.filterPredicate = (data: Center, filter: string) => {
-      const filters = JSON.parse(filter || '{}') as Record<string, string>;
-      return Object.keys(this.filters).every(key => {
-        if (!filters[key]) return true;
 
-        const cellValue = (data as unknown as Record<string, unknown>)[key];
-        return (cellValue ?? '')
-          .toString()
-          .toLowerCase()
-          .includes(filters[key].toLowerCase());
-      });
-    };
+    this.columnDefs = [
+      // Explicitly define these as hidden so they never show up as extra columns.
+      { field: 'id', hide: true },
+      { field: 'branchId', hide: true },
+      {
+        headerName: 'Center Name',
+        field: 'centerName',
+        flex: 1,
+        pinned: 'left'
+      },
+      {
+        headerName: 'Center Address',
+        field: 'centerAddress',
+        flex: 1.5,
+        tooltipField: 'centerAddress',
+        cellClass: 'truncate'
+      },
+      {
+        headerName: 'City',
+        field: 'city',
+        flex: 1
+      },
+      {
+        headerName: 'Branch Name',
+        field: 'branchName',
+        flex: 1
+      },
+      {
+        headerName: 'Actions',
+        colId: 'actions',
+        pinned: 'right',
+        width: 170,
+        sortable: false,
+        filter: false,
+        resizable: false,
+        cellRenderer: (params: ICellRendererParams<Center>) => {
+          const container = document.createElement('div');
+          container.className = 'actions-cell';
+          container.innerHTML = `
+            <button class="ag-icon-btn ag-edit" title="Edit" aria-label="Edit">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="ag-action-icon">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l9.06-9.06.92.92L5.92 20.08zM20.71 7.04a1.003 1.003 0 0 0 0-1.42L18.37 3.29a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.83z"/>
+              </svg>
+            </button>
+            <button class="ag-icon-btn ag-delete" title="Delete" aria-label="Delete">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="ag-action-icon">
+                <path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 1h4v2H4V5h4l1-1z"/>
+              </svg>
+            </button>
+          `;
+
+          const editBtn = container.querySelector('.ag-edit');
+          const delBtn = container.querySelector('.ag-delete');
+          if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editCenter(params.data));
+          if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.deleteCenter(params.data));
+          return container;
+        }
+      }
+    ];
   }
 
   // ViewChild setters handle paginator/sort wiring even when the table is created via *ngIf.
@@ -118,47 +205,103 @@ export class CentersPage implements OnInit, ViewWillEnter {
     void this.loadCenters();
   }
 
-
-  private readEventValue(event: unknown): string {
-    if (!event || typeof event !== 'object') return '';
-
-    const eventObj = event as { target?: unknown; detail?: unknown };
-    const target = eventObj.target as { value?: unknown } | undefined;
-    const detail = eventObj.detail as { value?: unknown } | undefined;
-    const value = target?.value ?? detail?.value ?? '';
-    return value.toString();
+  onGridReady(event: GridReadyEvent<Center>): void {
+    this.gridApi = event.api;
+    // Force column definitions to avoid any auto-generated columns.
+    this.gridApi.setGridOption('columnDefs', this.columnDefs);
+    this.gridApi.setGridOption('rowData', this.rowData);
+    this.gridApi.setGridOption('paginationPageSize', this.paginationPageSize);
+    this.gridApi.paginationGoToPage(this.paginatorPageIndex);
+    setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
+    this.syncPaginatorFromGrid();
+    this.updateGridHeight();
   }
 
-  onFilterChange(event: unknown): void {
-    const value = this.readEventValue(event);
-    // Legacy global filter (not used with per-column)
-    this.dataSource.filter = value.toString().trim().toLowerCase();
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
+  onSortChanged(): void {
+    if (!this.gridApi) return;
+    this.lastColumnState = this.gridApi.getColumnState();
+    this.syncPaginatorFromGrid();
   }
 
-  applyColumnFilter(): void {
-    // Triggers filterPredicate with all filters
-    this.dataSource.filter = JSON.stringify(this.filters);
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  onPageChanged(event: PageEvent): void {
+    this.paginationPageSize = event.pageSize;
+    this.paginatorPageIndex = event.pageIndex;
+    if (!this.gridApi) return;
+
+    const pageSizeChanged = this.gridApi.paginationGetPageSize() !== event.pageSize;
+    if (pageSizeChanged) {
+      this.gridApi.setGridOption('paginationPageSize', event.pageSize);
+      this.paginatorPageIndex = 0;
+      this.gridApi.paginationGoToFirstPage();
+    } else {
+      this.gridApi.paginationGoToPage(event.pageIndex);
     }
+
+    this.syncPaginatorFromGrid();
+    this.updateGridHeight();
+  }
+
+
+  private syncPaginatorFromGrid(): void {
+    if (!this.gridApi) {
+      this.paginatorLength = this.rowData.length;
+      return;
+    }
+    this.paginatorLength = this.gridApi.getDisplayedRowCount();
+    this.paginatorPageIndex = this.gridApi.paginationGetCurrentPage();
+  }
+
+  private updateGridHeight(): void {
+    const total = this.gridApi ? this.gridApi.getDisplayedRowCount() : this.rowData.length;
+    const pageSize = this.paginationPageSize;
+    const pageIndex = this.gridApi ? this.gridApi.paginationGetCurrentPage() : this.paginatorPageIndex;
+
+    const start = pageIndex * pageSize;
+    const remaining = Math.max(total - start, 0);
+    const rowsOnPage = Math.max(1, Math.min(pageSize, remaining || pageSize));
+
+    const base = this.gridHeaderHeightPx + 2; // +2 for borders
+    const height = base + rowsOnPage * this.gridRowHeightPx;
+    this.gridHeightPx = Math.max(220, height);
+  }
+
+  private getPrintableRows(): Center[] {
+    if (!this.gridApi) {
+      return this.rowData;
+    }
+    const rows: Center[] = [];
+    this.gridApi.forEachNodeAfterFilterAndSort(node => {
+      if (node.data) rows.push(node.data);
+    });
+    return rows;
   }
 
   exportCentersToCSV(): void {
-    const headers = this.displayedColumns;
-    const rows = this.dataSource.filteredData.length ? this.dataSource.filteredData : this.dataSource.data;
-    const csv = [headers.join(',')].concat(
-      rows.map(row =>
-        headers
-          .map(h => {
-            const value = (row as unknown as Record<string, unknown>)[h] ?? '';
-            return '"' + value.toString().replace(/"/g, '""') + '"';
-          })
-          .join(',')
+    const exportableColumns = ['centerName', 'centerAddress', 'city', 'branchName'];
+
+    if (this.gridApi) {
+      this.gridApi.exportDataAsCsv({
+        fileName: 'centers.csv',
+        columnKeys: exportableColumns
+      });
+      return;
+    }
+
+    // Fallback (should rarely happen, e.g. if grid not ready yet)
+    const rows = this.rowData;
+    const headers = exportableColumns;
+    const csv = [headers.join(',')]
+      .concat(
+        rows.map(row =>
+          headers
+            .map(h => {
+              const value = (row as unknown as Record<string, unknown>)[h] ?? '';
+              return '"' + value.toString().replace(/"/g, '""') + '"';
+            })
+            .join(',')
+        )
       )
-    ).join('\r\n');
+      .join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -169,19 +312,27 @@ export class CentersPage implements OnInit, ViewWillEnter {
   }
 
   printCentersTable(): void {
-    const headers = this.displayedColumns;
-    const rows = this.dataSource.filteredData.length ? this.dataSource.filteredData : this.dataSource.data;
+    const rows = this.getPrintableRows();
+    const printableFields: Array<keyof Center> = ['centerName', 'centerAddress', 'city', 'branchName'];
+    const columns = printableFields.map(field => {
+      const def = this.columnDefs.find(c => c.field === field);
+      return {
+        field: field as string,
+        header: (def?.headerName ?? field).toString()
+      };
+    });
+
     let html = '<table border="1" style="border-collapse:collapse;width:100%">';
-    html += '<thead><tr>' + headers.map(h => `<th style="padding:4px 8px">${h}</th>`).join('') + '</tr></thead>';
+    html += '<thead><tr>' + columns.map(c => `<th style="padding:4px 8px">${c.header}</th>`).join('') + '</tr></thead>';
     html +=
       '<tbody>' +
       rows
         .map(
           row =>
             '<tr>' +
-            headers
-              .map(h => {
-                const value = (row as unknown as Record<string, unknown>)[h] ?? '';
+            columns
+              .map(c => {
+                const value = (row as unknown as Record<string, unknown>)[c.field] ?? '';
                 return `<td style="padding:4px 8px">${value.toString()}</td>`;
               })
               .join('') +
@@ -243,14 +394,10 @@ export class CentersPage implements OnInit, ViewWillEnter {
 
             const mapped = (centers ?? []).map(center => {
               const centerRec = center as unknown as Record<string, unknown>;
-              const branchId =
-                Number(centerRec['branchId'] ?? centerRec['BranchId'] ?? center.branchId ?? 0) || undefined;
-              const branchName = branchMap.get(Number(branchId ?? 0)) || center.branchName || '';
-              return {
-                ...center,
-                branchId,
-                branchName
-              };
+              const bIdNum = Number(centerRec['branchId'] ?? centerRec['BranchId'] ?? (center as any)?.branchId ?? 0);
+              const branchId = Number.isFinite(bIdNum) && bIdNum > 0 ? bIdNum : undefined;
+              const branchName = branchMap.get(Number(branchId ?? 0)) || (center as any)?.branchName || '';
+              return this.normalizeCenter(center, branchName, branchId);
             });
 
             // If a branch is selected (e.g. user clicked Navigate), show only that branch's centers
@@ -258,9 +405,14 @@ export class CentersPage implements OnInit, ViewWillEnter {
               ? mapped.filter(c => Number(c.branchId) === Number(selectedBranchId) || (!!selectedBranchName && c.branchName === selectedBranchName))
               : mapped;
 
-            this.dataSource.data = this.centers;
-            if (this.paginator) this.dataSource.paginator = this.paginator;
-            if (this.sort) this.dataSource.sort = this.sort;
+            this.rowData = [...this.centers];
+            if (this.gridApi) {
+              this.gridApi.setGridOption('rowData', this.rowData);
+              this.gridApi.paginationGoToFirstPage();
+              this.paginatorPageIndex = 0;
+            }
+            this.syncPaginatorFromGrid();
+            this.updateGridHeight();
             this.isLoading = false;
             await loading.dismiss();
           },
@@ -268,14 +420,22 @@ export class CentersPage implements OnInit, ViewWillEnter {
             // If branches fail to load, still filter by branchId if present
             const mapped = (centers ?? []).map(center => {
               const centerRec = center as unknown as Record<string, unknown>;
-              const branchId =
-                Number(centerRec['branchId'] ?? centerRec['BranchId'] ?? center.branchId ?? 0) || undefined;
-              return { ...center, branchId };
+              const bIdNum = Number(centerRec['branchId'] ?? centerRec['BranchId'] ?? (center as any)?.branchId ?? 0);
+              const branchId = Number.isFinite(bIdNum) && bIdNum > 0 ? bIdNum : undefined;
+              return this.normalizeCenter(center, (center as any)?.branchName || '', branchId);
             });
             this.centers = selectedBranchId != null
               ? mapped.filter(c => Number(c.branchId) === Number(selectedBranchId))
               : mapped;
-            this.dataSource.data = this.centers;
+
+            this.rowData = [...this.centers];
+            if (this.gridApi) {
+              this.gridApi.setGridOption('rowData', this.rowData);
+              this.gridApi.paginationGoToFirstPage();
+              this.paginatorPageIndex = 0;
+            }
+            this.syncPaginatorFromGrid();
+            this.updateGridHeight();
             this.isLoading = false;
             await loading.dismiss();
             await this.showToast('Failed to load branches.', 'danger');
@@ -284,7 +444,14 @@ export class CentersPage implements OnInit, ViewWillEnter {
       },
       error: async () => {
         this.centers = [];
-        this.dataSource.data = [];
+        this.rowData = [];
+        if (this.gridApi) {
+          this.gridApi.setGridOption('rowData', this.rowData);
+          this.gridApi.paginationGoToFirstPage();
+          this.paginatorPageIndex = 0;
+        }
+        this.syncPaginatorFromGrid();
+        this.updateGridHeight();
         this.isLoading = false;
         await loading.dismiss();
         await this.showToast('Failed to load centers.', 'danger');
@@ -306,16 +473,24 @@ export class CentersPage implements OnInit, ViewWillEnter {
       const idx = this.centers.findIndex(c => c.id === data.center.id);
       if (idx > -1) {
         this.centers[idx] = data.center;
-        this.dataSource.data = [...this.centers];
+        this.rowData = [...this.centers];
+        if (this.gridApi) {
+          this.gridApi.setGridOption('rowData', this.rowData);
+        }
         await this.showToast('Center updated successfully', 'success');
 
         // Fallback: reload from API so table matches server-calculated values
         // (and ensures we keep branch mapping in sync).
         try {
-          const existingFilters = { ...this.filters };
+          const existingColumnState = this.gridApi?.getColumnState() ?? this.lastColumnState;
           await this.loadCenters();
-          this.filters = existingFilters;
-          this.applyColumnFilter();
+          if (this.gridApi && Array.isArray(existingColumnState)) {
+            this.gridApi.applyColumnState({
+              state: existingColumnState as any,
+              defaultState: { sort: null }
+            });
+          }
+          this.syncPaginatorFromGrid();
         } catch {
           // Ignore reload errors; the optimistic UI update already shows new values.
         }
@@ -335,7 +510,12 @@ export class CentersPage implements OnInit, ViewWillEnter {
         });
       });
       this.centers = this.centers.filter(c => c.id !== row.id);
-      this.dataSource.data = [...this.centers];
+      this.rowData = [...this.centers];
+      if (this.gridApi) {
+        this.gridApi.setGridOption('rowData', this.rowData);
+        this.gridApi.paginationGoToPage(Math.min(this.paginatorPageIndex, Math.max(this.gridApi.paginationGetTotalPages() - 1, 0)));
+      }
+      this.syncPaginatorFromGrid();
       await this.showToast('Center deleted successfully', 'success');
     } catch (err) {
       await this.showToast('Failed to delete center', 'danger');
