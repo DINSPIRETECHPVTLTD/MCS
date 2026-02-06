@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { AuthService } from './auth.service';
+import { ApiResponseService } from './api-response.service';
 import { Center, CreateCenterRequest } from '../models/center.models';
 
 export interface BranchLookup {
@@ -19,8 +20,17 @@ export class CenterService {
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private apiResponse: ApiResponseService
   ) {}
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+  }
+
+  private text(value: unknown): string {
+    return value == null ? '' : String(value);
+  }
 
   private getHeaders(): HttpHeaders {
     const token = this.authService.getToken();
@@ -39,38 +49,32 @@ export class CenterService {
     });
   }
 
-
-  private unwrapList(response: any): any[] {
-    const raw =
-      response?.$values ??
-      response?.data?.$values ??
-      response?.data ??
-      response?.items?.$values ??
-      response?.items ??
-      response;
-
-    if (Array.isArray(raw)) return raw;
-    if (Array.isArray(raw?.$values)) return raw.$values;
-    return [];
-  }
-
   getAllCenters(): Observable<Center[]> {
     return this.http
-      .get<any>(this.centersUrl, { headers: this.getHeaders() })
+      .get<unknown>(this.centersUrl, { headers: this.getHeaders() })
       .pipe(
-        map((response: any) => {
-          const list = this.unwrapList(response);
+        map((response: unknown) => {
+          const list = this.apiResponse.unwrapList<Record<string, unknown>>(response);
           return list
             .filter(Boolean)
-            .map((c: any) => {
-              const centerName = (c?.centerName ?? c?.CenterName ?? c?.name ?? c?.Name ?? '').toString().trim();
-              const centerAddress = (c?.centerAddress ?? c?.CenterAddress ?? c?.address ?? c?.Address ?? '').toString();
-              const branchId = Number(c?.branchId ?? c?.BranchId ?? 0) || undefined;
-              const branchName = (c?.branchName ?? c?.BranchName ?? c?.branch ?? c?.Branch ?? c?.branch?.name ?? c?.Branch?.Name ?? '').toString().trim();
-              const city = (c?.city ?? c?.City ?? '').toString().trim();
+            .map((c: Record<string, unknown>) => {
+              const branch = this.asRecord(c['branch'] ?? c['Branch']);
+
+              const centerName = this.text(c['centerName'] ?? c['CenterName'] ?? c['name'] ?? c['Name']).trim();
+              const centerAddress = this.text(c['centerAddress'] ?? c['CenterAddress'] ?? c['address'] ?? c['Address']);
+              const branchId = Number(c['branchId'] ?? c['BranchId'] ?? 0) || undefined;
+              const branchName = this.text(
+                c['branchName'] ??
+                  c['BranchName'] ??
+                  c['branch'] ??
+                  c['Branch'] ??
+                  branch?.['name'] ??
+                  branch?.['Name']
+              ).trim();
+              const city = this.text(c['city'] ?? c['City']).trim();
 
               return {
-                id: Number(c?.id ?? c?.Id ?? 0) || undefined,
+                id: Number(c['id'] ?? c['Id'] ?? 0) || undefined,
                 centerName,
                 centerAddress,
                 branchName,
@@ -85,16 +89,22 @@ export class CenterService {
 
   getBranchNamesFromCenters(): Observable<string[]> {
     return this.http
-      .get<any>(this.centersUrl, { headers: this.getHeaders() })
+      .get<unknown>(this.centersUrl, { headers: this.getHeaders() })
       .pipe(
-        map((response: any) => {
-          const list = this.unwrapList(response);
+        map((response: unknown) => {
+          const list = this.apiResponse.unwrapList<Record<string, unknown>>(response);
           const names = list
-            .map((c: any) =>
-              (c?.branchName ?? c?.BranchName ?? c?.branch ?? c?.Branch ?? c?.branch?.name ?? c?.Branch?.Name ?? '')
-                .toString()
-                .trim()
-            )
+            .map((c: Record<string, unknown>) => {
+              const branch = this.asRecord(c['branch'] ?? c['Branch']);
+              return this.text(
+                c['branchName'] ??
+                  c['BranchName'] ??
+                  c['branch'] ??
+                  c['Branch'] ??
+                  branch?.['name'] ??
+                  branch?.['Name']
+              ).trim();
+            })
             .filter(Boolean);
 
           return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b));
@@ -106,11 +116,13 @@ export class CenterService {
    * Fetch branch names from GET: api/Branches
    */
   getBranchNames(): Observable<string[]> {
-    return this.http.get<any>(this.branchesUrl, { headers: this.getHeaders() }).pipe(
-      map((response: any) => {
-        const list = this.unwrapList(response);
+    return this.http.get<unknown>(this.branchesUrl, { headers: this.getHeaders() }).pipe(
+      map((response: unknown) => {
+        const list = this.apiResponse.unwrapList<Record<string, unknown>>(response);
         const names = list
-          .map((b: any) => (b?.name ?? b?.Name ?? b?.branchName ?? b?.BranchName ?? '').toString().trim())
+          .map((b: Record<string, unknown>) =>
+            this.text(b['name'] ?? b['Name'] ?? b['branchName'] ?? b['BranchName']).trim()
+          )
           .filter(Boolean);
 
         return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b));
@@ -122,15 +134,15 @@ export class CenterService {
    * Fetch branches with IDs from GET: /Branches
    */
   getBranches(): Observable<BranchLookup[]> {
-    return this.http.get<any>(this.branchesUrl, { headers: this.getHeaders() }).pipe(
-      map((response: any) => {
-        const list = this.unwrapList(response);
+    return this.http.get<unknown>(this.branchesUrl, { headers: this.getHeaders() }).pipe(
+      map((response: unknown) => {
+        const list = this.apiResponse.unwrapList<Record<string, unknown>>(response);
 
         return list
           .filter(Boolean)
-          .map((b: any) => ({
-            id: Number(b?.id ?? b?.Id ?? 0),
-            name: (b?.name ?? b?.Name ?? b?.branchName ?? b?.BranchName ?? '').toString().trim()
+          .map((b: Record<string, unknown>) => ({
+            id: Number(b['id'] ?? b['Id'] ?? 0),
+            name: this.text(b['name'] ?? b['Name'] ?? b['branchName'] ?? b['BranchName']).trim()
           }))
           .filter((b: BranchLookup) => b.id > 0 && !!b.name)
           .sort((a, b) => a.name.localeCompare(b.name));
@@ -147,7 +159,7 @@ export class CenterService {
   /**
    * Delete a center by ID (DELETE: api/Centers/{id})
    */
-  deleteCenter(id: number): Observable<any> {
+  deleteCenter(id: number): Observable<unknown> {
     return this.http.delete(`${this.centersUrl}/${id}`, {
       headers: this.getHeaders()
     });

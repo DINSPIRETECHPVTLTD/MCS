@@ -8,55 +8,45 @@
     </div>
     <mat-divider></mat-divider>
 
-    <form class="add-center-form" [formGroup]="centerForm" (ngSubmit)="onSave()">
+    <form class="add-center-form" [formGroup]="centerForm" (ngSubmit)="onCreate()">
       <mat-card class="section-card">
         <div class="section-title">Center Details</div>
-
         <div class="form-grid">
-          <mat-form-field appearance="outline" class="form-field full-width">
-            <mat-label>Branch Name <span class="required">*</span></mat-label>
-            <select matNativeControl formControlName="branchId" [disabled]="branches.length === 0">
-              <option [ngValue]="null">Select Branch</option>
-              <option *ngFor="let branch of branches" [ngValue]="branch.id">{{ branch.name }}</option>
-            </select>
-            <mat-error *ngIf="isFieldInvalid('branchId')">{{ getFieldError('branchId') }}</mat-error>
-          </mat-form-field>
-
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>Center Name <span class="required">*</span></mat-label>
             <input matInput type="text" formControlName="centerName" maxlength="100" />
-            <mat-error *ngIf="isFieldInvalid('centerName')">{{ getFieldError('centerName') }}</mat-error>
+            <mat-error *ngIf="centerForm.get('centerName')?.invalid">Required</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="form-field">
             <mat-label>City <span class="required">*</span></mat-label>
             <input matInput type="text" formControlName="city" maxlength="50" />
-            <mat-error *ngIf="isFieldInvalid('city')">{{ getFieldError('city') }}</mat-error>
+            <mat-error *ngIf="centerForm.get('city')?.invalid">Required</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="form-field full-width">
             <mat-label>Center Address <span class="required">*</span></mat-label>
             <textarea matInput formControlName="centerAddress" rows="3"></textarea>
-            <mat-error *ngIf="isFieldInvalid('centerAddress')">{{ getFieldError('centerAddress') }}</mat-error>
+            <mat-error *ngIf="centerForm.get('centerAddress')?.invalid">Required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Branch <span class="required">*</span></mat-label>
+            <mat-select formControlName="branchId" [disabled]="isBranchLocked">
+              <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="centerForm.get('branchId')?.invalid">Required</mat-error>
           </mat-form-field>
         </div>
       </mat-card>
 
       <div class="dialog-footer">
-        <ion-button type="button" fill="outline" (click)="onClear()" [disabled]="isSubmitting" class="clear-button">
-          Clear
-        </ion-button>
-
-        <ion-button type="submit" [disabled]="isSubmitting || centerForm.invalid" class="save-button">
-          <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-          Save Center
+        <ion-button fill="clear" type="button" (click)="onCancel()">Cancel</ion-button>
+        <ion-button type="submit" [disabled]="isSubmitting || centerForm.invalid" class="create-button">
+          <ion-icon name="add-outline" slot="start"></ion-icon>
+          Create Center
         </ion-button>
       </div>
     </form>
-  </div>
-
-  <div *ngIf="isLoading" class="loading-overlay">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Loading data...</p>
   </div>
 </ion-content>

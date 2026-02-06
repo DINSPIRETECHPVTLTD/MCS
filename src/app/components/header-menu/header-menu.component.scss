@@ -5,6 +5,9 @@ ion-header {
   &::after {
     display: none !important;
   }
+
+  /* Add a divider line since the default Ionic header separator is disabled above */
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
 }
 
 .org-header {

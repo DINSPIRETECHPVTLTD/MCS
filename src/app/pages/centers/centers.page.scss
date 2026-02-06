@@ -1,39 +1,25 @@
+.content-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  h1 {
+    color: var(--ion-color-primary);
+    margin-bottom: 16px;
+  }
+}
+
 mat-paginator {
   margin-top: 16px;
   background: #fff;
   z-index: 2;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
+
 /* Centers page aligned with Members page layout */
 .users-list-container {
   margin-top: 16px;
-}
-
-.centers-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.centers-toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.centers-actions {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-
-  ion-button {
-    font-size: 14px;
-    font-weight: 600;
-    text-transform: none;
-  }
 }
 
 .filter-card {
@@ -63,29 +49,103 @@ mat-paginator {
   width: 100%;
 }
 
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+/* Column filter row inside the mat-table header */
+tr.table-filter-row {
+  display: table-row;
+}
+
+tr.table-filter-row > th {
+  display: table-cell;
+  padding: 6px 8px;
+  vertical-align: middle;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e0e0e0;
+  border-right: none;
+}
+
+tr.table-filter-row > th:last-child {
+  border-right: none;
+}
+
 .table-scroll {
-  height: calc(100vh - 320px);
+  /* Use max-height so the paginator stays reachable/visible on the page */
+  height: auto;
+  max-height: calc(100vh - 360px);
   min-height: 300px;
   overflow-x: auto;
   overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .centers-table {
-  min-width: 800px;
   width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+@supports (height: 100dvh) {
+  .table-scroll {
+    max-height: calc(100dvh - 360px);
+  }
 }
 
 .centers-table th,
 .centers-table td {
   padding: 6px 8px;
-  border-bottom: 1px solid #e0e0e0;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: middle;
+}
+
+/* Single source of truth for grid lines (vertical + horizontal) */
+.centers-table th.mat-header-cell,
+.centers-table td.mat-cell {
+  border-bottom: 1px solid #e0e0e0;
+  border-right: none;
+  box-sizing: border-box;
+}
+
+
+.centers-table th.mat-header-cell:last-child,
+.centers-table td.mat-cell:last-child {
+  border-right: none;
+}
+
+/* Divider shadows (right edge) for non-sticky columns only.
+   Exclude:
+   - Center Name: sticky column has its own combined shadow
+   - Branch Name: to avoid double divider with Actions left divider
+   - Actions: uses a left-edge divider
+*/
+.centers-table th.mat-header-cell:not(.mat-column-actions):not(.mat-column-centerName):not(.mat-column-branchName),
+.centers-table td.mat-cell:not(.mat-column-actions):not(.mat-column-centerName):not(.mat-column-branchName) {
+  /* 1px divider line + subtle shadow (prevents double-thick dividers) */
+  box-shadow: inset -1px 0 0 #e0e0e0, inset -2px 0 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Filter-row right dividers for all but the Actions column and the cell before Actions (Branch Name). */
+tr.table-filter-row > th:not(:last-child):not(:nth-last-child(2)) {
+  box-shadow: inset -1px 0 0 #e0e0e0, inset -2px 0 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Actions is the last (sticky) column: show divider shadow on the LEFT edge */
+.centers-table th.mat-header-cell.mat-column-actions,
+.centers-table td.mat-cell.mat-column-actions,
+tr.table-filter-row > th:last-child {
+  box-shadow: inset 1px 0 0 #e0e0e0, inset 2px 0 0 rgba(0, 0, 0, 0.06);
 }
 
 .centers-table tr.mat-row,
@@ -99,7 +159,8 @@ mat-paginator {
   left: 0;
   z-index: 3;
   background: #ffffff;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.08);
+  /* Keep sticky-column lift + keep the right-side divider line/shadow */
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.08), inset -1px 0 0 #e0e0e0, inset -2px 0 0 rgba(0, 0, 0, 0.06);
 }
 
 .centers-table th.mat-header-cell.mat-column-centerName {
@@ -111,7 +172,7 @@ mat-paginator {
   font-weight: 700;
   color: #ffffff;
   background: var(--ion-color-primary-shade);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid #e0e0e0;
   padding: 12px 14px;
   position: sticky;
   top: 0;
@@ -120,7 +181,6 @@ mat-paginator {
 
 .centers-table td.mat-cell {
   color: rgba(0, 0, 0, 0.82);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   padding: 12px 14px;
 }
 
@@ -139,43 +199,39 @@ mat-paginator {
   text-overflow: ellipsis;
   cursor: pointer;
 }
-/* Action column - enough width for Edit + Delete icon buttons, no clipping */
-.centers-table .mat-column-actions,
-.centers-table th.mat-header-cell.mat-column-actions {
+/* Action column */
+.centers-table th.mat-header-cell.mat-column-actions,
+.centers-table td.mat-cell.mat-column-actions {
   text-align: center;
-  min-width: 110px;
-  width: 110px;
-  max-width: none;
+  min-width: 90px;
+  max-width: 120px;
   position: sticky;
   right: 0;
-  background: #fff;
   z-index: 3;
-  overflow: visible;
-  white-space: nowrap;
-  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.08);
+  border-left: none;
 }
 
+
+/* Keep header styling for the Actions header cell */
 .centers-table th.mat-header-cell.mat-column-actions {
   background: var(--ion-color-primary-shade);
+  color: #ffffff;
   z-index: 4;
-  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.12);
 }
 
+/* Keep body styling for Actions body cells */
 .centers-table td.mat-cell.mat-column-actions {
-  overflow: visible;
-  text-overflow: clip;
+  background: #ffffff;
+}
+
+/* Avoid double vertical line (Branch right border + Actions left border) */
+.centers-table th.mat-header-cell.mat-column-branchName,
+.centers-table td.mat-cell.mat-column-branchName {
+  border-right: none;
 }
 
 .centers-table .mat-column-actions button {
-  margin: 0 4px;
-  flex-shrink: 0;
-}
-
-/* Align filter row actions cell with actions column width */
-.centers-table .filter-row th.filter-actions-cell {
-  min-width: 110px;
-  width: 110px;
-  box-sizing: border-box;
+  margin: 0 2px;
 }
 
 .truncate--address {
@@ -207,12 +263,6 @@ mat-paginator {
   .centers-table .mat-column-branchName {
     display: none;
   }
-  .centers-table .mat-column-actions,
-  .centers-table th.mat-header-cell.mat-column-actions,
-  .centers-table .filter-row th.filter-actions-cell {
-    min-width: 110px;
-    width: 110px;
-  }
 }
 
 @media (max-width: 600px) {
@@ -224,11 +274,4 @@ mat-paginator {
   .centers-table .mat-column-city {
     display: none;
   }
-  .centers-table .mat-column-actions,
-  .centers-table th.mat-header-cell.mat-column-actions,
-  .centers-table .filter-row th.filter-actions-cell {
-    min-width: 100px;
-    width: 100px;
-  }
 }
-

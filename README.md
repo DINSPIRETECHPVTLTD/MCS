@@ -33,7 +33,7 @@ npm start
 ionic serve
 ```
 
-The app will be available at `http://localhost:61008`
+The app will be available at `http://localhost:4200`
 
 ### Mobile Development
 
