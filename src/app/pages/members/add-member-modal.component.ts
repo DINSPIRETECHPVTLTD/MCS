@@ -476,11 +476,11 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
 
     private scrollToFirstInvalidField(): void {
       setTimeout(() => {
-        const invalid = document.querySelector('.add-member-dialog .ng-invalid') as HTMLElement | null;
+        const invalid = document.querySelector('.add-member-content .ion-invalid, .add-member-content .ng-invalid') as HTMLElement | null;
         if (!invalid) return;
 
-        const field = invalid.closest('.mat-mdc-form-field') as HTMLElement | null;
-        (field ?? invalid).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const field = invalid.closest('ion-item') ?? invalid;
+        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 0);
     }
 

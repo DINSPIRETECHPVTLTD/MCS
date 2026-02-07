@@ -36,3 +36,10 @@
 	color: #ffffff;
 }
 
+/* Member modals: 60% width */
+ion-modal.add-member-modal,
+ion-modal.edit-member-modal {
+	--width: 60%;
+	--min-width: 320px;
+}
+
