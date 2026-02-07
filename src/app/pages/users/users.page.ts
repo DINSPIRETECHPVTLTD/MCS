@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LoadingController, ToastController, ViewWillEnter, ModalController } from '@ionic/angular';
+import { LoadingController, ToastController, ViewWillEnter, ModalController, AlertController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
@@ -17,12 +16,11 @@ import { Branch } from 'src/app/models/branch.models';
 })
 export class UsersComponent implements OnInit, ViewWillEnter {
   users: User[] = [];
-  rowData: User[] = []; // <-- added
+  rowData: User[] = [];
   columnDefs: ColDef[] = [];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
   pagination: boolean = true;
-  paginationPageSize: number = 10;
-  userForm: FormGroup;
+  paginationPageSize: number = 20;
   showAddForm: boolean = false;
   isEditing: boolean = false;
   editingUserId: number | null = null;
@@ -30,10 +28,9 @@ export class UsersComponent implements OnInit, ViewWillEnter {
   isLoading: boolean = false;
 
   private gridApi?: GridApi;
-  gridOptions = { theme: agGridTheme };
+  gridOptions = { theme: agGridTheme, context: { componentParent: this } };
 
   public constructor(
-    private formBuilder: FormBuilder,
     private userService: UserService,
     private authService: AuthService,
     private userContext: UserContextService,
@@ -41,23 +38,8 @@ export class UsersComponent implements OnInit, ViewWillEnter {
     private loadingController: LoadingController,
     private toastController: ToastController,
     private modalController: ModalController,
-  ) {
-    this.userForm = this.formBuilder.group({
-      firstName: ['', [Validators.required]],
-      middleName: [''],
-      lastName: ['', [Validators.required]],
-      phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-      address1: [''],
-      address2: [''],
-      city: [''],
-      state: [''],
-      pinCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
-      email: ['', [Validators.email]],
-      level: ['Org'],
-      role: ['Owner'],
-      organizationId: [0]
-    });
-  }
+    private alertController: AlertController,
+  ) {}
 
   ngOnInit(): void {
     // Check authentication
@@ -66,23 +48,53 @@ export class UsersComponent implements OnInit, ViewWillEnter {
       return;
     }
     
-    this.setOrganizationId();
     // set up grid columns
     this.columnDefs = [
-      { headerName: 'First Name', field: 'firstName', flex: 1 },
-      { headerName: 'Last Name', field: 'lastName', flex: 1 },
-      { headerName: 'Email', field: 'email', flex: 1.5 },
-      { headerName: 'Actions',field: 'actions', flex: 0.8,
+      { headerName: 'User ID', field: 'id', width: 100, sortable: true, filter: true },
+      { headerName: 'First Name', field: 'firstName', width: 150, sortable: true, filter: true },
+      { headerName: 'Middle Name', field: 'middleName', width: 150, sortable: true, filter: true },
+      { headerName: 'Last Name', field: 'lastName', width: 150, sortable: true, filter: true },
+      { headerName: 'Email', field: 'email', width: 200, sortable: true, filter: true },
+      { 
+        headerName: 'Address', 
+        width: 300,
+        sortable: true, 
+        filter: true,
+        valueGetter: (params: any) => {
+          const data = params.data;
+          if (!data) return '';
+          const parts = [];
+          if (data.address1) parts.push(data.address1);
+          if (data.address2) parts.push(data.address2);
+          const cityStateZip = [];
+          if (data.city) cityStateZip.push(data.city);
+          if (data.state && data.pinCode) {
+            cityStateZip.push(`${data.state}-${data.pinCode}`);
+          } else if (data.state) {
+            cityStateZip.push(data.state);
+          } else if (data.pinCode) {
+            cityStateZip.push(data.pinCode);
+          }
+          if (cityStateZip.length > 0) parts.push(cityStateZip.join(', '));
+          return parts.join(', ');
+        }
+      },
+      { headerName: 'Actions',field: 'actions', width: 160,
         sortable: false,
         filter: false,
         resizable: false,
-        cellRenderer: () => {
-          return `
-            <div class="action-buttons">
-              <button class="ag-action ag-edit" title="Edit">Edit</button>
-              <button class="ag-action ag-delete" title="Delete">Delete</button>
-            </div>
+        cellRenderer: (params: any) => {
+          const container = document.createElement('div');
+          container.className = 'actions-cell';
+          container.innerHTML = `
+            <button class="ag-btn ag-edit" title="Edit" style="background: var(--ion-color-primary); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 500;">Edit</button>
+            <button class="ag-btn ag-delete" title="Delete" style="background: var(--ion-color-danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 500; margin-left: 8px;">Delete</button>
           `;
+          const editBtn = container.querySelector('.ag-edit');
+          const deleteBtn = container.querySelector('.ag-delete');
+          if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editUser(params.data));
+          if (deleteBtn) deleteBtn.addEventListener('click', () => params.context.componentParent.deleteUser(params.data));
+          return container;
         }
       }
     ];
@@ -92,16 +104,6 @@ export class UsersComponent implements OnInit, ViewWillEnter {
     // Reload users when page becomes active (Ionic lifecycle hook)
     if (this.authService.isAuthenticated()) {
       this.loadUsers();
-    }
-  }
-
-  setOrganizationId(): void {
-    // Use UserContext service to get organization ID
-    const organizationId = this.userContext.organizationId;
-    if (organizationId) {
-      this.userForm.patchValue({
-        organizationId: organizationId
-      });
     }
   }
 
@@ -179,11 +181,6 @@ export class UsersComponent implements OnInit, ViewWillEnter {
   }
 
   resetForm(): void {
-    this.userForm.reset({
-      level: 'Org',
-      role: 'Owner',
-      organizationId: this.userForm.value.organizationId || 0
-    });
     this.isEditing = false;
     this.editingUserId = null;
   }
@@ -218,5 +215,45 @@ export class UsersComponent implements OnInit, ViewWillEnter {
     setTimeout(() => {
       this.gridApi?.sizeColumnsToFit();
     }, 100);
+  }
+
+  editUser(user: User): void {
+    if (!user || !user.id) return;
+    this.isEditing = true;
+    this.editingUserId = user.id;
+    this.showAddForm = true;
+    this.openAddUserModal();
+  }
+
+  async deleteUser(user: User): Promise<void> {
+    if (!user || !user.id) return;
+    const alert = await this.alertController.create({
+      header: 'Confirm delete',
+      message: `Are you sure you want to delete user "${user.firstName} ${user.lastName}"?`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            const loading = await this.loadingController.create({ message: 'Deleting user...', spinner: 'crescent' });
+            await loading.present();
+            this.userService.deleteUser(user.id!).subscribe({
+              next: async () => {
+                await loading.dismiss();
+                this.showToast('User deleted successfully', 'success');
+                this.loadUsers();
+              },
+              error: async (err) => {
+                await loading.dismiss();
+                console.error('Delete user error', err);
+                this.showToast('Failed to delete user', 'danger');
+              }
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 }
