@@ -4,25 +4,38 @@
   (branchChange)="onBranchChange($event)">
   <ion-content [fullscreen]="true" class="ion-padding">
   <div class="content-container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <div class="page-header">
       <h1>Manage Loan</h1>
+      <ion-badge *ngIf="selectedBranch" color="primary">{{ selectedBranch.name }}</ion-badge>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading loans...</p>
+    </div>
+
+    <div *ngIf="!isLoading && getCurrentBranchId() == null" class="empty-state">
+      <ion-icon name="business-outline" size="large"></ion-icon>
+      <p>Select a branch</p>
+      <p class="empty-hint">Choose a branch from the header to view its loans.</p>
     </div>
     
-    <div *ngIf="loans.length === 0" class="empty-state">
+    <div *ngIf="!isLoading && getCurrentBranchId() != null && loans.length === 0" class="empty-state">
       <ion-icon name="document-text-outline" size="large"></ion-icon>
       <p>No loans found</p>
-      <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
-        Loans will be displayed here
-      </p>
+      <p class="empty-hint">There are no loans for this branch.</p>
     </div>
     
-    <ion-list *ngIf="loans.length > 0">
-      <ion-item *ngFor="let loan of loans" class="loan-item">
+    <ion-list *ngIf="!isLoading && loans.length > 0">
+      <ion-item *ngFor="let loan of loans" class="loan-item" button detail="true">
         <ion-label>
-          <h2>{{ loan.loanNumber || 'Loan #' + loan.id }}</h2>
-          <p *ngIf="loan.memberName">Member: {{ loan.memberName }}</p>
-          <p *ngIf="loan.amount">Amount: {{ loan.amount }}</p>
-          <p *ngIf="loan.status">Status: {{ loan.status }}</p>
+          <h2>{{ loan.loanCode || 'Loan #' + (loan.loanId ?? '') }}</h2>
+          <p>Member ID: {{ loan.memberId }}</p>
+          <p>Amount: {{ loan.loanAmount | number:'1.2-2' }} &middot; Interest: {{ loan.interestAmount | number:'1.2-2' }}</p>
+          <p *ngIf="loan.processingFee != null || loan.insuranceFee != null">
+            Fee: {{ loan.processingFee | number:'1.2-2' }} &middot; Insurance: {{ loan.insuranceFee | number:'1.2-2' }}
+          </p>
+          <p *ngIf="loan.isSavingEnabled">Saving: {{ loan.savingAmount | number:'1.2-2' }}</p>
         </ion-label>
       </ion-item>
     </ion-list>
