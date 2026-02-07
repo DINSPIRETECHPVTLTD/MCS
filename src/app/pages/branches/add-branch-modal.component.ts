@@ -93,6 +93,15 @@ ngOnInit(): void {
     });
   }
 
+  onNumericInput(event: Event, fieldName: string): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    const numericValue = value.replace(/[^0-9]/g, '');
+    if (value !== numericValue) {
+      this.branchForm.get(fieldName)?.setValue(numericValue);
+    }
+  }
+
   onNameInput(event: Event): void {
     const raw = (event.target as HTMLInputElement)?.value ?? '';
     const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');

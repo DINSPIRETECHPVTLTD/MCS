@@ -48,7 +48,10 @@
         formControlName="phoneNumber"
         placeholder="Enter 10-digit phone number"
         type="tel"
-        maxlength="10">
+        inputmode="numeric"
+        pattern="[0-9]*"
+        maxlength="10"
+        (ionInput)="onNumericInput($event, 'phoneNumber')">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
     </ion-item>
@@ -117,7 +120,10 @@
         formControlName="pinCode"
         placeholder="Enter 6-digit pin code"
         type="tel"
-        maxlength="6">
+        inputmode="numeric"
+        pattern="[0-9]*"
+        maxlength="6"
+        (ionInput)="onNumericInput($event, 'pinCode')">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('pinCode') }}</ion-note>
     </ion-item>

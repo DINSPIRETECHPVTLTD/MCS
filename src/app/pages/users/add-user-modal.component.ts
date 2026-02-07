@@ -98,6 +98,15 @@ export class AddUserModalComponent implements OnInit {
     });
   }
 
+  onNumericInput(event: Event, fieldName: string): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    const numericValue = value.replace(/[^0-9]/g, '');
+    if (value !== numericValue) {
+      this.userForm.get(fieldName)?.setValue(numericValue);
+    }
+  }
+
   async onSubmit(): Promise<void> {
     this.submitted = true;
     
@@ -133,6 +142,11 @@ export class AddUserModalComponent implements OnInit {
       organizationId: this.userForm.value.organizationId,
       branchId: null
     };
+
+    // Add password for new user creation
+    if (!this.isEditing && this.userForm.value.password) {
+      userData.password = this.userForm.value.password;
+    }
 
     if (this.isEditing && this.editingUserId) {
       // Update existing user

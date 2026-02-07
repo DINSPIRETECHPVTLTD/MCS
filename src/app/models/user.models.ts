@@ -28,6 +28,7 @@ export interface CreateUserRequest {
   state?: string;
   pinCode?: string;
   email?: string;
+  password?: string;
   level: string;
   role: string;
   organizationId: number;
