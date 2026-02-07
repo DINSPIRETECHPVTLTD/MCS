@@ -27,19 +27,27 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
 
   // AG Grid configuration
   rowData: Branch[] = [];
+  pagination: boolean = true;
+  paginationPageSize: number = 20;
   columnDefs: ColDef[] = [
     { field: 'id', headerName: 'ID', width: 80, sortable: true, filter: true },
     { field: 'name', headerName: 'Name', sortable: true, filter: true, flex: 1 },
-    { field: 'city', headerName: 'City', sortable: true, filter: true, width: 150 },
-    { field: 'state', headerName: 'State', sortable: true, filter: true, width: 120 },
-    { headerName: 'Address', valueGetter: (params: ValueGetterParams<Branch>) => {
+    { 
+      headerName: 'Address', 
+      valueGetter: (params: ValueGetterParams<Branch>) => {
         const a1 = params.data?.address1 || '';
         const a2 = params.data?.address2 || '';
-        return [a1, a2].filter(Boolean).join(' ');
-      }, sortable: true, filter: true, flex: 1 },
-    { field: 'country', headerName: 'Country', sortable: true, filter: true, width: 120 },
-    { field: 'zipCode', headerName: 'Zip', sortable: true, filter: true, width: 120 },
-    { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 140 },
+        const city = params.data?.city || '';
+        const state = params.data?.state || '';
+        const zip = params.data?.zipCode || '';
+        const parts = [a1, a2, city, state && zip ? `${state}-${zip}` : state || zip].filter(Boolean);
+        return parts.join(', ');
+      }, 
+      sortable: true, 
+      filter: true, 
+      flex: 2 
+    },
+    { field: 'phoneNumber', headerName: 'Phone No', sortable: true, filter: true, width: 140 },
     {
       headerName: 'Actions',
       field: 'actions',
