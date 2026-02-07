@@ -8,6 +8,7 @@ import { UserContextService } from '../../services/user-context.service';
 import { User } from '../../models/user.models';
 import { AddUserModalComponent } from './add-user-modal.component';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
+import { agGridTheme } from '../../ag-grid-theme';
 import { Branch } from 'src/app/models/branch.models';
 
 @Component({
@@ -29,7 +30,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
   isLoading: boolean = false;
 
   private gridApi?: GridApi;
-  gridOptions = { theme: 'legacy' as const };
+  gridOptions = { theme: agGridTheme };
 
   public constructor(
     private formBuilder: FormBuilder,

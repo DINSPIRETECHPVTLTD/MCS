@@ -5,9 +5,7 @@
  * the entire app and not just one component.
  */
 
-/* AG Grid styles - using legacy CSS theme approach */
-@import 'ag-grid-community/styles/ag-grid.css';
-@import 'ag-grid-community/styles/ag-theme-alpine.css';
+/* AG Grid: theme applied via Theming API (ag-grid-theme.ts) - do not import legacy CSS */
 
 /* Angular Material theme */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';

@@ -10,6 +10,7 @@ import { User } from '../../models/user.models';
 import { Branch } from '../../models/branch.models';
 import { AddStaffModalComponent } from './add-staff-modal.component';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
+import { agGridTheme } from '../../ag-grid-theme';
 import { POCData } from '../branch-dashboard/branch-dashboard.page';
 
 @Component({
@@ -55,8 +56,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
       phoneNumber: [''],
       role: ['']
     });
-    // theme: 'legacy' = use v32-style CSS file themes with AG Grid v33+
-    this.gridOptions = { theme: 'legacy', context: { componentParent: this } } as any;
+    this.gridOptions = { theme: agGridTheme, context: { componentParent: this } } as any;
   }
 
   // simple client-side filters
@@ -84,7 +84,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
 
     // grid options with row id resolver and context
     this.gridOptions = {
-      theme: 'legacy',
+      theme: agGridTheme,
       context: { componentParent: this },
       getRowNodeId: (data: any) => data.id?.toString()
     } as any;
