@@ -118,8 +118,8 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         filter: 'agTextColumnFilter'
       },
       { headerName: 'Country', field: 'country', editable: false, width: 140, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.country || 'India') },
-      { headerName: 'Pin Code', field: 'pinCode', editable: false, width: 120, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.zipCode || p.data?.ZipCode || p.data?.pinCode || p.data?.PinCode || '') },
-      { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.phoneNumber || p.data?.PhoneNumber || '') },
+      { headerName: 'Zip Code', field: 'zipCode', editable: false, width: 120, filter: 'agTextColumnFilter' },
+      { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter' },
       // keep actions column (edit/delete/save) at end
       {
         headerName: 'Actions', field: 'actions', width: 160, cellRenderer: (params: any) => {

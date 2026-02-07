@@ -1,12 +1,12 @@
 // Staff Page Specific Styles
 .staff-list-container {
-  padding: 16px;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
   
-  h2 {
-    margin: 0 0 16px 0;
-    font-size: 24px;
-    font-weight: 600;
+   h1 {
     color: var(--ion-color-primary);
+    margin-bottom: 16px;
   }
 }
 

@@ -43,7 +43,11 @@ export class CentersPage implements OnInit, ViewWillEnter {
     floatingFilter: false
   };
 
-  paginationPageSize = 5;
+  pagination: boolean = true;
+  paginationPageSize: number = 20;
+  paginationPageSizeSelector: number[] = [10, 20, 50, 100];
+
+  paginationPageSize_old = 5;
   paginatorLength = 0;
   paginatorPageIndex = 0;
 
@@ -58,7 +62,7 @@ export class CentersPage implements OnInit, ViewWillEnter {
   gridOptions: GridOptions<Center> = {
     theme: agGridTheme,
     context: { componentParent: this },
-    suppressPaginationPanel: true,
+    suppressPaginationPanel: false,
 
     // Lock table adjustments from the UI
     suppressMovableColumns: true,
@@ -79,8 +83,7 @@ export class CentersPage implements OnInit, ViewWillEnter {
     private branchService: BranchService,
     private userContext: UserContextService,
     private modalController: ModalController,
-    private toastController: ToastController,
-    private loadingController: LoadingController
+    private toastController: ToastController
   ) { }
 
   private normalizeCenter(raw: unknown, branchName: string, branchId?: number): Center {
