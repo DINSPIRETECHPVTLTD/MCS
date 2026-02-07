@@ -11,10 +11,6 @@
       </div>
 
       <div class="members-actions">
-        <ion-button (click)="onViewMembers()">
-          <ion-icon name="list-outline" slot="start"></ion-icon>
-          View Members
-        </ion-button>
         <ion-button (click)="openAddMemberModal()">
           <ion-icon name="person-add-outline" slot="start"></ion-icon>
           Add Member
@@ -24,20 +20,14 @@
 
     <mat-card class="filter-card">
       <div class="filter-row">
-        <mat-form-field *ngIf="isViewMembersClicked" appearance="outline" class="filter-field">
-          <mat-label>Center Name</mat-label>
-          <mat-select
-            [(ngModel)]="selectedCenterId"
-            (selectionChange)="onCenterChange($event.value)"
-            [disabled]="!isViewMembersClicked">
-            <mat-option *ngFor="let c of centers" [value]="c.id">{{ c.name }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field *ngIf="showSearch" appearance="outline" class="filter-field filter-field--search">
-          <mat-label>Search members</mat-label>
-          <input matInput (input)="onFilterChange($event)" />
-        </mat-form-field>
+        <ion-item *ngIf="showSearch" class="members-search-item filter-field--search">
+          <ion-label position="stacked">Search</ion-label>
+          <ion-input
+            placeholder="Search members"
+            type="text"
+            (ionInput)="onFilterChange($event)">
+          </ion-input>
+        </ion-item>
       </div>
     </mat-card>
 
@@ -57,6 +47,8 @@
         [columnDefs]="columnDefs"
         [defaultColDef]="defaultColDef"
         [gridOptions]="gridOptions"
+        [pagination]="true"
+        [paginationPageSize]="paginationPageSize"
         (gridReady)="onGridReady($event)"
         >
       </ag-grid-angular>
