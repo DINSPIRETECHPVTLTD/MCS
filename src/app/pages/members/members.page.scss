@@ -38,14 +38,39 @@ ion-content {
 }
 
 .filter-field--search {
-  min-width: 260px;
-  flex: 1 1 320px;
+  min-width: 400px;
+  flex: 0 1 260px;
+  max-width: 320px;
+}
+
+/* Search bar styled like Add Center form fields */
+.members-search-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --border-radius: 8px;
+  --background: var(--ion-color-light);
+  border-radius: 8px;
+}
+
+.members-search-item ion-label {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.members-search-item ion-input {
+  --padding-start: 12px;
 }
 
 .members-toolbar-left {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.members-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 

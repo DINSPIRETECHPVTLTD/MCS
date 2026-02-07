@@ -1,160 +1,151 @@
-// ==============================
-// Add Member Modal Styles
-// ==============================
-
-.add-member-content {
-  --background: #f8fafc;
-  --padding-start: 20px;
-  --padding-end: 20px;
-  --padding-top: 20px;
-  --padding-bottom: 20px;
+// Add Member Modal - alternating sections, 3 fields per row
+ion-content.add-member-content {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 16px;
+  --padding-bottom: 120px;
 }
 
-.add-member-dialog {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.dialog-header {
+ion-footer {
   position: sticky;
-  top: 0;
-  z-index: 5;
-  background: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 4px 4px;
-
-  h2 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 700;
-    color: #0f172a;
-  }
+  bottom: 0;
+  z-index: 30;
+  background: var(--ion-toolbar-background, #fff);
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.08);
 }
 
-.add-member-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-bottom: 80px;
-}
-
-.section-card {
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
-  background: #ffffff;
+.footer-toolbar {
   padding: 16px;
 }
 
-.section-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 12px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 20px;
-}
-
-.form-field {
+.footer-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
 }
 
-:host ::ng-deep .date-input::-webkit-calendar-picker-indicator {
-  opacity: 0;
-  display: none;
+.left-action {
+  flex: 0 0 48%;
 }
 
-:host ::ng-deep .date-input {
-  padding-right: 40px;
-}
-
-.date-icon-button {
-  width: 36px;
-  height: 36px;
-  margin-right: 4px;
+.right-actions {
+  flex: 0 0 48%;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: 12px;
+  justify-content: flex-end;
 }
 
-.date-icon-button ion-icon {
-  font-size: 18px;
-  color: #475569;
+.save-btn {
+  height: 48px;
+  width: 100%;
+  border-radius: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  --background: var(--ion-color-primary, #4f6ef7);
+  background: var(--ion-color-primary, #4f6ef7);
+  color: #fff;
+  --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
-.date-icon-button mat-icon {
-  font-size: 18px;
-  color: #475569;
+.save-btn[disabled],
+.save-btn.ion-disabled {
+  opacity: 0.65;
+  filter: none;
+  background: color-mix(in srgb, var(--ion-color-primary, #4f6ef7) 60%, #ffffff 40%);
 }
 
-.full-width {
-  grid-column: 1 / -1;
+.save-btn ion-icon,
+.save-btn .btn-text {
+  color: inherit;
 }
 
-.readonly-field .mat-mdc-text-field-wrapper {
-  background: #f1f5f9;
-}
-
-.readonly-field input {
-  cursor: not-allowed;
-}
-
-.required {
-  color: #ef4444;
-  font-weight: 600;
-}
-
-.dialog-footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
-  background: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 4px 4px;
-}
-
-:host ::ng-deep .cdk-overlay-container {
-  z-index: 10000;
-}
-
-:host ::ng-deep .cdk-overlay-pane {
-  z-index: 10001;
-}
-
-:host ::ng-deep .mat-mdc-select-panel {
-  z-index: 10002;
-}
-
-:host ::ng-deep .add-member-select-panel {
-  background: #ffffff;
-  color: #0f172a;
-  max-height: 320px;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
-}
-
-:host ::ng-deep .add-member-select-panel .mat-mdc-option {
-  color: #0f172a;
-}
-
-:host ::ng-deep .cdk-overlay-connected-position-bounding-box {
-  z-index: 10002;
-}
-
-.save-button,
-.clear-button {
-  --border-radius: 8px;
+.cancel-btn {
+  min-width: 100px;
   height: 44px;
+  border-radius: 6px;
+  --border-color: var(--ion-color-primary-shade);
   font-weight: 600;
-  text-transform: none;
+  text-transform: uppercase;
+}
+
+.btn-text {
+  letter-spacing: 0.6px;
+}
+
+.add-member-form {
+  padding-bottom: 24px;
+}
+
+// Alternating section cards
+.section-card {
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  background: var(--ion-color-light, #f1f5f9);
+
+  &.section-card--alt {
+    background: var(--ion-background-color, #ffffff);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ion-text-color, #1e293b);
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--ion-color-primary-tint, rgba(79, 110, 247, 0.25));
+}
+
+// Three fields per row
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 20px;
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+form {
+  .form-row ion-item {
+    --padding-start: 0;
+    --inner-padding-end: 0;
+    margin: 0;
+    --border-radius: 8px;
+    --background: var(--ion-color-light, #f8fafc);
+    border-radius: 8px;
+    min-height: 56px;
+
+    ion-label {
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    ion-input,
+    ion-select {
+      --padding-start: 12px;
+    }
+
+    &.ion-invalid {
+      --border-color: var(--ion-color-danger);
+    }
+  }
+
+  .required {
+    color: var(--ion-color-danger);
+  }
+
+  ion-note {
+    font-size: 11px;
+    margin-top: 2px;
+    display: block;
+  }
 }
 
 // Loading Overlay
@@ -181,19 +172,8 @@
   }
 }
 
-@media (max-width: 900px) {
-  .form-grid {
+@media (max-width: 768px) {
+  .form-row {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 576px) {
-  .add-member-content {
-    --padding-start: 12px;
-    --padding-end: 12px;
-  }
-
-  .section-card {
-    padding: 12px;
   }
 }

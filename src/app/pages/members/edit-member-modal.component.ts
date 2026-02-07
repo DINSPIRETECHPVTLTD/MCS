@@ -2,7 +2,6 @@ import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController } from '@ionic/angular';
 import { MemberService } from '../../services/member.service';
-import { CenterOption, POCOption, MemberStatus } from '../../models/member.models';
 
 @Component({
   selector: 'app-edit-member-modal',
@@ -70,7 +69,6 @@ export class EditMemberModalComponent implements OnInit {
       zipCode: ['', [Validators.required, Validators.maxLength(6), Validators.minLength(6)]],
       aadhaar: ['', [Validators.required, Validators.pattern(/^\d{12}$/)]],
       occupation: ['', [Validators.maxLength(100)]],
-      status: ['', Validators.required],
       guardianFirstName: ['', [Validators.required, Validators.maxLength(100)]],
       guardianMiddleName: ['', [Validators.maxLength(100)]],
       guardianLastName: ['', [Validators.required, Validators.maxLength(100)]],
@@ -107,7 +105,6 @@ export class EditMemberModalComponent implements OnInit {
       state: m['state'] || '',
       zipCode: m['zipCode'] || '',
       aadhaar: m['aadhaar'] || '',
-      status: m['isDeleted'] ? 'Inactive' : 'Active',
       occupation: m['occupation'] || '',
       guardianFirstName: m['guardianFirstName'] || '',
       guardianMiddleName: m['guardianMiddleName'] || '',
@@ -140,7 +137,7 @@ export class EditMemberModalComponent implements OnInit {
   }
 
   async onClear(): Promise<void> {
-    this.memberForm.reset({ status: 'Active', age: '' });
+    this.memberForm.reset({ age: '' });
     this.memberForm.markAsPristine();
     this.memberForm.markAsUntouched();
     this.memberForm.updateValueAndValidity();

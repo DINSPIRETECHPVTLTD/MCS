@@ -7,7 +7,7 @@ import { ModalController, LoadingController, ToastController } from '@ionic/angu
 import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil, distinctUntilChanged } from 'rxjs/operators';
 import { MemberService } from '../../services/member.service';
-import { BranchOption, CenterOption, POCOption, MemberStatus } from '../../models/member.models';
+import { CenterOption, POCOption } from '../../models/member.models';
 
 @Injectable()
 class ModalOverlayContainer extends OverlayContainer {
@@ -34,13 +34,16 @@ class ModalOverlayContainer extends OverlayContainer {
   selector: 'app-add-member-modal',
   templateUrl: './add-member-modal.component.html',
   styleUrls: ['./add-member-modal.component.scss'],
-  providers: [{ provide: OverlayContainer, useClass: ModalOverlayContainer }]
+  providers: [
+    { provide: OverlayContainer, useClass: ModalOverlayContainer }
+  ]
 })
 export class AddMemberModalComponent implements OnInit, OnDestroy {
   // ...existing properties...
 
 
   memberForm: FormGroup;
+  guardianRelationships: string[] = ['Father', 'Mother', 'Wife', 'Sister', 'Brother', 'Other'];
   isSubmitting = false;
   isLoading = false;
   submitted = false;
@@ -48,11 +51,6 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
 
   centers: CenterOption[] = [];
   pocs: POCOption[] = [];
-  memberStatuses: MemberStatus[] = [
-    { value: 'New', label: 'New' },
-    { value: 'Active', label: 'Active' },
-    { value: 'Inactive', label: 'Inactive' }
-  ];
 
   private destroy$ = new Subject<void>();
 
@@ -88,7 +86,6 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
       {
         centerId: ['', Validators.required],
         pocId: ['', Validators.required],
-        pocContactNumber: ['', Validators.required],
         firstName: ['', [Validators.required, Validators.maxLength(50), this.alphanumericValidator()]],
         middleName: ['', [Validators.maxLength(50), this.alphanumericValidator()]],
         lastName: ['', [Validators.required, Validators.maxLength(50), this.alphanumericValidator()]],
@@ -103,16 +100,17 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         zipCode: ['', [Validators.required, Validators.maxLength(6), Validators.minLength(6), Validators.pattern(/^[0-9]{6}$/)]],
         aadhaar: ['', [Validators.pattern(/^\d{12}$/)]],
         occupation: ['', [Validators.required, Validators.maxLength(100)]],
-        status: ['New', Validators.required],
         guardianFirstName: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
         guardianMiddleName: ['', [Validators.maxLength(100), this.alphanumericValidator()]],
         guardianLastName: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
+        guardianRelationship: ['', [Validators.required]],
+        guardianRelationshipOther: ['', [Validators.maxLength(100), this.alphanumericValidator()]],
         guardianPhone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
         guardianDOB: ['', [this.noFutureDateValidator()]],
         guardianAge: ['', [Validators.required, Validators.min(18), Validators.max(150)]]
       },
       {
-        validators: [this.uniquePhoneNumbersValidator(['phoneNumber', 'altPhone', 'guardianPhone', 'pocContactNumber'])]
+        validators: [this.uniquePhoneNumbersValidator(['phoneNumber', 'altPhone', 'guardianPhone'])]
       }
     );
   }
@@ -189,6 +187,22 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         }
       });
 
+    this.memberForm.get('guardianRelationship')?.valueChanges
+      .pipe(distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(value => {
+        const otherControl = this.memberForm.get('guardianRelationshipOther');
+        if (!otherControl) return;
+
+        if (value === 'Other') {
+          otherControl.setValidators([Validators.required, Validators.maxLength(100), this.alphanumericValidator()]);
+        } else {
+          otherControl.clearValidators();
+          otherControl.setValidators([Validators.maxLength(100), this.alphanumericValidator()]);
+          otherControl.setValue('', { emitEvent: false });
+        }
+        otherControl.updateValueAndValidity({ emitEvent: false });
+      });
+
 
 
     this.memberForm.get('centerId')?.valueChanges
@@ -196,7 +210,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
       .subscribe(centerId => {
         const selectedCenterId = Number(centerId);
         if (selectedCenterId) {
-          this.memberForm.patchValue({ pocId: '', pocContactNumber: '' });
+          this.memberForm.patchValue({ pocId: '' });
           // Fetch POCs for the selected center
           this.memberService.getAllPOCs().subscribe(pocs => {
             // Filter POCs by centerId if needed, or use API that supports centerId
@@ -209,38 +223,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
           });
         } else {
           this.pocs = [];
-          this.memberForm.patchValue({ pocId: '', pocContactNumber: '' });
-        }
-      });
-
-    this.memberForm.get('pocId')?.valueChanges
-      .pipe(distinctUntilChanged(), takeUntil(this.destroy$))
-      .subscribe(pocId => {
-        const selectedPocId = Number(pocId);
-        if (selectedPocId) {
-          const selectedFromList = this.pocs.find(p => Number(p.id) === selectedPocId);
-          if (selectedFromList) {
-            const contactFromList = (selectedFromList.phoneNumber || selectedFromList.contactNumber || '').toString();
-            this.memberForm.patchValue({ pocContactNumber: contactFromList });
-          } else {
-            this.memberForm.patchValue({ pocContactNumber: '' });
-          }
-
-          // Refresh from API (in case list data doesn't include contact number)
-          this.memberService.getPOCById(selectedPocId).subscribe({
-            next: poc => {
-              const contact = (poc.phoneNumber || poc.contactNumber || '').toString();
-              if (contact) {
-                this.memberForm.patchValue({ pocContactNumber: contact });
-              }
-            },
-            error: err => {
-              // Keep any value we already patched from the dropdown list
-              console.error('Failed to load POC details', err);
-            }
-          });
-        } else {
-          this.memberForm.patchValue({ pocContactNumber: '' });
+          this.memberForm.patchValue({ pocId: '' });
         }
       });
 
@@ -420,6 +403,11 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
 
         const ageValue = raw.age ? Number(raw.age) : this.calculateAge(raw.dateOfBirth);
         const guardianPhone = (raw.guardianPhone ?? '').toString();
+        const relationshipSelection = (raw.guardianRelationship ?? '').toString();
+        const guardianRelationship =
+          relationshipSelection === 'Other'
+            ? (raw.guardianRelationshipOther ?? '').toString().trim()
+            : relationshipSelection;
 
         const payload = {
           firstName: (raw.firstName ?? '').toString().trim(),
@@ -441,6 +429,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
           guardianPhone,
           guardianDOB: raw.guardianDOB ? this.formatDateForApi(raw.guardianDOB) : null,
           guardianAge: Number(raw.guardianAge),
+          guardianRelationship: guardianRelationship || null,
           centerId: selectedCenterId,
           pocId: Number(raw.pocId)
           ,occupation: (raw.occupation ?? '').toString().trim()
@@ -487,11 +476,11 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
 
     private scrollToFirstInvalidField(): void {
       setTimeout(() => {
-        const invalid = document.querySelector('.add-member-dialog .ng-invalid') as HTMLElement | null;
+        const invalid = document.querySelector('.add-member-content .ion-invalid, .add-member-content .ng-invalid') as HTMLElement | null;
         if (!invalid) return;
 
-        const field = invalid.closest('.mat-mdc-form-field') as HTMLElement | null;
-        (field ?? invalid).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const field = invalid.closest('ion-item') ?? invalid;
+        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 0);
     }
 

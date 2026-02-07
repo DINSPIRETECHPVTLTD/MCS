@@ -1,243 +1,213 @@
-<ion-content class="edit-member-content">
-  <div class="edit-member-dialog">
-    <div class="dialog-header">
-      <h2>Edit Member</h2>
-      <ion-button fill="clear" size="small" (click)="onCancel()" aria-label="Close">
+<ion-header [translucent]="false">
+  <ion-toolbar>
+    <ion-title>Edit Member</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="onCancel()">
         <ion-icon name="close-outline" slot="icon-only"></ion-icon>
       </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding edit-member-content">
+  <form class="edit-member-form" [formGroup]="memberForm" (ngSubmit)="onSave()">
+    <!-- Section 1: Member Identification -->
+    <div class="section-card">
+      <div class="section-title">Member Identification</div>
+      <div class="form-row">
+        <ion-item>
+          <ion-label position="stacked">Member ID/Code</ion-label>
+          <ion-input formControlName="memberId" type="text" readonly></ion-input>
+        </ion-item>
+      </div>
     </div>
-    <mat-divider></mat-divider>
 
-    <form class="edit-member-form" [formGroup]="memberForm" (ngSubmit)="onSave()">
-      <!-- Member ID (Read-only) -->
-      <mat-card class="section-card">
-        <div class="section-title">Member Identification</div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="form-field readonly-field">
-            <mat-label>Member ID/Code</mat-label>
-            <input matInput type="text" formControlName="memberId" readonly aria-readonly="true" />
-          </mat-form-field>
-        </div>
-      </mat-card>
+    <!-- Section 2: Member Personal Details -->
+    <div class="section-card section-card--alt">
+      <div class="section-title">Member Personal Details</div>
+      <div class="form-row">
+        <ion-item [class.ion-invalid]="isFieldInvalid('firstName')">
+          <ion-label position="stacked">First Name <span class="required">*</span></ion-label>
+          <ion-input formControlName="firstName" type="text" maxlength="50" placeholder="Enter first name"></ion-input>
+          <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('middleName')">
+          <ion-label position="stacked">Middle Name</ion-label>
+          <ion-input formControlName="middleName" type="text" maxlength="50" placeholder="Enter middle name"></ion-input>
+          <ion-note slot="error">{{ getFieldError('middleName') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
+          <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
+          <ion-input formControlName="lastName" type="text" maxlength="50" placeholder="Enter last name"></ion-input>
+          <ion-note slot="error">{{ getFieldError('lastName') }}</ion-note>
+        </ion-item>
+      </div>
+      <div class="form-row">
+        <ion-item [class.ion-invalid]="isFieldInvalid('dateOfBirth')">
+          <ion-label position="stacked">Date of Birth</ion-label>
+          <ion-input formControlName="dateOfBirth" type="date" [max]="todayString"></ion-input>
+          <ion-note slot="error">{{ getFieldError('dateOfBirth') }}</ion-note>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Age</ion-label>
+          <ion-input formControlName="age" type="text" readonly placeholder="Auto-calculated"></ion-input>
+          <ion-note slot="error">{{ getFieldError('age') }}</ion-note>
+        </ion-item>
+      </div>
+    </div>
 
-      <!-- Member Personal Details (matching grid order) -->
-      <mat-card class="section-card">
-        <div class="section-title">Member Personal Details</div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member First Name</mat-label>
-            <input matInput type="text" formControlName="firstName" maxlength="50" />
-            <mat-error *ngIf="isFieldInvalid('firstName')">{{ getFieldError('firstName') }}</mat-error>
-          </mat-form-field>
+    <!-- Section 3: Contact Details -->
+    <div class="section-card">
+      <div class="section-title">Member Contact Details</div>
+      <div class="form-row">
+        <ion-item [class.ion-invalid]="isFieldInvalid('phoneNumber')">
+          <ion-label position="stacked">Phone Number <span class="required">*</span></ion-label>
+          <ion-input formControlName="phoneNumber" type="tel" maxlength="10" inputmode="numeric" placeholder="Enter phone number"></ion-input>
+          <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('altPhone')">
+          <ion-label position="stacked">Alternate Phone</ion-label>
+          <ion-input formControlName="altPhone" type="tel" maxlength="10" inputmode="numeric" placeholder="Enter alternate phone"></ion-input>
+          <ion-note slot="error">{{ getFieldError('altPhone') }}</ion-note>
+        </ion-item>
+      </div>
+    </div>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member Middle Name</mat-label>
-            <input matInput type="text" formControlName="middleName" maxlength="50" />
-            <mat-error *ngIf="isFieldInvalid('middleName')">{{ getFieldError('middleName') }}</mat-error>
-          </mat-form-field>
+    <!-- Section 4: Address Details -->
+    <div class="section-card section-card--alt">
+      <div class="section-title">Member Address Details</div>
+      <div class="form-row">
+        <ion-item [class.ion-invalid]="isFieldInvalid('address1')">
+          <ion-label position="stacked">Address Line 1 <span class="required">*</span></ion-label>
+          <ion-input formControlName="address1" type="text" maxlength="200" placeholder="Enter address line 1"></ion-input>
+          <ion-note slot="error">{{ getFieldError('address1') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('address2')">
+          <ion-label position="stacked">Address Line 2</ion-label>
+          <ion-input formControlName="address2" type="text" maxlength="200" placeholder="Enter address line 2"></ion-input>
+          <ion-note slot="error">{{ getFieldError('address2') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('city')">
+          <ion-label position="stacked">City <span class="required">*</span></ion-label>
+          <ion-input formControlName="city" type="text" maxlength="100" placeholder="Enter city"></ion-input>
+          <ion-note slot="error">{{ getFieldError('city') }}</ion-note>
+        </ion-item>
+      </div>
+      <div class="form-row">
+        <ion-item [class.ion-invalid]="isFieldInvalid('state')">
+          <ion-label position="stacked">State <span class="required">*</span></ion-label>
+          <ion-input formControlName="state" type="text" maxlength="100" placeholder="Enter state"></ion-input>
+          <ion-note slot="error">{{ getFieldError('state') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
+          <ion-label position="stacked">Zip Code <span class="required">*</span></ion-label>
+          <ion-input formControlName="zipCode" type="text" maxlength="6" placeholder="Enter zip code"></ion-input>
+          <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
+        </ion-item>
+      </div>
+    </div>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member Last Name</mat-label>
-            <input matInput type="text" formControlName="lastName" maxlength="50" />
-            <mat-error *ngIf="isFieldInvalid('lastName')">{{ getFieldError('lastName') }}</mat-error>
-          </mat-form-field>
+    <!-- Section 5: Additional Details -->
+    <div class="section-card">
+      <div class="section-title">Member Additional Details</div>
+      <div class="form-row">
+        <ion-item [class.ion-invalid]="isFieldInvalid('aadhaar')">
+          <ion-label position="stacked">Aadhaar</ion-label>
+          <ion-input formControlName="aadhaar" type="tel" maxlength="12" inputmode="numeric" placeholder="Enter Aadhaar"></ion-input>
+          <ion-note slot="error">{{ getFieldError('aadhaar') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('occupation')">
+          <ion-label position="stacked">Occupation</ion-label>
+          <ion-input formControlName="occupation" type="text" maxlength="100" placeholder="Enter occupation"></ion-input>
+          <ion-note slot="error">{{ getFieldError('occupation') }}</ion-note>
+        </ion-item>
+      </div>
+    </div>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member DOB</mat-label>
-            <input
-              matInput
-              #dobInput
-              type="date"
-              class="date-input"
-              formControlName="dateOfBirth"
-              [attr.max]="todayString"
-              (click)="openNativeDatePicker(dobInput)" />
-            <mat-error *ngIf="isFieldInvalid('dateOfBirth')">{{ getFieldError('dateOfBirth') }}</mat-error>
-          </mat-form-field>
+    <!-- Section 6: Guardian/Husband Details -->
+    <div class="section-card section-card--alt">
+      <div class="section-title">Guardian/Husband Details</div>
+      <div class="form-row">
+        <ion-item [class.ion-invalid]="isFieldInvalid('guardianFirstName')">
+          <ion-label position="stacked">Guardian First Name <span class="required">*</span></ion-label>
+          <ion-input formControlName="guardianFirstName" type="text" maxlength="100" placeholder="Enter first name"></ion-input>
+          <ion-note slot="error">{{ getFieldError('guardianFirstName') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('guardianMiddleName')">
+          <ion-label position="stacked">Guardian Middle Name</ion-label>
+          <ion-input formControlName="guardianMiddleName" type="text" maxlength="100" placeholder="Enter middle name"></ion-input>
+          <ion-note slot="error">{{ getFieldError('guardianMiddleName') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('guardianLastName')">
+          <ion-label position="stacked">Guardian Last Name <span class="required">*</span></ion-label>
+          <ion-input formControlName="guardianLastName" type="text" maxlength="100" placeholder="Enter last name"></ion-input>
+          <ion-note slot="error">{{ getFieldError('guardianLastName') }}</ion-note>
+        </ion-item>
+      </div>
+      <div class="form-row">
+        <ion-item [class.ion-invalid]="isFieldInvalid('guardianPhone')">
+          <ion-label position="stacked">Guardian Phone <span class="required">*</span></ion-label>
+          <ion-input formControlName="guardianPhone" type="tel" maxlength="10" inputmode="numeric" placeholder="Enter phone number"></ion-input>
+          <ion-note slot="error">{{ getFieldError('guardianPhone') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('guardianDOB')">
+          <ion-label position="stacked">Guardian DOB</ion-label>
+          <ion-input formControlName="guardianDOB" type="date" [max]="todayString"></ion-input>
+          <ion-note slot="error">{{ getFieldError('guardianDOB') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('guardianAge')">
+          <ion-label position="stacked">Guardian Age</ion-label>
+          <ion-input
+            formControlName="guardianAge"
+            type="number"
+            min="18"
+            max="150"
+            [readonly]="!!memberForm.get('guardianDOB')?.value"
+            [placeholder]="memberForm.get('guardianDOB')?.value ? 'Auto-calculated' : '18+'"></ion-input>
+          <ion-note slot="error">{{ getFieldError('guardianAge') }}</ion-note>
+        </ion-item>
+      </div>
+    </div>
 
-          <mat-form-field appearance="outline" class="form-field readonly-field">
-            <mat-label>Member Age</mat-label>
-            <input matInput type="number" formControlName="age" />
-            <mat-error *ngIf="isFieldInvalid('age')">{{ getFieldError('age') }}</mat-error>
-          </mat-form-field>
-        </div>
-      </mat-card>
+    <!-- Section 7: Assignment Details -->
+    <div class="section-card">
+      <div class="section-title">Assignment Details</div>
+      <div class="form-row">
+        <ion-item>
+          <ion-label position="stacked">Center Name</ion-label>
+          <ion-input formControlName="centerName" type="text" readonly></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">POC Name</ion-label>
+          <ion-input formControlName="pocName" type="text" readonly></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">POC Contact Number</ion-label>
+          <ion-input formControlName="pocContactNumber" type="text" readonly></ion-input>
+        </ion-item>
+      </div>
+    </div>
+  </form>
+</ion-content>
 
-      <!-- Contact Details -->
-      <mat-card class="section-card">
-        <div class="section-title">Member Contact Details</div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member Phone Number</mat-label>
-            <input matInput type="tel" inputmode="numeric" formControlName="phoneNumber" maxlength="10" />
-            <mat-error *ngIf="isFieldInvalid('phoneNumber')">{{ getFieldError('phoneNumber') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member Alternate Phone</mat-label>
-            <input matInput type="tel" inputmode="numeric" formControlName="altPhone" maxlength="10" />
-            <mat-error *ngIf="isFieldInvalid('altPhone')">{{ getFieldError('altPhone') }}</mat-error>
-          </mat-form-field>
-        </div>
-      </mat-card>
-
-      <!-- Address Details -->
-      <mat-card class="section-card">
-        <div class="section-title">Member Address Details</div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="form-field full-width">
-            <mat-label>Member Address Line 1 </mat-label>
-            <input matInput type="text" formControlName="address1" maxlength="200" />
-            <mat-error *ngIf="isFieldInvalid('address1')">{{ getFieldError('address1') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field full-width">
-            <mat-label>Member Address Line 2</mat-label>
-            <input matInput type="text" formControlName="address2" maxlength="200" />
-            <mat-error *ngIf="isFieldInvalid('address2')">{{ getFieldError('address2') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member City</mat-label>
-            <input matInput type="text" formControlName="city" maxlength="100" />
-            <mat-error *ngIf="isFieldInvalid('city')">{{ getFieldError('city') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member State</mat-label>
-            <input matInput type="text" formControlName="state" maxlength="100" />
-            <mat-error *ngIf="isFieldInvalid('state')">{{ getFieldError('state') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member Zip Code</mat-label>
-            <input matInput type="text" formControlName="zipCode" maxlength="6" />
-            <mat-error *ngIf="isFieldInvalid('zipCode')">{{ getFieldError('zipCode') }}</mat-error>
-          </mat-form-field>
-        </div>
-      </mat-card>
-
-      <!-- Additional Member Details -->
-      <mat-card class="section-card">
-        <div class="section-title">Member Additional Details</div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member Aadhaar</mat-label>
-            <input matInput type="tel" inputmode="numeric" formControlName="aadhaar" maxlength="12" />
-            <mat-error *ngIf="isFieldInvalid('aadhaar')">{{ getFieldError('aadhaar') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member Status</mat-label>
-            <input matInput type="text" formControlName="status" maxlength="100" />
-            <mat-error *ngIf="isFieldInvalid('status')">{{ getFieldError('status') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Member Occupation</mat-label>
-            <input matInput type="text" formControlName="occupation" maxlength="100" />
-            <mat-error *ngIf="isFieldInvalid('occupation')">{{ getFieldError('occupation') }}</mat-error>
-          </mat-form-field>
-        </div>
-      </mat-card>
-
-      <!-- Guardian/Husband Details -->
-      <mat-card class="section-card">
-        <div class="section-title">Guardian/Husband Details</div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Guardian First Name</mat-label>
-            <input matInput type="text" formControlName="guardianFirstName" maxlength="100" />
-            <mat-error *ngIf="isFieldInvalid('guardianFirstName')">{{ getFieldError('guardianFirstName') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Guardian Middle Name</mat-label>
-            <input matInput type="text" formControlName="guardianMiddleName" maxlength="100" />
-            <mat-error *ngIf="isFieldInvalid('guardianMiddleName')">{{ getFieldError('guardianMiddleName') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Guardian Last Name</mat-label>
-            <input matInput type="text" formControlName="guardianLastName" maxlength="100" />
-            <mat-error *ngIf="isFieldInvalid('guardianLastName')">{{ getFieldError('guardianLastName') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Guardian Phone</mat-label>
-            <input matInput type="tel" inputmode="numeric" formControlName="guardianPhone" maxlength="10" />
-            <mat-error *ngIf="isFieldInvalid('guardianPhone')">{{ getFieldError('guardianPhone') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Guardian DOB</mat-label>
-            <input
-              matInput
-              #guardianDobInput
-              type="date"
-              class="date-input"
-              formControlName="guardianDOB"
-              [attr.max]="todayString"
-              (click)="openNativeDatePicker(guardianDobInput)" />
-            <mat-error *ngIf="isFieldInvalid('guardianDOB')">{{ getFieldError('guardianDOB') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Guardian Age</mat-label>
-            <input
-              matInput
-              type="number"
-              formControlName="guardianAge"
-              min="18"
-              max="150"
-              [readonly]="!!memberForm.get('guardianDOB')?.value"
-              [placeholder]="memberForm.get('guardianDOB')?.value ? 'Auto-calculated' : '18+'" />
-            <mat-error *ngIf="isFieldInvalid('guardianAge')">{{ getFieldError('guardianAge') }}</mat-error>
-          </mat-form-field>
-        </div>
-      </mat-card>
-
-      <!-- Assignment Details (Center & POC) -->
-      <mat-card class="section-card">
-        <div class="section-title">Assignment Details</div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Center Name</mat-label>
-            <input matInput type="text" formControlName="centerName" maxlength="100" />
-            <mat-error *ngIf="isFieldInvalid('centerName')">{{ getFieldError('centerName') }}</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>POC Name</mat-label>
-            <input matInput type="text" formControlName="pocName" maxlength="100" />
-            <mat-error *ngIf="isFieldInvalid('pocName')">{{ getFieldError('pocName') }}</mat-error>
-          </mat-form-field>
-        </div>
-      </mat-card>
-
-      <div class="dialog-footer">
-        <ion-button
-          type="button"
-          fill="outline"
-          (click)="onClear()"
-          [disabled]="isSubmitting"
-          class="clear-button">
-          Clear
-        </ion-button>
-
-        <ion-button
-          type="submit"
-          [disabled]="isSubmitting || memberForm.invalid"
-          class="save-button">
-          <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-          Update Member
+<ion-footer>
+  <ion-toolbar class="footer-toolbar">
+    <div class="footer-actions">
+      <div class="left-action">
+        <ion-button class="save-btn" color="primary" fill="solid" (click)="onSave()" [disabled]="isSubmitting || memberForm.invalid">
+          <ion-icon slot="start" name="checkmark-outline"></ion-icon>
+          <span class="btn-text">Update Member</span>
         </ion-button>
       </div>
-    </form>
-  </div>
+      <div class="right-actions">
+        <ion-button type="button" fill="outline" (click)="onClear()" [disabled]="isSubmitting" class="cancel-btn">Clear</ion-button>
+        <ion-button type="button" fill="outline" (click)="onCancel()" class="cancel-btn">Cancel</ion-button>
+      </div>
+    </div>
+  </ion-toolbar>
+</ion-footer>
 
-  <div *ngIf="isLoading" class="loading-overlay">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Loading data...</p>
-  </div>
-</ion-content>
+<div *ngIf="isLoading" class="loading-overlay">
+  <ion-spinner name="crescent"></ion-spinner>
+  <p>Loading data...</p>
+</div>
