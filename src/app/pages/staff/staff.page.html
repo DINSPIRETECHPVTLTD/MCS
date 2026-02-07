@@ -18,12 +18,6 @@
       </div>
     </form>
     
-    <!-- Debug info -->
-    <div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-size: 12px;">
-      <p style="margin: 0;">Staff count: {{ staff.length }}</p>
-      <p style="margin: 4px 0 0 0;">Loading: {{ isLoading ? 'Yes' : 'No' }}</p>
-    </div>
-    
     <div *ngIf="staff.length === 0 && !isLoading" class="empty-state">
       <ion-icon name="people-outline" size="large"></ion-icon>
       <p>No staff found</p>
@@ -39,6 +33,9 @@
         [columnDefs]="columnDefs"
         [gridOptions]="gridOptions"
         [defaultColDef]="defaultColDef"
+        [pagination]="pagination"
+        [paginationPageSize]="paginationPageSize"
+        [paginationPageSizeSelector]="paginationPageSizeSelector"
         (gridReady)="onGridReady($event)">
       </ag-grid-angular>
     </div>

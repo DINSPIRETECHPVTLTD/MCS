@@ -21,6 +21,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
   pagination: boolean = true;
   paginationPageSize: number = 20;
+  paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   showAddForm: boolean = false;
   isEditing: boolean = false;
   editingUserId: number | null = null;

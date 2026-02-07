@@ -15,8 +15,7 @@ import { POCData } from '../branch-dashboard/branch-dashboard.page';
 
 @Component({
   selector: 'app-staff',
-  templateUrl: './staff.page.html',
-  styleUrls: ['./staff.page.scss']
+  templateUrl: './staff.page.html'
 })
 export class StaffComponent implements OnInit, ViewWillEnter {
   staff: User[] = [];
@@ -24,6 +23,9 @@ export class StaffComponent implements OnInit, ViewWillEnter {
   rowData: User[] = [];
   columnDefs: ColDef[] = [];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
+  pagination: boolean = true;
+  paginationPageSize: number = 20;
+  paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   staffForm: FormGroup;
   showAddForm: boolean = false;
   isEditing: boolean = false;
@@ -127,7 +129,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
           container.className = 'actions-cell';
           container.innerHTML = `
             <button class="ag-btn ag-edit">Edit</button>
-            <button class="ag-btn ag-delete" style="margin-left:8px;">Delete</button>
+            <button class="ag-btn ag-delete">Delete</button>
           `;
           const editBtn = container.querySelector('.ag-edit');
           const deleteBtn = container.querySelector('.ag-delete');

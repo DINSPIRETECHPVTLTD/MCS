@@ -12,8 +12,7 @@ import { agGridTheme } from '../../ag-grid-theme';
 
 @Component({
   selector: 'app-branches',
-  templateUrl: './branches.page.html',
-  styleUrls: ['./branches.page.scss'],
+  templateUrl: './branches.page.html'
 })
 export class BranchesComponent implements OnInit, ViewWillEnter {
   branches: Branch[] = [];
@@ -29,6 +28,7 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
   rowData: Branch[] = [];
   pagination: boolean = true;
   paginationPageSize: number = 20;
+  paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   columnDefs: ColDef[] = [
     { field: 'id', headerName: 'ID', width: 80, sortable: true, filter: true },
     { field: 'name', headerName: 'Name', sortable: true, filter: true, flex: 1 },

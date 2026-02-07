@@ -3,8 +3,7 @@ import { Router } from '@angular/router';
 import {
   ViewWillEnter,
   ModalController,
-  ToastController,
-  LoadingController
+  ToastController
 } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { BranchService } from '../../services/branch.service';
@@ -21,8 +20,7 @@ import { agGridTheme } from '../../ag-grid-theme';
 
 @Component({
   selector: 'app-centers',
-  templateUrl: './centers.page.html',
-  styleUrls: ['./centers.page.scss']
+  templateUrl: './centers.page.html'
 })
 // eslint-disable-next-line @angular-eslint/component-class-suffix
 export class CentersPage implements OnInit, ViewWillEnter {
