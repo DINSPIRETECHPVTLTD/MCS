@@ -16,6 +16,7 @@ import { AddCenterModalComponent } from './add-center-modal.component';
 import { EditCenterModalComponent } from './edit-center-modal.component';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { ColDef, GridApi, GridOptions, GridReadyEvent, ICellRendererParams } from 'ag-grid-community';
+import { agGridTheme } from '../../ag-grid-theme';
 
 
 @Component({
@@ -54,9 +55,8 @@ export class CentersPage implements OnInit, ViewWillEnter {
   private gridApi?: GridApi<Center>;
   private lastColumnState: unknown = null;
 
-  // theme: 'legacy' = use v32-style CSS file themes with AG Grid v33+
   gridOptions: GridOptions<Center> = {
-    theme: 'legacy',
+    theme: agGridTheme,
     context: { componentParent: this },
     suppressPaginationPanel: true,
 

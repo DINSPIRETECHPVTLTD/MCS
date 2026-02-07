@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { Branch } from '../../models/branch.models';
 import { AddPocModalComponent } from './add-poc-modal.component';
 import { ColDef } from 'ag-grid-community';
+import { agGridTheme } from '../../ag-grid-theme';
 import { Poc, PocService } from '../../services/poc.service';
 
 @Component({
@@ -90,6 +91,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   ) {
     // Grid options with context so cell renderers can call component methods
     this.gridOptions = {
+      theme: agGridTheme,
       context: { componentParent: this }
     } as any;
   }

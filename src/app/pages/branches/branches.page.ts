@@ -8,6 +8,7 @@ import { BranchService } from '../../services/branch.service';
 import { Branch } from '../../models/branch.models';
 import { AddBranchModalComponent } from './add-branch-modal.component';
 import { ColDef, ValueGetterParams, ICellRendererParams, GridOptions } from 'ag-grid-community';
+import { agGridTheme } from '../../ag-grid-theme';
 
 @Component({
   selector: 'app-branches',
@@ -91,9 +92,8 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
     });
 
     // Grid options with context so cell renderers can call component methods
-    // theme: 'legacy' = use v32-style CSS file themes (ag-grid.css / ag-theme-alpine.css) with AG Grid v33+
     this.gridOptions = {
-      theme: 'legacy',
+      theme: agGridTheme,
       context: { componentParent: this }
     };
   }

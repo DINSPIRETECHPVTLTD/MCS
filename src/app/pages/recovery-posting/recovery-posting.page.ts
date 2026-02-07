@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { ColDef, GridApi, GridReadyEvent, RowSelectionOptions } from 'ag-grid-community';
+import { agGridTheme } from '../../ag-grid-theme';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { Branch } from '../../models/branch.models';
 
@@ -61,7 +62,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   private gridApi?: GridApi;
   selectAllChecked: boolean = false;
   isLoading: boolean = false;
-  gridOptions = { theme: 'legacy' as const };
+  gridOptions = { theme: agGridTheme };
 
   constructor(
     private authService: AuthService,

@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { MemberService } from '../../services/member.service';
 import { Member } from '../../models/member.models';
 import { ColDef, GridApi, GridReadyEvent, RowSelectionOptions } from 'ag-grid-community';
+import { agGridTheme } from '../../ag-grid-theme';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { Branch } from '../../models/branch.models';
 
@@ -71,7 +72,7 @@ export class AddLoanComponent implements OnInit, ViewWillEnter {
   };
   
   private gridApi?: GridApi;
-  gridOptions = { theme: 'legacy' as const };
+  gridOptions = { theme: agGridTheme };
 
   constructor(
     private authService: AuthService,

@@ -3,6 +3,7 @@ import { forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { ViewWillEnter, ModalController, ToastController, LoadingController, AlertController } from '@ionic/angular';
 import { ColDef, GridReadyEvent, GridOptions } from 'ag-grid-community';
+import { agGridTheme } from '../../ag-grid-theme';
 import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { MemberService } from '../../services/member.service';
@@ -115,7 +116,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     });
 
     this.gridOptions = {
-      theme: 'legacy',
+      theme: agGridTheme,
       context: { componentParent: this },
       onGridReady: (event: GridReadyEvent) => {
         this.gridApi = event.api;
