@@ -31,7 +31,7 @@ export class AddCenterModalComponent implements OnInit {
     this.centerForm = this.formBuilder.group({
       centerName: ['', [Validators.required, Validators.maxLength(100)]],
       city: ['', [Validators.required, Validators.maxLength(50)]],
-      centerAddress: ['', [Validators.required]],
+      centerAddress: [''],
       branchId: [savedBranchId, [Validators.required]]
     });
 

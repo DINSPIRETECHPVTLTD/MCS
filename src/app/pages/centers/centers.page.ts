@@ -37,8 +37,8 @@ export class CentersPage implements OnInit, ViewWillEnter {
   columnDefs: ColDef<Center>[] = [];
   defaultColDef: ColDef = {
     sortable: true,
-    resizable: false,
-    filter: false,
+    resizable: true,
+    filter: true,
     floatingFilter: false
   };
 
@@ -156,13 +156,14 @@ export class CentersPage implements OnInit, ViewWillEnter {
       {
         headerName: 'Branch Name',
         field: 'branchName',
-        flex: 1
+        flex: 1,
+        hide: true
       },
       {
         headerName: 'Actions',
         colId: 'actions',
         pinned: 'right',
-        width: 170,
+        width: 200,
         sortable: false,
         filter: false,
         resizable: false,
@@ -170,16 +171,8 @@ export class CentersPage implements OnInit, ViewWillEnter {
           const container = document.createElement('div');
           container.className = 'actions-cell';
           container.innerHTML = `
-            <button class="ag-icon-btn ag-edit" title="Edit" aria-label="Edit">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="ag-action-icon">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 2.83H5v-.92l9.06-9.06.92.92L5.92 20.08zM20.71 7.04a1.003 1.003 0 0 0 0-1.42L18.37 3.29a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.83z"/>
-              </svg>
-            </button>
-            <button class="ag-icon-btn ag-delete" title="Delete" aria-label="Delete">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="ag-action-icon">
-                <path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 1h4v2H4V5h4l1-1z"/>
-              </svg>
-            </button>
+            <button class="ag-btn ag-edit">Edit</button>
+            <button class="ag-btn ag-delete">Delete</button>
           `;
 
           const editBtn = container.querySelector('.ag-edit');
@@ -351,15 +344,13 @@ export class CentersPage implements OnInit, ViewWillEnter {
   async openAddCenterModal(): Promise<void> {
     const modal = await this.modalController.create({
       component: AddCenterModalComponent,
-      cssClass: 'add-center-modal',
-      breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 1
+      cssClass: 'add-center-modal'
     });
     await modal.present();
 
     const { data } = await modal.onWillDismiss();
     if (data && data.created) {
-      await this.loadCenters();
+      await this.loadCenters(true);
       await this.showToast('Center created successfully', 'success');
     }
   }
@@ -372,14 +363,18 @@ export class CentersPage implements OnInit, ViewWillEnter {
     void branch;
   }
 
-  private async loadCenters(): Promise<void> {
+  private async loadCenters(forceRefresh: boolean = false): Promise<void> {
     if (this.isLoading) return;
 
-    this.isLoading = true;
-    const loading = await this.loadingController.create({ message: 'Loading centers...' });
-    await loading.present();
-
     const selectedBranchId = this.getSelectedBranchId();
+
+    // Avoid reloading (and re-showing the loader) when the user taps the Centers menu again
+    // and nothing relevant changed.
+    if (!forceRefresh && this.rowData.length > 0 && this.selectedBranchId === selectedBranchId) {
+      return;
+    }
+
+    this.isLoading = true;
     this.selectedBranchId = selectedBranchId;
     this.selectedBranchName = '';
 
@@ -414,7 +409,6 @@ export class CentersPage implements OnInit, ViewWillEnter {
             this.syncPaginatorFromGrid();
             this.updateGridHeight();
             this.isLoading = false;
-            await loading.dismiss();
           },
           error: async () => {
             // If branches fail to load, still filter by branchId if present
@@ -437,7 +431,6 @@ export class CentersPage implements OnInit, ViewWillEnter {
             this.syncPaginatorFromGrid();
             this.updateGridHeight();
             this.isLoading = false;
-            await loading.dismiss();
             await this.showToast('Failed to load branches.', 'danger');
           }
         });
@@ -453,7 +446,6 @@ export class CentersPage implements OnInit, ViewWillEnter {
         this.syncPaginatorFromGrid();
         this.updateGridHeight();
         this.isLoading = false;
-        await loading.dismiss();
         await this.showToast('Failed to load centers.', 'danger');
       }
     });
@@ -462,9 +454,7 @@ export class CentersPage implements OnInit, ViewWillEnter {
     const modal = await this.modalController.create({
       component: EditCenterModalComponent,
       componentProps: { center: { ...row } },
-      cssClass: 'edit-center-modal',
-      breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 1
+      cssClass: 'edit-center-modal'
     });
     await modal.present();
     const { data } = await modal.onWillDismiss();
@@ -483,7 +473,7 @@ export class CentersPage implements OnInit, ViewWillEnter {
         // (and ensures we keep branch mapping in sync).
         try {
           const existingColumnState = this.gridApi?.getColumnState() ?? this.lastColumnState;
-          await this.loadCenters();
+          await this.loadCenters(true);
           if (this.gridApi && Array.isArray(existingColumnState)) {
             this.gridApi.applyColumnState({
               state: existingColumnState as any,
@@ -499,7 +489,7 @@ export class CentersPage implements OnInit, ViewWillEnter {
   }
 
   async deleteCenter(row: Center): Promise<void> {
-    const confirmed = await this.showConfirmDialog(`Are you sure you want to delete center "${row.centerName}"? This action cannot be undone.`);
+    const confirmed = await this.showConfirmDialog(`Are you sure you want to delete center "${row.centerName}"?`);
     if (!confirmed) return;
     this.isLoading = true;
     try {

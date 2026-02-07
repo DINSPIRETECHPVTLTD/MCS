@@ -24,7 +24,7 @@ export class EditCenterModalComponent implements OnInit {
   ngOnInit(): void {
     this.centerForm = this.formBuilder.group({
       centerName: [this.center.centerName, [Validators.required, Validators.maxLength(100)]],
-      centerAddress: [this.center.centerAddress, [Validators.required]],
+      centerAddress: [this.center.centerAddress],
       city: [this.center.city, [Validators.required, Validators.maxLength(50)]],
       // Branch must not be editable during center update.
       branchName: [{ value: this.center.branchName, disabled: true }]

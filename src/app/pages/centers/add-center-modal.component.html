@@ -1,52 +1,84 @@
-<ion-content class="add-center-content">
-  <div class="add-center-dialog">
-    <div class="dialog-header">
-      <h2>Add Center</h2>
-      <ion-button fill="clear" size="small" (click)="onCancel()" aria-label="Close">
+<ion-header [translucent]="false">
+  <ion-toolbar>
+    <ion-title>Add Center</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="onCancel()">
         <ion-icon name="close-outline" slot="icon-only"></ion-icon>
       </ion-button>
-    </div>
-    <mat-divider></mat-divider>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
 
-    <form class="add-center-form" [formGroup]="centerForm" (ngSubmit)="onCreate()">
-      <mat-card class="section-card">
-        <div class="section-title">Center Details</div>
-        <div class="form-grid">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Center Name <span class="required">*</span></mat-label>
-            <input matInput type="text" formControlName="centerName" maxlength="100" />
-            <mat-error *ngIf="centerForm.get('centerName')?.invalid">Required</mat-error>
-          </mat-form-field>
+<ion-content [fullscreen]="true" class="ion-padding add-center-content">
+  <form [formGroup]="centerForm" (ngSubmit)="onCreate()">
+    <ion-item>
+      <ion-label position="stacked">Center Name <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="centerName"
+        placeholder="Enter center name"
+        type="text"
+        maxlength="100">
+      </ion-input>
+      <ion-note slot="error" *ngIf="centerForm.get('centerName')?.invalid && centerForm.get('centerName')?.touched">
+        <span *ngIf="centerForm.get('centerName')?.errors?.['required']">Center name is required</span>
+        <span *ngIf="centerForm.get('centerName')?.errors?.['maxlength']">Center name must be at most 100 characters</span>
+      </ion-note>
+    </ion-item>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>City <span class="required">*</span></mat-label>
-            <input matInput type="text" formControlName="city" maxlength="50" />
-            <mat-error *ngIf="centerForm.get('city')?.invalid">Required</mat-error>
-          </mat-form-field>
+    <ion-item>
+      <ion-label position="stacked">City <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="city"
+        placeholder="Enter city"
+        type="text"
+        maxlength="50">
+      </ion-input>
+      <ion-note slot="error" *ngIf="centerForm.get('city')?.invalid && centerForm.get('city')?.touched">
+        <span *ngIf="centerForm.get('city')?.errors?.['required']">City is required</span>
+        <span *ngIf="centerForm.get('city')?.errors?.['maxlength']">City must be at most 50 characters</span>
+      </ion-note>
+    </ion-item>
 
-          <mat-form-field appearance="outline" class="form-field full-width">
-            <mat-label>Center Address <span class="required">*</span></mat-label>
-            <textarea matInput formControlName="centerAddress" rows="3"></textarea>
-            <mat-error *ngIf="centerForm.get('centerAddress')?.invalid">Required</mat-error>
-          </mat-form-field>
+    <ion-item>
+      <ion-label position="stacked">Center Address</ion-label>
+      <ion-textarea
+        formControlName="centerAddress"
+        placeholder="Enter center address (optional)"
+        autoGrow="true">
+      </ion-textarea>
+    </ion-item>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Branch <span class="required">*</span></mat-label>
-            <mat-select formControlName="branchId" [disabled]="isBranchLocked">
-              <mat-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</mat-option>
-            </mat-select>
-            <mat-error *ngIf="centerForm.get('branchId')?.invalid">Required</mat-error>
-          </mat-form-field>
-        </div>
-      </mat-card>
-
-      <div class="dialog-footer">
-        <ion-button fill="clear" type="button" (click)="onCancel()">Cancel</ion-button>
-        <ion-button type="submit" [disabled]="isSubmitting || centerForm.invalid" class="create-button">
-          <ion-icon name="add-outline" slot="start"></ion-icon>
-          Create Center
-        </ion-button>
-      </div>
-    </form>
-  </div>
+    <ion-item class="branch-field" [class.ion-invalid]="centerForm.get('branchId')?.invalid && centerForm.get('branchId')?.touched">
+      <ion-label position="stacked">Branch <span class="required">*</span></ion-label>
+      <ion-select
+        formControlName="branchId"
+        interface="popover"
+        [disabled]="isBranchLocked">
+        <ion-select-option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</ion-select-option>
+      </ion-select>
+      <ion-note slot="error">Branch is required</ion-note>
+    </ion-item>
+  </form>
 </ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <div class="action-row footer-row">
+      <ion-button
+        type="button"
+        (click)="onCreate()"
+        [disabled]="isSubmitting || centerForm.invalid"
+        class="save-button">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Create Center
+      </ion-button>
+      <ion-button
+        fill="outline"
+        type="button"
+        (click)="onCancel()"
+        class="cancel-button">
+        Cancel
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>

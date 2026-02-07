@@ -3,19 +3,24 @@
   (menuChange)="onMenuChange($event)"
   (branchChange)="onBranchChange($event)">
   <ion-content [fullscreen]="true" class="ion-padding">
-    <div class="content-container">
+    <div class="centers-list-container">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h1>Centers</h1>
+        <h2>All Centers</h2>
         <ion-button (click)="openAddCenterModal()">
           <ion-icon name="add-outline" slot="start"></ion-icon>
           Add Center
         </ion-button>
       </div>
 
-      <p *ngIf="selectedBranchId !== null" style="margin: -8px 0 16px; color: var(--ion-color-medium);">
+      <!-- <p *ngIf="selectedBranchId !== null" style="margin: -8px 0 16px; color: var(--ion-color-medium);">
         Showing centers for:
         <strong>{{ selectedBranchName || ('Branch #' + selectedBranchId) }}</strong>
-      </p>
+      </p> -->
+
+      <div *ngIf="isLoading" style="text-align: center; padding: 20px;">
+        <ion-spinner></ion-spinner>
+        <p>Loading centers...</p>
+      </div>
       
       <div *ngIf="!isLoading && centers.length === 0" class="empty-state">
         <ion-icon name="location-outline" size="large"></ion-icon>
@@ -25,34 +30,16 @@
         </p>
       </div>
 
-      <div *ngIf="centers.length > 0" class="centers-table-wrapper">
-        <div class="table-toolbar">
-          <button mat-stroked-button (click)="exportCentersToCSV()" title="Export to CSV">Export CSV</button>
-          <button mat-stroked-button (click)="printCentersTable()" title="Print Table">Print</button>
-        </div>
-        <div class="table-scroll centers-grid">
-          <ag-grid-angular
-            class="ag-theme-alpine"
-            style="width: 100%;"
-            [style.height.px]="gridHeightPx"
-            [gridOptions]="gridOptions"
-            [rowData]="rowData"
-            [columnDefs]="columnDefs"
-            [defaultColDef]="defaultColDef"
-            [pagination]="true"
-            [paginationPageSize]="paginationPageSize"
-            (gridReady)="onGridReady($event)"
-            (sortChanged)="onSortChanged()">
-          </ag-grid-angular>
-        </div>
-        <mat-paginator
-          [length]="paginatorLength"
-          [pageIndex]="paginatorPageIndex"
-          [pageSize]="paginationPageSize"
-          [pageSizeOptions]="[5, 10, 25]"
-          showFirstLastButtons
-          (page)="onPageChanged($event)">
-        </mat-paginator>
+      <div *ngIf="!isLoading && centers.length > 0" class="centers-grid">
+        <ag-grid-angular
+          class="ag-theme-alpine"
+          style="width: 100%; height: 60vh;"
+          [rowData]="rowData"
+          [columnDefs]="columnDefs"
+          [gridOptions]="gridOptions"
+          [defaultColDef]="defaultColDef">
+        </ag-grid-angular>
       </div>
     </div>
   </ion-content>
+</app-header-menu>

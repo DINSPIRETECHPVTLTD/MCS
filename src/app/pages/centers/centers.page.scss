@@ -1,11 +1,11 @@
-.content-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
 
-  h1 {
+// Centers Page Specific Styles (aligned with Branches page)
+.centers-list-container {
+  h2 {
+    margin: 8px 0 16px 0;
+    font-size: 24px;
+    font-weight: 600;
     color: var(--ion-color-primary);
-    margin-bottom: 16px;
   }
 }
 
@@ -101,38 +101,39 @@ tr.table-filter-row > th:last-child {
 /* AG Grid styling for Centers */
 ::ng-deep {
   .centers-grid {
-    .ag-theme-alpine {
-      /* Reduce visual noise: remove vertical separators/lines */
-      --ag-borders: none;
-      --ag-borders-secondary: none;
-      --ag-border-color: transparent;
-      --ag-secondary-border-color: transparent;
+    // Header cells with borders
+    .ag-header-cell {
+      border-right: 1px solid #d0d0d0 !important;
+      border-bottom: 1px solid #d0d0d0 !important;
 
-      .ag-cell,
-      .ag-header-cell {
-        border-right: none !important;
+      &:first-child {
+        border-left: 1px solid #d0d0d0 !important;
       }
+    }
 
-      /* Header separators (theme pseudo-elements) */
-      .ag-header-cell::after,
-      .ag-header-group-cell::after {
-        display: none !important;
-      }
+    // Data cells with borders
+    .ag-cell {
+      border-right: 1px solid #d0d0d0 !important;
+      border-bottom: 1px solid #d0d0d0 !important;
 
-      /* Pinned column divider lines */
-      .ag-pinned-left-header,
-      .ag-pinned-left-cols-container {
-        border-right: none !important;
+      &:first-child {
+        border-left: 1px solid #d0d0d0 !important;
       }
+    }
 
-      .ag-pinned-right-header,
-      .ag-pinned-right-cols-container {
-        border-left: none !important;
-      }
+    // Top border for header row
+    .ag-header-row {
+      border-top: 1px solid #d0d0d0 !important;
+    }
 
-      .ag-header-cell-resize::after {
-        background-color: transparent !important;
-      }
+    // Top border for data rows
+    .ag-row {
+      border-top: 1px solid #d0d0d0 !important;
+    }
+
+    // Ensure the grid itself has borders
+    .ag-root-wrapper {
+      border: 1px solid #d0d0d0 !important;
     }
 
     .actions-cell {
@@ -141,26 +142,18 @@ tr.table-filter-row > th:last-child {
       align-items: center;
       justify-content: center;
       height: 100%;
+      flex-wrap: wrap;
     }
 
-    .ag-icon-btn {
+    .ag-btn {
       appearance: none;
       border: none;
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
       cursor: pointer;
+      font-weight: 500;
       transition: all 0.2s ease;
-      padding: 0;
-    }
-
-    .ag-action-icon {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
     }
 
     .ag-edit {
