@@ -170,7 +170,7 @@ export class AddStaffModalComponent implements OnInit {
             address2: user.address2 || '',
             city: user.city || '',
             state: user.state || '',
-            pinCode: user.pinCode || '',
+            pinCode: user.zipCode || user['ZipCode'] || '',
             role: user.role ? (user.role.toLowerCase().includes('branch') ? 'BranchAdmin' : 'Staff') : 'Staff',
             organizationId: user.organizationId || this.staffForm.value.organizationId,
             branchId: user.branchId || this.staffForm.value.branchId

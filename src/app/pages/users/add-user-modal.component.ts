@@ -36,7 +36,7 @@ export class AddUserModalComponent implements OnInit {
       address2: [''],
       city: [''],
       state: [''],
-      pinCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
+      zipCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
       level: ['Org', [Validators.required]],
       role: ['Owner', [Validators.required]],
       organizationId: [0]
@@ -80,7 +80,7 @@ export class AddUserModalComponent implements OnInit {
           address2: user.address2 || '',
           city: user.city || '',
           state: user.state || '',
-          pinCode: user.pinCode || '',
+          zipCode: user.zipCode || '',
           email: user.email || '',
           level: user.level || 'Org',
           role: user.role || 'Owner',
@@ -135,7 +135,7 @@ export class AddUserModalComponent implements OnInit {
       address2: this.userForm.value.address2?.trim() || '',
       city: this.userForm.value.city?.trim() || '',
       state: this.userForm.value.state?.trim() || '',
-      pinCode: this.userForm.value.pinCode?.trim() || '',
+      zipCode: this.userForm.value.zipCode?.trim() || '',
       email: this.userForm.value.email?.trim() || '',
       level: this.userForm.value.level,
       role: this.userForm.value.role,
@@ -208,8 +208,8 @@ export class AddUserModalComponent implements OnInit {
         if (fieldName === 'phoneNumber') {
           return 'Please enter a valid 10-digit phone number';
         }
-        if (fieldName === 'pinCode') {
-          return 'Please enter a valid 6-digit pin code';
+        if (fieldName === 'zipCode') {
+          return 'Please enter a valid 6-digit zip code';
         }
       }
       if (field.errors?.['minlength']) {
@@ -228,7 +228,7 @@ export class AddUserModalComponent implements OnInit {
       phoneNumber: 'Phone number',
       email: 'Email',
       password: 'Password',
-      pinCode: 'Pin code'
+      zipCode: 'Zip code'
     };
     return labels[fieldName] || fieldName;
   }

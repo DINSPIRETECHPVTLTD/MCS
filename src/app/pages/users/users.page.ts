@@ -68,12 +68,13 @@ export class UsersComponent implements OnInit, ViewWillEnter {
           if (data.address2) parts.push(data.address2);
           const cityStateZip = [];
           if (data.city) cityStateZip.push(data.city);
-          if (data.state && data.pinCode) {
-            cityStateZip.push(`${data.state}-${data.pinCode}`);
+          const zipCode = data.zipCode || data.ZipCode;
+          if (data.state && zipCode) {
+            cityStateZip.push(`${data.state}-${zipCode}`);
           } else if (data.state) {
             cityStateZip.push(data.state);
-          } else if (data.pinCode) {
-            cityStateZip.push(data.pinCode);
+          } else if (zipCode) {
+            cityStateZip.push(zipCode);
           }
           if (cityStateZip.length > 0) parts.push(cityStateZip.join(', '));
           return parts.join(', ');

@@ -8,7 +8,7 @@ export interface User {
   address2?: string;
   city?: string;
   state?: string;
-  pinCode?: string;
+  zipCode?: string;
   email?: string;
   level?: string;
   role?: string;
@@ -26,7 +26,7 @@ export interface CreateUserRequest {
   address2?: string;
   city?: string;
   state?: string;
-  pinCode?: string;
+  zipCode?: string;
   email?: string;
   password?: string;
   level: string;

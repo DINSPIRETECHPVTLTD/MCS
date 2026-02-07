@@ -114,18 +114,18 @@
       </ion-input>
     </ion-item>
 
-    <ion-item [class.ion-invalid]="isFieldInvalid('pinCode')">
-      <ion-label position="stacked">Pin Code</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
+      <ion-label position="stacked">Zip Code</ion-label>
       <ion-input
-        formControlName="pinCode"
-        placeholder="Enter 6-digit pin code"
+        formControlName="zipCode"
+        placeholder="Enter 6-digit zip code"
         type="tel"
         inputmode="numeric"
         pattern="[0-9]*"
         maxlength="6"
-        (ionInput)="onNumericInput($event, 'pinCode')">
+        (ionInput)="onNumericInput($event, 'zipCode')">
       </ion-input>
-      <ion-note slot="error">{{ getFieldError('pinCode') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
     </ion-item>
 
     <!-- Action Buttons moved to footer -->
