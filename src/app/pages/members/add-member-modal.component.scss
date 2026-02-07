@@ -110,6 +110,12 @@
   font-weight: 600;
 }
 
+/* We render our own '*' in labels; hide Material's automatic required marker to avoid '**'. */
+:host ::ng-deep .mat-mdc-form-field-required-marker,
+:host ::ng-deep .mat-form-field-required-marker {
+  display: none;
+}
+
 .dialog-footer {
   position: sticky;
   bottom: 0;

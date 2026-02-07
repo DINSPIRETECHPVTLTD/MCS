@@ -34,6 +34,7 @@ export interface Member {
   guardianPhone: string;
   guardianDOB?: string | null;
   guardianAge: number;
+  guardianRelationship?: string | null;
   centerId: number;
   pocId: number;
   createdAt?: string;
@@ -59,6 +60,7 @@ export interface CreateMemberRequest {
   guardianPhone: string;
   guardianDOB?: string | null;
   guardianAge: number;
+  guardianRelationship?: string | null;
   centerId: number;
   pocId: number;
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { ViewWillEnter, ModalController, ToastController, LoadingController, AlertController } from '@ionic/angular';
@@ -24,10 +24,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   isLoadingMembers: boolean = false;
 
   selectedBranch: Branch | null = null;
-  selectedCenterId: number | null = null;
-  private lastCenterId: number | null = null;
-  isViewMembersClicked = false;
-  showSearch = false;
+  showSearch = true;
 
   centers: CenterOption[] = [];
   pocs: POCOption[] = [];
@@ -36,20 +33,11 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   rowData: Array<Record<string, any>> = [];
   originalRowData: Array<Record<string, any>> = [];
   columnDefs: ColDef[] = [
-    {field: 'memberId', headerName: 'Member ID/Code' },
-    { field: 'memberFirstName', headerName: 'Member First Name' },
-    { field: 'memberMiddleName', headerName: 'Member Middle Name' },
-    { field: 'memberLastName', headerName: 'Member Last Name'},
-    { field: 'memberDob', headerName: 'Member DOB'},
-    { field: 'memberAge', headerName: 'Member Age'},
-    { field: 'memberPhone', headerName: 'Member Phone '},
-    { field: 'memberAddress', headerName: 'Member Address' },
-    { field: 'memberAadhaar', headerName: 'Member Aadhaar'},
-    { field: 'memberOccupation', headerName: 'Member Occupation'},
-    { field: 'memberStatus', headerName: 'Member Status'},
-    { field: 'guardianName', headerName: 'Husband/Guardian Name'},
-    { field: 'guardianAge', headerName: 'Husband/Guardian Age'},
-    { field: 'branch', headerName: 'Branch'},
+    { field: 'memberId', headerName: 'ID/Code' },
+    { field: 'memberFirstName', headerName: 'First Name' },
+    { field: 'memberLastName', headerName: 'Last Name' },
+    { field: 'dobAge', headerName: 'DOB/Age' },
+    { field: 'memberPhone', headerName: 'Phone' },
     { field: 'center', headerName: 'Center'},
     { field: 'poc', headerName: 'POC'},
     {
@@ -90,8 +78,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     filter: true,
     resizable: true
   };
-  pagination = true;
-  paginationPageSize = 10;
+  paginationPageSize: number = 10;
 
 
   branches: Branch[] = [];
@@ -118,6 +105,8 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     this.gridOptions = {
       theme: agGridTheme,
       context: { componentParent: this },
+      pagination: true,
+      paginationPageSize: this.paginationPageSize,
       onGridReady: (event: GridReadyEvent) => {
         this.gridApi = event.api;
       }
@@ -141,7 +130,20 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.initializeSelectionAndData();
+
+    const branchId = this.resolveSelectedBranchId();
+    if (branchId) {
+      // Ensure selectedBranch has at least an id (name can be resolved from branchMap).
+      if (!this.selectedBranch) {
+        const match = (this.branches ?? []).find(b => Number(b.id) === Number(branchId)) ?? null;
+        this.selectedBranch = match ?? ({ id: branchId } as any);
+      }
+      void this.refreshMembers();
+    } else {
+      // No branch selected yet.
+      this.rowData = [];
+      this.originalRowData = [];
+    }
   }
 
   ngAfterViewInit(): void {
@@ -157,39 +159,14 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   onBranchChange(branch: Branch): void {
     console.log('MembersPage: onBranchChange called with branch ->', branch);
     this.selectedBranch = branch;
-    this.selectedCenterId = null;
     this.rowData = [];
-
-    // Load centers for this branch so the centers dropdown is populated
-    if (branch && (branch.id || branch.id === 0)) {
-      const id = Number(branch.id);
-      if (!Number.isNaN(id) && id > 0) {
-        this.loadCentersForBranch(id);
-      }
-    } else {
-      // Fallback: try reading selected branch id from localStorage
-      const saved = localStorage.getItem('selected_branch_id');
-      const savedId = saved ? Number(saved) : 0;
-      if (savedId && !Number.isNaN(savedId)) {
-        this.loadCentersForBranch(savedId);
-      }
-    }
-  }
-
-  onCenterChange(centerId: any): void {
-    const id = Number(centerId);
-    const normalizedId = id ? id : null;
-    if (normalizedId === this.lastCenterId) {
-      return;
-    }
-
-    this.lastCenterId = normalizedId;
-    this.selectedCenterId = normalizedId;
-    this.refreshMembers();
+    this.originalRowData = [];
+    void this.refreshMembers();
   }
 
   onFilterChange(event: any): void {
-    const searchValue = (event.target.value || '').trim().toLowerCase();
+    const rawValue = (event?.target?.value ?? event?.detail?.value ?? '').toString();
+    const searchValue = rawValue.trim().toLowerCase();
     
     if (!this.originalRowData || this.originalRowData.length === 0) {
       console.log('No data to filter');
@@ -200,11 +177,11 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     const searchFields = [
       'memberId',
       'memberFirstName',
-      'memberMiddleName',
       'memberLastName',
+      'dobAge',
       'memberPhone',
-      'memberAadhaar',
-      'memberAddress'
+      'center',
+      'poc'
     ];
 
     if (searchValue === '') {
@@ -230,49 +207,17 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     console.log('Grid API initialized');
   }
 
-  async onViewMembers(): Promise<void> {
-    this.isViewMembersClicked = true;
-    this.showSearch = true;
 
-    if (this.centers.length === 0) {
-      this.isLoading = true;
-      this.memberService.getAllCenters().subscribe({
-        next: centers => {
-          this.centers = centers ?? [];
-          this.isLoading = false;
-        },
-        error: () => {
-          this.centers = [];
-          this.isLoading = false;
-        }
-      });
+  private resolveSelectedBranchId(): number | null {
+    const fromContext = this.userContext.branchId;
+    if (fromContext != null) {
+      const ctx = Number(fromContext);
+      return Number.isFinite(ctx) && ctx > 0 ? ctx : null;
     }
-  }
 
-  private initializeSelectionAndData(): void {
-    // No-op for Material table (columns are configured in displayedColumns)
-  }
-
-
-  private loadCentersForBranch(branchId: number): void {
-    console.log('MembersPage: loadCentersForBranch branchId =', branchId);
-    this.isLoading = true;
-    this.memberService.getAllCenters().subscribe({
-      next: centers => {
-        this.centers = (centers ?? []).filter(c => Number(c.branchId) === Number(branchId));
-        this.isLoading = false;
-
-        // Auto-select if only one center
-        if (this.centers.length === 1) {
-          this.selectedCenterId = this.centers[0].id;
-          this.refreshMembers();
-        }
-      },
-      error: () => {
-        this.isLoading = false;
-        this.centers = [];
-      }
-    });
+    const raw = localStorage.getItem('selected_branch_id');
+    const fromStorage = raw ? Number(raw) : null;
+    return fromStorage && Number.isFinite(fromStorage) && fromStorage > 0 ? fromStorage : null;
   }
 
   private async refreshMembers(): Promise<void> {
@@ -280,20 +225,16 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       return;
     }
 
-    const centerId = Number(this.selectedCenterId ?? 0);
-    if (!centerId) {
+    const branchId = Number(this.selectedBranch?.id ?? this.resolveSelectedBranchId() ?? 0);
+    console.log('MembersPage: refreshMembers branchId =', branchId);
+    if (!branchId || Number.isNaN(branchId)) {
       this.rowData = [];
-      return;
-    }
-
-    const branchId = this.selectedBranch?.id;
-    console.log('MembersPage: refreshMembers branchId =', branchId, 'centerId =', centerId);
-    if (!branchId) {
-      this.rowData = [];
+      this.originalRowData = [];
       return;
     }
 
     this.isLoadingMembers = true;
+    this.isLoading = true;
 
     const loading = await this.loadingController.create({ message: 'Loading members...' });
     await loading.present();
@@ -306,8 +247,10 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       next: ({ centers, pocs, members }) => {
         loading.dismiss();
         this.isLoadingMembers = false;
+        this.isLoading = false;
 
-        this.centers = centers ?? [];
+        // Keep only this branch's centers for mapping CenterId -> CenterName.
+        this.centers = (centers ?? []).filter(c => Number((c as any).branchId) === Number(branchId));
         this.pocs = pocs ?? [];
 
         const centerMap = new Map<number, string>(this.centers.map(c => [Number(c.id), c.name]));
@@ -322,20 +265,28 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
         const raw = (members as any)?.$values ?? members;
         const list: any[] = Array.isArray(raw) ? raw : [];
 
-        const filtered = list.filter(m => {
-          const mCenter = Number(m?.centerId ?? m?.CenterId ?? 0);
-          if (!mCenter || Number.isNaN(mCenter)) return false;
-          return mCenter === centerId;
+        const mappedData = list.map(m => this.toGridRow(m as any, centerMap, pocMap, branchId));
+
+        // Defensive: prevent duplicate rows when backend returns duplicates.
+        const seenIds = new Set<number>();
+        const uniqueData = mappedData.filter(r => {
+          const id = Number((r as any)?.memberId ?? 0);
+          if (!id || Number.isNaN(id)) return true;
+          if (seenIds.has(id)) return false;
+          seenIds.add(id);
+          return true;
         });
-        const mappedData = filtered.map(m => this.toGridRow(m as any, centerMap, pocMap));
-        this.rowData = mappedData;
+
+        this.rowData = uniqueData;
         console.log('Loaded members:', this.rowData);
-        this.originalRowData = [...mappedData];  // Store original data for filtering
+        this.originalRowData = [...uniqueData];  // Store original data for filtering
       },
       error: async () => {
         await loading.dismiss();
         this.isLoadingMembers = false;
+        this.isLoading = false;
         this.rowData = [];
+        this.originalRowData = [];
         const toast = await this.toastController.create({
           message: 'Failed to load members.',
           duration: 2000,
@@ -350,21 +301,14 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   private toGridRow(
     member: Member,
     centerMap: Map<number, string>,
-    pocMap: Map<number, string>
+    pocMap: Map<number, string>,
+    branchId?: number
   ): Record<string, any> {
     const m: any = member as any;
 
     // Backend DTO uses PascalCase (e.g., FirstName, DOB). Keep camelCase fallbacks too.
-    const guardianFirst = (m.guardianFirstName ?? m.GuardianFirstName ?? '').toString().trim();
-    const guardianMiddle = (m.guardianMiddleName ?? m.GuardianMiddleName ?? '').toString().trim();
-    const guardianLast = (m.guardianLastName ?? m.GuardianLastName ?? '').toString().trim();
-    const guardianName = [guardianFirst, guardianMiddle, guardianLast]
-      .filter(Boolean)
-      .join(' ')
-      .trim();
     const memberId = Number(m.id ?? m.Id ?? 0);
     const firstName = (m.firstName ?? m.FirstName ?? '').toString();
-    const middleName = (m.middleName ?? m.MiddleName ?? '').toString();
     const lastName = (m.lastName ?? m.LastName ?? '').toString();
     const dob = (m.dob ?? m.Dob ?? m.DOB ?? m.dateOfBirth ?? m.DateOfBirth ?? '').toString();
     const phoneNumber = (m.phoneNumber ?? m.PhoneNumber ?? '').toString();
@@ -378,21 +322,17 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       (pocId ? pocId : '')
     );
 
+    const dobDisplay = this.formatDate(dob);
+    const ageValue = (m.age ?? m.Age ?? '').toString();
+    const dobAge = dobDisplay && ageValue ? `${dobDisplay} / ${ageValue}` : (dobDisplay || ageValue || '');
+
     return {
       memberId,
       memberFirstName: firstName,
-      memberMiddleName: middleName,
       memberLastName: lastName,
-      memberDob: dob,
-      memberAge: m.age ?? m.Age ?? '',
+      dobAge,
       memberPhone: phoneNumber,
-      memberAddress: this.formatAddress(m),
-      memberAadhaar: m.aadhaar ?? m.Aadhaar ?? '',
-      memberOccupation: m.occupation ?? m.Occupation ?? '',
-      memberStatus: m.isDeleted ? 'Inactive' : 'Active',
-      guardianName,
-      guardianAge: m.guardianAge ?? m.GuardianAge ?? '',
-      branch: this.selectedBranch?.name,
+      branch: this.selectedBranch?.name ?? (branchId ? this.branchMap.get(Number(branchId)) : ''),
       center: centerMap.get(centerId) ?? '',
       poc: pocDisplay
     };
