@@ -10,8 +10,7 @@ import { Poc, PocService } from '../../services/poc.service';
 
 @Component({
   selector: 'app-pocs',
-  templateUrl: './pocs.page.html',
-  styleUrls: ['./pocs.page.scss']
+  templateUrl: './pocs.page.html'
 })
 export class PocsComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'POCs';
@@ -77,7 +76,8 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     filter: true 
   };
   pagination: boolean = true;
-  paginationPageSize: number = 10;
+  paginationPageSize: number = 20;
+  paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   gridOptions: any;
 
   constructor(

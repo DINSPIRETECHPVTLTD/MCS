@@ -36,7 +36,7 @@ export class AddUserModalComponent implements OnInit {
       address2: [''],
       city: [''],
       state: [''],
-      pinCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
+      zipCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
       level: ['Org', [Validators.required]],
       role: ['Owner', [Validators.required]],
       organizationId: [0]
@@ -50,6 +50,60 @@ export class AddUserModalComponent implements OnInit {
       this.userForm.patchValue({
         organizationId: organizationId
       });
+    }
+
+    // Load user data if editing
+    if (this.isEditing && this.editingUserId) {
+      this.loadUserData();
+    }
+  }
+
+  async loadUserData(): Promise<void> {
+    if (!this.editingUserId) return;
+
+    const loading = await this.loadingController.create({
+      message: 'Loading user data...',
+      spinner: 'crescent'
+    });
+    await loading.present();
+
+    this.userService.getUser(this.editingUserId).subscribe({
+      next: async (user) => {
+        await loading.dismiss();
+        // Patch form with user data
+        this.userForm.patchValue({
+          firstName: user.firstName || '',
+          middleName: user.middleName || '',
+          lastName: user.lastName || '',
+          phoneNumber: user.phoneNumber || '',
+          address1: user.address1 || '',
+          address2: user.address2 || '',
+          city: user.city || '',
+          state: user.state || '',
+          zipCode: user.zipCode || '',
+          email: user.email || '',
+          level: user.level || 'Org',
+          role: user.role || 'Owner',
+          organizationId: user.organizationId || this.userContext.organizationId
+        });
+        // Make password optional when editing
+        this.userForm.get('password')?.clearValidators();
+        this.userForm.get('password')?.updateValueAndValidity();
+      },
+      error: async (error) => {
+        await loading.dismiss();
+        this.showToast('Failed to load user data', 'danger');
+        console.error('Error loading user:', error);
+      }
+    });
+  }
+
+  onNumericInput(event: Event, fieldName: string): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    const numericValue = value.replace(/[^0-9]/g, '');
+    if (value !== numericValue) {
+      this.userForm.get(fieldName)?.setValue(numericValue);
     }
   }
 
@@ -81,32 +135,50 @@ export class AddUserModalComponent implements OnInit {
       address2: this.userForm.value.address2?.trim() || '',
       city: this.userForm.value.city?.trim() || '',
       state: this.userForm.value.state?.trim() || '',
-      pinCode: this.userForm.value.pinCode?.trim() || '',
+      zipCode: this.userForm.value.zipCode?.trim() || '',
       email: this.userForm.value.email?.trim() || '',
-     // password: this.userForm.value.password,
       level: this.userForm.value.level,
       role: this.userForm.value.role,
       organizationId: this.userForm.value.organizationId,
       branchId: null
     };
 
-    this.userService.createUser(userData).subscribe({
-      next: async (user) => {
-        await loading.dismiss();
-        this.showToast(
-          this.isEditing ? 'User updated successfully!' : 'User created successfully!', 
-          'success'
-        );
-        // Close modal and return success
-        await this.modalController.dismiss({ success: true, user });
-      },
-      error: async (error) => {
-        await loading.dismiss();
-        const errorMessage = error.error?.message || error.message || 'Failed to create user. Please try again.';
-        this.showToast(errorMessage, 'danger');
-        console.error('Error creating user:', error);
-      }
-    });
+    // Add password for new user creation
+    if (!this.isEditing && this.userForm.value.password) {
+      userData.password = this.userForm.value.password;
+    }
+
+    if (this.isEditing && this.editingUserId) {
+      // Update existing user
+      this.userService.updateUser(this.editingUserId, userData).subscribe({
+        next: async (user) => {
+          await loading.dismiss();
+          this.showToast('User updated successfully!', 'success');
+          await this.modalController.dismiss({ success: true, user });
+        },
+        error: async (error) => {
+          await loading.dismiss();
+          const errorMessage = error.error?.message || error.message || 'Failed to update user. Please try again.';
+          this.showToast(errorMessage, 'danger');
+          console.error('Error updating user:', error);
+        }
+      });
+    } else {
+      // Create new user
+      this.userService.createUser(userData).subscribe({
+        next: async (user) => {
+          await loading.dismiss();
+          this.showToast('User created successfully!', 'success');
+          await this.modalController.dismiss({ success: true, user });
+        },
+        error: async (error) => {
+          await loading.dismiss();
+          const errorMessage = error.error?.message || error.message || 'Failed to create user. Please try again.';
+          this.showToast(errorMessage, 'danger');
+          console.error('Error creating user:', error);
+        }
+      });
+    }
   }
 
   async closeModal(): Promise<void> {
@@ -136,8 +208,8 @@ export class AddUserModalComponent implements OnInit {
         if (fieldName === 'phoneNumber') {
           return 'Please enter a valid 10-digit phone number';
         }
-        if (fieldName === 'pinCode') {
-          return 'Please enter a valid 6-digit pin code';
+        if (fieldName === 'zipCode') {
+          return 'Please enter a valid 6-digit zip code';
         }
       }
       if (field.errors?.['minlength']) {
@@ -156,7 +228,7 @@ export class AddUserModalComponent implements OnInit {
       phoneNumber: 'Phone number',
       email: 'Email',
       password: 'Password',
-      pinCode: 'Pin code'
+      zipCode: 'Zip code'
     };
     return labels[fieldName] || fieldName;
   }

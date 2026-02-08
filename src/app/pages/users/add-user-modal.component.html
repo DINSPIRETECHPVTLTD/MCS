@@ -48,7 +48,10 @@
         formControlName="phoneNumber"
         placeholder="Enter 10-digit phone number"
         type="tel"
-        maxlength="10">
+        inputmode="numeric"
+        pattern="[0-9]*"
+        maxlength="10"
+        (ionInput)="onNumericInput($event, 'phoneNumber')">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
     </ion-item>
@@ -64,7 +67,7 @@
       <ion-note slot="error">{{ getFieldError('email') }}</ion-note>
     </ion-item>
 
-    <ion-item [class.ion-invalid]="isFieldInvalid('password')">
+    <ion-item *ngIf="!isEditing" [class.ion-invalid]="isFieldInvalid('password')">
       <ion-label position="stacked">Password <span class="required">*</span></ion-label>
       <ion-input
         formControlName="password"
@@ -111,35 +114,44 @@
       </ion-input>
     </ion-item>
 
-    <ion-item [class.ion-invalid]="isFieldInvalid('pinCode')">
-      <ion-label position="stacked">Pin Code</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
+      <ion-label position="stacked">Zip Code</ion-label>
       <ion-input
-        formControlName="pinCode"
-        placeholder="Enter 6-digit pin code"
+        formControlName="zipCode"
+        placeholder="Enter 6-digit zip code"
         type="tel"
-        maxlength="6">
+        inputmode="numeric"
+        pattern="[0-9]*"
+        maxlength="6"
+        (ionInput)="onNumericInput($event, 'zipCode')">
       </ion-input>
-      <ion-note slot="error">{{ getFieldError('pinCode') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
     </ion-item>
 
-    <!-- Action Buttons -->
-    <div class="ion-margin-top">
-      <ion-button
-        expand="block"
-        (click)="userForm.reset()"
-        class="cancel-button">
-        Clear
-      </ion-button>
+    <!-- Action Buttons moved to footer -->
+  </form>
+</ion-content>
 
+<ion-footer>
+  <ion-toolbar>
+    <div class="action-row footer-row">
       <ion-button
-        expand="block"
-        type="submit"
+        type="button"
+        (click)="onSubmit()"
         [disabled]="userForm.invalid && submitted"
         class="save-button">
         <ion-icon name="checkmark-outline" slot="start"></ion-icon>
         {{ isEditing ? 'Update User' : 'Save User' }}
-      </ion-button> 
+      </ion-button>
+
+      <ion-button
+        fill="outline"
+        type="button"
+        (click)="closeModal()"
+        class="cancel-button">
+        Cancel
+      </ion-button>
     </div>
-  </form>
-</ion-content>
+  </ion-toolbar>
+</ion-footer>
 

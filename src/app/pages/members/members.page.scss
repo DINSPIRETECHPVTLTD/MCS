@@ -1,15 +1,4 @@
-/* Members page aligned with Users page layout */
-.users-list-container {
-  h2 {
-    margin: 0 0 16px 0;
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--ion-color-primary);
-  }
-}
-ion-content {
-  overflow-x: auto !important;
-}
+// Common styles moved to global.scss
 
 .members-toolbar {
   display: flex;
@@ -32,18 +21,12 @@ ion-content {
   flex-wrap: wrap;
 }
 
-.filter-field {
-  min-width: 220px;
-  flex: 0 0 auto;
-}
-
 .filter-field--search {
-  min-width: 400px;
+  min-width: 200px;
   flex: 0 1 260px;
   max-width: 320px;
 }
 
-/* Search bar styled like Add Center form fields */
 .members-search-item {
   --padding-start: 0;
   --inner-padding-end: 0;
@@ -71,149 +54,6 @@ ion-content {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-
-.members-search {
-  margin: 8px 0 16px;
-  max-width: 360px;
-}
-
-.filter-item {
-  --background: var(--ion-color-light);
-  border-radius: 8px;
-  margin-bottom: 16px;
-}
-
-.compact-item {
-  --min-height: 44px;
-}
-
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.status-active {
-  background: color-mix(in srgb, #22c55e 20%, #ffffff 80%);
-  color: #0f5132;
-}
-
-.status-inactive {
-  background: color-mix(in srgb, #ef4444 18%, #ffffff 82%);
-  color: #842029;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--ion-color-medium);
-
-  ion-icon {
-    margin-bottom: 16px;
-    opacity: 0.5;
-  }
-
-  p {
-    margin: 0;
-    font-size: 16px;
-  }
-}
-
-
-::ng-deep {
-  .members-grid {
-    // Header cells with borders
-    .ag-header-cell {
-      border-right: 1px solid #d0d0d0 !important;
-      border-bottom: 1px solid #d0d0d0 !important;
-      
-      &:first-child {
-        border-left: 1px solid #d0d0d0 !important;
-      }
-    }
-
-    // Data cells with borders
-    .ag-cell {
-      border-right: 1px solid #d0d0d0 !important;
-      border-bottom: 1px solid #d0d0d0 !important;
-      
-      &:first-child {
-        border-left: 1px solid #d0d0d0 !important;
-      }
-    }
-
-    // Top border for header row
-    .ag-header-row {
-      border-top: 1px solid #d0d0d0 !important;
-    }
-
-    // Top border for data rows
-    .ag-row {
-      border-top: 1px solid #d0d0d0 !important;
-    }
-
-    // Ensure the grid itself has borders
-    .ag-root-wrapper {
-      border: 1px solid #d0d0d0 !important;
-    }
-
-    // Actions cell and buttons
-    .actions-cell {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      flex-wrap: wrap;
-    }
-
-    .ag-btn {
-      appearance: none;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-
-    .ag-edit {
-      background: var(--ion-color-primary);
-      color: white;
-    }
-
-    .ag-edit:hover {
-      background: var(--ion-color-primary-shade);
-      transform: translateY(-1px);
-    }
-
-    .ag-delete {
-      background: var(--ion-color-danger);
-      color: white;
-    }
-
-    .ag-delete:hover {
-      background: var(--ion-color-danger-shade);
-      transform: translateY(-1px);
-    }
-
-    .ag-loan {
-      background: var(--ion-color-tertiary, #5260ff);
-      color: white;
-    }
-
-    .ag-loan:hover {
-      background: var(--ion-color-tertiary-shade, #4854e6);
-      transform: translateY(-1px);
-    }
-  }
 }
 
 

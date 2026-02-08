@@ -13,31 +13,32 @@
       </ion-button>
     </div>
     
-    <!-- Debug info -->
-    <div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-size: 12px;">
-      <p style="margin: 0;">Users count: {{ users.length }}</p>
-      <p style="margin: 4px 0 0 0;">Loading: {{ isLoading ? 'Yes' : 'No' }}</p>
+    <!-- AG Grid -->
+    <div *ngIf="isLoading" style="text-align: center; padding: 20px;">
+      <ion-spinner></ion-spinner>
+      <p>Loading users...</p>
     </div>
     
-    <div *ngIf="users.length === 0 && !isLoading" class="empty-state">
+    <div *ngIf="!isLoading && users.length === 0" class="empty-state">
       <ion-icon name="people-outline" size="large"></ion-icon>
       <p>No users found</p>
       <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
         Click "Add User" to create a new user
       </p>
     </div>
-    <div *ngIf="users.length > 0" class="users-grid">
+    
+    <div *ngIf="!isLoading && users.length > 0" class="users-grid">
       <ag-grid-angular
         class="ag-theme-alpine"
         style="width: 100%; height: 60vh;"
-        [gridOptions]="gridOptions"
         [rowData]="rowData"
         [columnDefs]="columnDefs"
+        [gridOptions]="gridOptions"
         [defaultColDef]="defaultColDef"
         [pagination]="pagination"
         [paginationPageSize]="paginationPageSize"
-        (gridReady)="onGridReady($event)"
-        >
+        [paginationPageSizeSelector]="paginationPageSizeSelector"
+        (gridReady)="onGridReady($event)">
       </ag-grid-angular>
     </div>
   </div>

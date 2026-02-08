@@ -36,10 +36,135 @@
 	color: #ffffff;
 }
 
-/* Member modals: 60% width */
-ion-modal.add-member-modal,
-ion-modal.edit-member-modal {
-	--width: 60%;
-	--min-width: 320px;
+/* Common AG Grid Styles - Applied to all pages with grids */
+.centers-grid,
+.branches-grid,
+.users-grid,
+.pocs-grid,
+.members-grid,
+.staff-grid {
+  // Header cells with borders
+  .ag-header-cell {
+    border-right: 1px solid #d0d0d0 !important;
+    border-bottom: 1px solid #d0d0d0 !important;
+    
+    &:first-child {
+      border-left: 1px solid #d0d0d0 !important;
+    }
+  }
+
+  // Data cells with borders
+  .ag-cell {
+    border-right: 1px solid #d0d0d0 !important;
+    border-bottom: 1px solid #d0d0d0 !important;
+    
+    &:first-child {
+      border-left: 1px solid #d0d0d0 !important;
+    }
+  }
+
+  // Top border for header row
+  .ag-header-row {
+    border-top: 1px solid #d0d0d0 !important;
+  }
+
+  // Top border for data rows
+  .ag-row {
+    border-top: 1px solid #d0d0d0 !important;
+  }
+
+  // Ensure the grid itself has borders
+  .ag-root-wrapper {
+    border: 1px solid #d0d0d0 !important;
+  }
 }
+
+// Actions cell and buttons - apply globally to all AG Grid instances
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  flex-wrap: wrap;
+}
+
+.ag-btn {
+  appearance: none;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.ag-edit {
+  background: var(--ion-color-primary);
+  color: white;
+}
+
+.ag-edit:hover {
+  background: var(--ion-color-primary-shade);
+  transform: translateY(-1px);
+}
+
+.ag-delete {
+  background: var(--ion-color-danger);
+  color: white;
+}
+
+.ag-delete:hover {
+  background: var(--ion-color-danger-shade);
+  transform: translateY(-1px);
+}
+
+.ag-navigate {
+  background: var(--ion-color-success);
+  color: white;
+}
+
+.ag-navigate:hover {
+  background: var(--ion-color-success-shade);
+  transform: translateY(-1px);
+}
+
+/* Common Page Container Styles */
+.page-list-container,
+.centers-list-container,
+.branches-list-container,
+.users-list-container,
+.staff-list-container,
+.pocs-list-container,
+.members-list-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  
+  h2 {
+    margin: 8px 0 16px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--ion-color-primary);
+  }
+}
+
+/* Common Empty State Styles */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ion-color-medium);
+
+  ion-icon {
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  p {
+    margin: 0;
+    font-size: 16px;
+  }
+}
+
 

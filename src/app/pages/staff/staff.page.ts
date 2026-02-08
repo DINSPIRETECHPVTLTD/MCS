@@ -15,8 +15,7 @@ import { POCData } from '../branch-dashboard/branch-dashboard.page';
 
 @Component({
   selector: 'app-staff',
-  templateUrl: './staff.page.html',
-  styleUrls: ['./staff.page.scss']
+  templateUrl: './staff.page.html'
 })
 export class StaffComponent implements OnInit, ViewWillEnter {
   staff: User[] = [];
@@ -24,6 +23,9 @@ export class StaffComponent implements OnInit, ViewWillEnter {
   rowData: User[] = [];
   columnDefs: ColDef[] = [];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
+  pagination: boolean = true;
+  paginationPageSize: number = 20;
+  paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   staffForm: FormGroup;
   showAddForm: boolean = false;
   isEditing: boolean = false;
@@ -118,8 +120,8 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         filter: 'agTextColumnFilter'
       },
       { headerName: 'Country', field: 'country', editable: false, width: 140, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.country || 'India') },
-      { headerName: 'Pin Code', field: 'pinCode', editable: false, width: 120, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.pinCode || p.data?.PinCode || '') },
-      { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.phoneNumber || p.data?.PhoneNumber || '') },
+      { headerName: 'Zip Code', field: 'zipCode', editable: false, width: 120, filter: 'agTextColumnFilter' },
+      { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter' },
       // keep actions column (edit/delete/save) at end
       {
         headerName: 'Actions', field: 'actions', width: 160, cellRenderer: (params: any) => {
@@ -127,7 +129,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
           container.className = 'actions-cell';
           container.innerHTML = `
             <button class="ag-btn ag-edit">Edit</button>
-            <button class="ag-btn ag-delete" style="margin-left:8px;">Delete</button>
+            <button class="ag-btn ag-delete">Delete</button>
           `;
           const editBtn = container.querySelector('.ag-edit');
           const deleteBtn = container.querySelector('.ag-delete');
@@ -294,7 +296,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
       }
       // zip
       if (this.filters.zip) {
-        list = list.filter(s => (s.pinCode||'').toString().includes(this.filters.zip));
+        list = list.filter(s => (s.zipCode||'').toString().includes(this.filters.zip));
       }
       // phone
       if (this.filters.phone) {

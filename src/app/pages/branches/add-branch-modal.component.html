@@ -84,8 +84,11 @@
       <ion-input
         formControlName="zipCode"
         placeholder="Enter zip/postal code"
-        type="text"
+        type="tel"
+        inputmode="numeric"
+        pattern="[0-9]*"
         maxlength="10"
+        (ionInput)="onNumericInput($event, 'zipCode')"
         required>
       </ion-input>
       <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
@@ -110,7 +113,10 @@
         formControlName="phoneNumber"
         placeholder="Enter 10-digit phone number"
         type="tel"
+        inputmode="numeric"
+        pattern="[0-9]*"
         maxlength="10"
+        (ionInput)="onNumericInput($event, 'phoneNumber')"
         required>
       </ion-input>
       <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>

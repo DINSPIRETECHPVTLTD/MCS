@@ -3,9 +3,9 @@
   (menuChange)="onMenuChange($event)"
   (branchChange)="onBranchChange($event)">
   <ion-content [fullscreen]="true" class="ion-padding">
-  <div class="content-container">
+  <div class="pocs-list-container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h1>Points of Contact (POCs)</h1>
+      <h2>Points of Contact (POCs)</h2>
       <ion-button (click)="openAddPocModal()" [disabled]="!selectedBranch">
         <ion-icon name="add-outline" slot="start"></ion-icon>
         Add POC
@@ -39,7 +39,8 @@
         [gridOptions]="gridOptions"
         [defaultColDef]="defaultColDef"
         [pagination]="pagination"
-        [paginationPageSize]="paginationPageSize">
+        [paginationPageSize]="paginationPageSize"
+        [paginationPageSizeSelector]="paginationPageSizeSelector">
       </ag-grid-angular>
     </div>
   </div>
