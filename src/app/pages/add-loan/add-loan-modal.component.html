@@ -1,0 +1,168 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Add Loan</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Selected Member Details (Read-only) -->
+  <ion-card class="member-details-card">
+    <ion-card-header>
+      <ion-card-title>Selected Member</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="member-details-grid">
+        <div class="detail-item">
+          <div class="detail-label">Member ID:</div>
+          <span>{{ selectedMember.memberId || selectedMember.id || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">First Name:</div>
+          <span>{{ selectedMember.firstName || 'N/A' }}</span>
+        </div>
+        <div class="detail-item" *ngIf="selectedMember.middleName">
+          <div class="detail-label">Middle Name:</div>
+          <span>{{ selectedMember.middleName }}</span>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Last Name:</div>
+          <span>{{ selectedMember.lastName || 'N/A' }}</span>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Age:</div>
+          <span>{{ selectedMember.age || 'N/A' }}</span>
+        </div>
+        <div class="detail-item" *ngIf="selectedMember.phone || selectedMember.phoneNumber">
+          <div class="detail-label">Phone:</div>
+          <span>{{ selectedMember.phone || selectedMember.phoneNumber }}</span>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Loan Details Form -->
+  <form class="loan-details-form">
+    <h3 class="detail-section-title">Loan Details</h3>
+    <div class="loan-form-grid">
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Loan Code *</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.loanCode"
+          name="loanCode"
+          placeholder="Enter loan code"
+          type="text">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Member ID</ion-label>
+        <ion-input
+          [value]="loanForm.memberId"
+          readonly
+          type="text">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Loan Amount *</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.loanAmount"
+          name="loanAmount"
+          placeholder="0"
+          type="number"
+          min="0"
+          step="0.01"
+          (ionInput)="onNumericInput($event, 'loanAmount')">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Interest Amount</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.interestAmount"
+          name="interestAmount"
+          placeholder="0"
+          type="number"
+          min="0"
+          step="0.01"
+          (ionInput)="onNumericInput($event, 'interestAmount')">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Processing Fee</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.processingFee"
+          name="processingFee"
+          placeholder="0"
+          type="number"
+          min="0"
+          step="0.01"
+          (ionInput)="onNumericInput($event, 'processingFee')">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Insurance Fee</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.insuranceFee"
+          name="insuranceFee"
+          placeholder="0"
+          type="number"
+          min="0"
+          step="0.01"
+          (ionInput)="onNumericInput($event, 'insuranceFee')">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field checkbox-field">
+        <ion-checkbox
+          [(ngModel)]="loanForm.isSavingEnabled"
+          name="isSavingEnabled">
+        </ion-checkbox>
+        <ion-label>Enable Saving</ion-label>
+      </ion-item>
+
+      <ion-item class="loan-form-field" *ngIf="loanForm.isSavingEnabled">
+        <ion-label position="stacked">Saving Amount</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.savingAmount"
+          name="savingAmount"
+          placeholder="0"
+          type="number"
+          min="0"
+          step="0.01"
+          (ionInput)="onNumericInput($event, 'savingAmount')">
+        </ion-input>
+      </ion-item>
+    </div>
+  </form>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <div class="action-row footer-row">
+      <ion-button
+        type="button"
+        (click)="createLoan()"
+        [disabled]="!isLoanFormValid() || isCreatingLoan"
+        class="save-button">
+        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+        Save Loan
+      </ion-button>
+
+      <ion-button
+        fill="outline"
+        type="button"
+        (click)="closeModal()"
+        class="cancel-button">
+        Cancel
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>
