@@ -69,6 +69,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/manage-loan/manage-loan.module').then(m => m.ManageLoanPageModule)
   },
   {
+    path: 'loan-detail/:loanId',
+    loadChildren: () => import('./pages/loan-detail/loan-detail.module').then(m => m.LoanDetailPageModule)
+  },
+  {
     path: 'preclose-loan',
     loadChildren: () => import('./pages/preclose-loan/preclose-loan.module').then(m => m.PrecloseLoanPageModule)
   },

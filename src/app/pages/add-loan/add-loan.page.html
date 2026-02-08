@@ -5,11 +5,11 @@
   <ion-content [fullscreen]="true" class="ion-padding">
   <div class="content-container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h1>Add Loan</h1>
+      <h1>{{ createdLoan ? 'Loan Detail' : 'Add Loan' }}</h1>
     </div>
     
-    <!-- Step 1: Search Member -->
-    <ion-card class="step-card">
+    <!-- Step 1: Search Member (hidden when loan detail is shown) -->
+    <ion-card *ngIf="!createdLoan" class="step-card">
       <ion-card-header (click)="toggleStep(1)" class="step-header">
         <div class="step-header-content">
           <ion-card-title>
@@ -21,24 +21,36 @@
       </ion-card-header>
       <ion-card-content *ngIf="step1Expanded">
         <div class="search-section">
-          <div class="search-input-group">
+          <div class="search-fields">
             <ion-input
-              [(ngModel)]="searchTerm"
-              placeholder="Search by First Name, Last Name, Middle Name, or Member ID"
+              [(ngModel)]="searchFirstName"
+              placeholder="First Name"
+              (keypress)="onSearchKeyPress($event)"
+              class="search-input">
+            </ion-input>
+            <ion-input
+              [(ngModel)]="searchLastName"
+              placeholder="Last Name"
+              (keypress)="onSearchKeyPress($event)"
+              class="search-input">
+            </ion-input>
+            <ion-input
+              [(ngModel)]="searchMemberId"
+              placeholder="Member ID"
               (keypress)="onSearchKeyPress($event)"
               class="search-input">
             </ion-input>
             <ion-button 
               (click)="searchMembers()" 
-              [disabled]="isSearching || !searchTerm || searchTerm.trim() === ''"
+              [disabled]="isSearching || (!searchFirstName.trim() && !searchLastName.trim() && !searchMemberId.trim())"
               class="search-button">
               <ion-icon name="search-outline" slot="start"></ion-icon>
               Search
             </ion-button>
           </div>
           
-          <!-- AG Grid for search results -->
-          <div *ngIf="rowData.length > 0" class="grid-container">
+          <!-- Member grid: hidden after selecting a member; only show when results exist and no selection -->
+          <div *ngIf="showMemberGrid && rowData.length > 0 && !selectedMember" class="grid-container">
             <ag-grid-angular
               class="ag-theme-alpine"
               style="width: 100%; height: 400px;"
@@ -48,24 +60,27 @@
               [defaultColDef]="defaultColDef"
               [pagination]="pagination"
               [paginationPageSize]="paginationPageSize"
-              [rowSelection]="rowSelection"
-              (gridReady)="onGridReady($event)"
-              (selectionChanged)="onSelectionChanged()">
+              [context]="gridContext"
+              (gridReady)="onGridReady($event)">
             </ag-grid-angular>
           </div>
           
           <div *ngIf="rowData.length === 0 && !isSearching" class="empty-state">
             <ion-icon name="search-outline" size="large"></ion-icon>
-            <p>Enter search criteria and click Search to find members</p>
+            <p>Search by First Name, Last Name, or Member ID and click Search</p>
           </div>
         </div>
       </ion-card-content>
     </ion-card>
 
-    <!-- Selected Member Details -->
-    <ion-card *ngIf="selectedMember" class="member-details-card">
-      <ion-card-header>
+    <!-- Selected Member Details (shown after selecting from grid; hidden when loan detail is shown) -->
+    <ion-card *ngIf="selectedMember && !createdLoan" class="member-details-card">
+      <ion-card-header class="member-details-header">
         <ion-card-title>Selected Member Details</ion-card-title>
+        <ion-button fill="clear" size="small" (click)="clearSelectedMember()" class="change-member-btn">
+          <ion-icon name="arrow-undo-outline"></ion-icon>
+          Change Member
+        </ion-button>
       </ion-card-header>
       <ion-card-content>
         <div class="member-details-grid">
@@ -117,8 +132,8 @@
       </ion-card-content>
     </ion-card>
 
-    <!-- Step 2: Loan Details -->
-    <ion-card class="step-card">
+    <!-- Step 2: Loan Details (hidden when loan detail is shown) -->
+    <ion-card *ngIf="!createdLoan" class="step-card">
       <ion-card-header (click)="toggleStep(2)" class="step-header">
         <div class="step-header-content">
           <ion-card-title>
@@ -129,26 +144,211 @@
         </div>
       </ion-card-header>
       <ion-card-content *ngIf="step2Expanded">
-        <p>Loan details form will be implemented here.</p>
-        <!-- TODO: Add loan details form fields -->
+        <div *ngIf="!selectedMember" class="loan-step-message">
+          <ion-icon name="person-outline" size="large"></ion-icon>
+          <p>Select a member in Step 1 to enter loan details.</p>
+        </div>
+        <form *ngIf="selectedMember" class="loan-details-form">
+          <h3 class="detail-section-title">Loan Details</h3>
+          <div class="loan-form-grid">
+            <div class="loan-form-field">
+              <ion-label position="stacked">Loan ID</ion-label>
+              <ion-input
+                [value]="loanId ?? 'Auto (on save)'"
+                readonly
+                name="loanId"
+                type="text">
+              </ion-input>
+            </div>
+            <div class="loan-form-field">
+              <ion-label position="stacked">Loan Code</ion-label>
+              <ion-input
+                [(ngModel)]="loanForm.loanCode"
+                name="loanCode"
+                placeholder="Enter loan code"
+                type="text">
+              </ion-input>
+            </div>
+            <div class="loan-form-field">
+              <ion-label position="stacked">Member ID</ion-label>
+              <ion-input
+                [value]="loanForm.memberId"
+                readonly
+                placeholder="From selected member"
+                type="text">
+              </ion-input>
+            </div>
+            <div class="loan-form-field">
+              <ion-label position="stacked">Loan Amount</ion-label>
+              <ion-input
+                [(ngModel)]="loanForm.loanAmount"
+                name="loanAmount"
+                placeholder="0"
+                type="number"
+                min="0"
+                step="0.01">
+              </ion-input>
+            </div>
+            <div class="loan-form-field">
+              <ion-label position="stacked">Interest Amount</ion-label>
+              <ion-input
+                [(ngModel)]="loanForm.interestAmount"
+                name="interestAmount"
+                placeholder="0"
+                type="number"
+                min="0"
+                step="0.01">
+              </ion-input>
+            </div>
+            <div class="loan-form-field">
+              <ion-label position="stacked">Processing Fee</ion-label>
+              <ion-input
+                [(ngModel)]="loanForm.processingFee"
+                name="processingFee"
+                placeholder="0"
+                type="number"
+                min="0"
+                step="0.01">
+              </ion-input>
+            </div>
+            <div class="loan-form-field">
+              <ion-label position="stacked">Insurance Fee</ion-label>
+              <ion-input
+                [(ngModel)]="loanForm.insuranceFee"
+                name="insuranceFee"
+                placeholder="0"
+                type="number"
+                min="0"
+                step="0.01">
+              </ion-input>
+            </div>
+            <div class="loan-form-field loan-form-field-toggle">
+              <ion-label position="stacked">Saving Enabled</ion-label>
+              <ion-toggle
+                [(ngModel)]="loanForm.isSavingEnabled"
+                name="isSavingEnabled">
+              </ion-toggle>
+            </div>
+            <div class="loan-form-field">
+              <ion-label position="stacked">Saving Amount</ion-label>
+              <ion-input
+                [(ngModel)]="loanForm.savingAmount"
+                name="savingAmount"
+                placeholder="0"
+                type="number"
+                min="0"
+                step="0.01"
+                [disabled]="!loanForm.isSavingEnabled">
+              </ion-input>
+            </div>
+          </div>
+          <div class="loan-form-actions">
+            <ion-button (click)="createLoan()" [disabled]="isCreatingLoan || !isLoanFormValid()" type="button">
+              <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+              Create Loan
+            </ion-button>
+          </div>
+        </form>
       </ion-card-content>
     </ion-card>
 
-    <!-- Step 3: Review & Submit -->
-    <ion-card class="step-card">
-      <ion-card-header (click)="toggleStep(3)" class="step-header">
-        <div class="step-header-content">
-          <ion-card-title>
-            <ion-icon [name]="step3Expanded ? 'chevron-down-outline' : 'chevron-forward-outline'" class="step-icon"></ion-icon>
-            Step 3: Review & Submit
-          </ion-card-title>
-        </div>
-      </ion-card-header>
-      <ion-card-content *ngIf="step3Expanded">
-        <p>Review and submit form will be implemented here.</p>
-        <!-- TODO: Add review and submit section -->
-      </ion-card-content>
-    </ion-card>
+    <!-- Loan Detail (after create): loan details + member details -->
+    <ng-container *ngIf="createdLoan">
+      <ion-card class="loan-detail-card">
+        <ion-card-header class="loan-detail-header">
+          <ion-card-title>Loan Details</ion-card-title>
+          <ion-button fill="outline" size="small" (click)="goBackToAddLoan()">
+            <ion-icon name="add-circle-outline"></ion-icon>
+            Add Another Loan
+          </ion-button>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="loan-details-grid">
+            <div class="detail-item">
+              <div class="detail-label">Loan ID</div>
+              <span>{{ createdLoan.loanId ?? 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Loan Code</div>
+              <span>{{ createdLoan.loanCode || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Member ID</div>
+              <span>{{ createdLoan.memberId }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Loan Amount</div>
+              <span>{{ createdLoan.loanAmount | number:'1.2-2' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Interest Amount</div>
+              <span>{{ createdLoan.interestAmount | number:'1.2-2' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Processing Fee</div>
+              <span>{{ createdLoan.processingFee | number:'1.2-2' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Insurance Fee</div>
+              <span>{{ createdLoan.insuranceFee | number:'1.2-2' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Saving Enabled</div>
+              <span>{{ createdLoan.isSavingEnabled ? 'Yes' : 'No' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Saving Amount</div>
+              <span>{{ createdLoan.savingAmount | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      <ion-card *ngIf="selectedMember" class="member-details-card">
+        <ion-card-header>
+          <ion-card-title>Member Details</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="member-details-grid">
+            <div class="detail-item">
+              <div class="detail-label">Member ID</div>
+              <span>{{ selectedMember.memberId || selectedMember.id || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">First Name</div>
+              <span>{{ selectedMember.firstName || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Middle Name</div>
+              <span>{{ selectedMember.middleName || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Last Name</div>
+              <span>{{ selectedMember.lastName || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Age</div>
+              <span>{{ selectedMember.age || 'N/A' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedMember.phone || selectedMember.phoneNumber">
+              <div class="detail-label">Phone</div>
+              <span>{{ selectedMember.phone || selectedMember.phoneNumber }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedMember.email">
+              <div class="detail-label">Email</div>
+              <span>{{ selectedMember.email }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedMember.address || selectedMember.address1 || selectedMember.address2">
+              <div class="detail-label">Address</div>
+              <span>{{ selectedMember.address || selectedMember.address1 || '' }}{{ selectedMember.address2 ? (', ' + selectedMember.address2) : '' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedMember.city">
+              <div class="detail-label">City</div>
+              <span>{{ selectedMember.city }}</span>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </ng-container>
   </div>
   </ion-content>
 </app-header-menu>

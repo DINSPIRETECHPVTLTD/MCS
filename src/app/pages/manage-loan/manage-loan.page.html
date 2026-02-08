@@ -2,30 +2,47 @@
   [activeMenu]="activeMenu"
   (menuChange)="onMenuChange($event)"
   (branchChange)="onBranchChange($event)">
-  <ion-content [fullscreen]="true" class="ion-padding">
-  <div class="content-container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h1>Manage Loan</h1>
+  <ion-content [fullscreen]="true">
+  <div class="loan-list-container">
+    <div class="loan-filter" style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
+      <div style="flex: 1; display: flex; align-items: center; gap: 12px;">
+        <h2 style="margin: 0">All Loans</h2>
+        <ion-badge *ngIf="selectedBranch" color="primary">{{ selectedBranch.name }}</ion-badge>
+      </div>
     </div>
-    
-    <div *ngIf="loans.length === 0" class="empty-state">
+
+    <div *ngIf="isLoading" class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading loans...</p>
+    </div>
+
+    <div *ngIf="!isLoading && getCurrentBranchId() == null" class="empty-state">
+      <ion-icon name="business-outline" size="large"></ion-icon>
+      <p>Select a branch</p>
+      <p class="empty-hint">Choose a branch from the header to view its loans.</p>
+    </div>
+
+    <div *ngIf="!isLoading && getCurrentBranchId() != null && loans.length === 0" class="empty-state">
       <ion-icon name="document-text-outline" size="large"></ion-icon>
       <p>No loans found</p>
-      <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
-        Loans will be displayed here
-      </p>
+      <p class="empty-hint">There are no loans for this branch.</p>
     </div>
-    
-    <ion-list *ngIf="loans.length > 0">
-      <ion-item *ngFor="let loan of loans" class="loan-item">
-        <ion-label>
-          <h2>{{ loan.loanNumber || 'Loan #' + loan.id }}</h2>
-          <p *ngIf="loan.memberName">Member: {{ loan.memberName }}</p>
-          <p *ngIf="loan.amount">Amount: {{ loan.amount }}</p>
-          <p *ngIf="loan.status">Status: {{ loan.status }}</p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
+
+    <div *ngIf="!isLoading && loans.length > 0" class="ag-grid-wrapper">
+      <ag-grid-angular
+        class="ag-theme-alpine"
+        style="width: 100%; height: 60vh;"
+        [rowData]="rowData"
+        [columnDefs]="columnDefs"
+        [gridOptions]="gridOptions"
+        [defaultColDef]="defaultColDef"
+        [pagination]="pagination"
+        [paginationPageSize]="paginationPageSize"
+        [paginationPageSizeSelector]="paginationPageSizeSelector"
+        [context]="gridContext"
+        (gridReady)="onGridReady($event)">
+      </ag-grid-angular>
+    </div>
   </div>
   </ion-content>
 </app-header-menu>

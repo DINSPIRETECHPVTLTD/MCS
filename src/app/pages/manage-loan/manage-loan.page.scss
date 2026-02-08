@@ -1,7 +1,22 @@
-.content-container {
+.loan-list-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
+}
+
+.loan-filter {
+  h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ion-color-dark);
+  }
+}
+
+.ag-grid-wrapper {
+  border: 1px solid var(--ion-color-medium);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 h1 {
@@ -11,21 +26,61 @@ h1 {
   color: var(--ion-color-dark);
 }
 
-.empty-state {
+.loading-state {
   text-align: center;
   padding: 40px 20px;
   color: var(--ion-color-medium);
-  
-  ion-icon {
-    font-size: 64px;
+
+  ion-spinner {
     margin-bottom: 16px;
   }
-  
+
   p {
     margin: 8px 0;
   }
 }
 
-.loan-item {
-  margin-bottom: 8px;
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ion-color-medium);
+
+  ion-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 8px 0;
+  }
+
+  .empty-hint {
+    font-size: 12px;
+    margin-top: 8px;
+    color: var(--ion-color-medium);
+  }
+}
+
+// AG Grid theme adjustments (same as staff/add-loan)
+::ng-deep .ag-theme-alpine {
+  --ag-font-family: inherit;
+  --ag-font-size: 14px;
+
+  .ag-header-cell {
+    font-weight: 600;
+  }
+
+  .ag-view-btn {
+    padding: 4px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    background: var(--ion-color-primary);
+    color: var(--ion-color-primary-contrast);
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
 }

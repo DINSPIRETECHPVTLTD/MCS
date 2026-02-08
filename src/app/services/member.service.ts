@@ -281,6 +281,35 @@ export class MemberService {
   }
 
   /**
+   * Search members by first name, last name, and/or member ID.
+   * Builds a combined term for backend or filters client-side.
+   */
+  searchMembersByCriteria(criteria: { firstName?: string; lastName?: string; memberId?: string }): Observable<Member[]> {
+    const { firstName = '', lastName = '', memberId = '' } = criteria;
+    const first = (firstName ?? '').trim();
+    const last = (lastName ?? '').trim();
+    const id = (memberId ?? '').trim();
+
+    if (!first && !last && !id) return of([]);
+
+    const term = [first, last, id].filter(Boolean).join(' ');
+    return this.searchMembers(term).pipe(
+      map((members) => {
+        if (!first && !last) return members;
+        const qFirst = first.toLowerCase();
+        const qLast = last.toLowerCase();
+        return members.filter((m) => {
+          const mFirst = String(m?.firstName ?? '').toLowerCase();
+          const mLast = String(m?.lastName ?? '').toLowerCase();
+          const matchFirst = !qFirst || mFirst.includes(qFirst);
+          const matchLast = !qLast || mLast.includes(qLast);
+          return matchFirst && matchLast;
+        });
+      })
+    );
+  }
+
+  /**
    * Get members using query params (some backends prefer this over /branch routes)
    * Example: GET /api/Members?branchId=1&centerId=2
    */

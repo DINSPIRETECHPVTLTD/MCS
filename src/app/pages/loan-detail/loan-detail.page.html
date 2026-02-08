@@ -1,0 +1,136 @@
+<app-header-menu
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
+  <ion-content [fullscreen]="true" class="ion-padding">
+    <div class="content-container">
+      <div class="page-header">
+        <div class="header-row">
+          <ion-button fill="clear" (click)="goBack()" class="back-btn">
+            <ion-icon name="arrow-back-outline"></ion-icon>
+            Back to Manage Loan
+          </ion-button>
+        </div>
+        <h1>Manage Loan Details</h1>
+      </div>
+
+      <div *ngIf="isLoading" class="loading-state">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Loading loan details...</p>
+      </div>
+
+      <div *ngIf="loadError && !isLoading" class="error-state">
+        <ion-icon name="alert-circle-outline" size="large"></ion-icon>
+        <p>{{ loadError }}</p>
+        <ion-button (click)="goBack()">Back to Manage Loan</ion-button>
+      </div>
+
+      <ng-container *ngIf="!isLoading && !loadError && loan">
+        <ion-card class="detail-card loan-detail-card">
+          <ion-card-header>
+            <ion-card-title>Loan Information</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <div class="details-grid">
+              <div class="detail-item">
+                <div class="detail-label">Loan ID</div>
+                <span>{{ loan.loanId ?? 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Loan Code</div>
+                <span>{{ loan.loanCode || 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Member ID</div>
+                <span>{{ loan.memberId }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Loan Amount</div>
+                <span>{{ loan.loanAmount | number:'1.2-2' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Interest Amount</div>
+                <span>{{ loan.interestAmount | number:'1.2-2' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Processing Fee</div>
+                <span>{{ loan.processingFee | number:'1.2-2' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Insurance Fee</div>
+                <span>{{ loan.insuranceFee | number:'1.2-2' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Saving Enabled</div>
+                <span>{{ loan.isSavingEnabled ? 'Yes' : 'No' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Saving Amount</div>
+                <span>{{ loan.savingAmount | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card *ngIf="member" class="detail-card member-detail-card">
+          <ion-card-header>
+            <ion-card-title>Member Information</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <div class="details-grid">
+              <div class="detail-item">
+                <div class="detail-label">Member ID</div>
+                <span>{{ member.memberId || member.id || 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">First Name</div>
+                <span>{{ member.firstName || 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Middle Name</div>
+                <span>{{ member.middleName || 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Last Name</div>
+                <span>{{ member.lastName || 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Age</div>
+                <span>{{ member.age }}</span>
+              </div>
+              <div class="detail-item" *ngIf="member.phoneNumber || member.phone">
+                <div class="detail-label">Phone</div>
+                <span>{{ member.phoneNumber || member.phone }}</span>
+              </div>
+              <div class="detail-item" *ngIf="member.email">
+                <div class="detail-label">Email</div>
+                <span>{{ member.email }}</span>
+              </div>
+              <div class="detail-item" *ngIf="member.address1 || member.address2 || member.address">
+                <div class="detail-label">Address</div>
+                <span>{{ member.address || member.address1 || '' }}{{ member.address2 ? ', ' + member.address2 : '' }}</span>
+              </div>
+              <div class="detail-item" *ngIf="member.city">
+                <div class="detail-label">City</div>
+                <span>{{ member.city }}</span>
+              </div>
+              <div class="detail-item" *ngIf="member.dateOfBirth || member.dob">
+                <div class="detail-label">Date of Birth</div>
+                <span>{{ member.dateOfBirth || member.dob }}</span>
+              </div>
+              <div class="detail-item" *ngIf="member.gender">
+                <div class="detail-label">Gender</div>
+                <span>{{ member.gender }}</span>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <div *ngIf="!member && loan?.memberId" class="member-unavailable">
+          <ion-icon name="person-outline"></ion-icon>
+          <p>Member details could not be loaded for Member ID {{ loan.memberId }}</p>
+        </div>
+      </ng-container>
+    </div>
+  </ion-content>
+</app-header-menu>
