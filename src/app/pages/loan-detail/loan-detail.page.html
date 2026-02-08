@@ -1,6 +1,7 @@
 <app-header-menu
   [activeMenu]="activeMenu"
-  (menuChange)="onMenuChange($event)">
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
   <ion-content [fullscreen]="true" class="ion-padding">
     <div class="content-container">
       <div class="page-header">

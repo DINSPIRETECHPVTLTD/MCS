@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -6,6 +7,7 @@ import { LoanService } from '../../services/loan.service';
 import { MemberService } from '../../services/member.service';
 import { Loan } from '../../models/loan.models';
 import { Member } from '../../models/member.models';
+import { Branch } from '../../models/branch.models';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -25,6 +27,7 @@ export class LoanDetailComponent implements OnInit, ViewWillEnter {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private ngZone: NgZone,
     private route: ActivatedRoute,
     private loanService: LoanService,
     private memberService: MemberService,
@@ -97,10 +100,24 @@ export class LoanDetailComponent implements OnInit, ViewWillEnter {
   }
 
   goBack(): void {
-    this.router.navigate(['/manage-loan']);
+    this.ngZone.run(() => {
+      this.router.navigateByUrl('/manage-loan', { replaceUrl: true })
+        .then(success => {
+          if (!success) {
+            window.location.href = '/manage-loan';
+          }
+        })
+        .catch(() => {
+          window.location.href = '/manage-loan';
+        });
+    });
   }
 
   onMenuChange(menu: string): void {
     this.activeMenu = menu;
+  }
+
+  onBranchChange(_branch: Branch): void {
+    // Header may emit when branch is selected; no-op on this page
   }
 }

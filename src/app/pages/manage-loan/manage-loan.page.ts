@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -25,7 +26,19 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
   columnDefs: ColDef[] = [
     { headerName: 'Loan ID', valueGetter: (p) => (p.data as Loan)?.loanId ?? '', width: 100, filter: 'agNumberColumnFilter', sortable: true },
     { headerName: 'Loan Code', field: 'loanCode', width: 120, filter: 'agTextColumnFilter', sortable: true },
-    { headerName: 'Member ID', field: 'memberId', width: 110, filter: 'agNumberColumnFilter', sortable: true },
+    {
+      headerName: 'Member Name',
+      width: 180,
+      filter: 'agTextColumnFilter',
+      sortable: true,
+      valueGetter: (p) => {
+        const d = p.data as Loan;
+        const first = (d?.memberFirstName ?? d?.memberName ?? '').toString().trim();
+        const last = (d?.memberLastName ?? '').toString().trim();
+        const full = [first, last].filter(Boolean).join(' ').trim();
+        return full || (d?.memberId != null ? `Member ${d.memberId}` : '');
+      }
+    },
     { headerName: 'Loan Amount', valueGetter: (p) => (p.data as Loan)?.loanAmount ?? 0, width: 130, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
     { headerName: 'Interest', valueGetter: (p) => (p.data as Loan)?.interestAmount ?? 0, width: 110, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
     { headerName: 'Processing Fee', valueGetter: (p) => (p.data as Loan)?.processingFee ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
@@ -41,8 +54,13 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
         const btn = document.createElement('button');
         btn.className = 'ag-btn ag-view-btn';
         btn.textContent = 'View';
+        btn.type = 'button';
         const comp = (params.context as { component?: ManageLoanComponent })?.component ?? this;
-        btn.addEventListener('click', () => comp.viewLoan(params.data));
+        btn.addEventListener('click', (e: Event) => {
+          e.preventDefault();
+          e.stopPropagation();
+          comp.viewLoan(params.data);
+        });
         return btn;
       }
     }
@@ -60,6 +78,7 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private ngZone: NgZone,
     private userContext: UserContextService,
     private loanService: LoanService,
     private toastController: ToastController,
@@ -108,14 +127,18 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
   viewLoan(loan: Loan): void {
     const id = loan.loanId ?? (loan as { id?: number }).id;
     if (id != null) {
-      this.router.navigate(['/loan-detail', id]);
+      this.ngZone.run(() => {
+        this.router.navigate(['/loan-detail', String(id)], { replaceUrl: true });
+      });
     } else {
-      this.toastController.create({
-        message: 'Cannot view: loan ID not available',
-        duration: 2000,
-        color: 'warning',
-        position: 'top'
-      }).then(toast => toast.present());
+      this.ngZone.run(() => {
+        this.toastController.create({
+          message: 'Cannot view: loan ID not available',
+          duration: 2000,
+          color: 'warning',
+          position: 'top'
+        }).then(toast => toast.present());
+      });
     }
   }
 
