@@ -219,6 +219,13 @@ export class HeaderMenuComponent implements OnInit {
       this.activeMenu = 'Branches';
       this.menuChange.emit('Branches');
       setTimeout(() => this.navigateToRoute('/branches'), 0);
+    } else if (menu === 'Master Data' && this.isOrgOwner) {
+      this.showUsersSubmenu = false;
+      this.showBranchesSubmenu = false;
+      this.showLoanSubmenu = false;
+      this.activeMenu = 'Master Data';
+      this.menuChange.emit('Master Data');
+      setTimeout(() => this.navigateToRoute('/master-data'), 0);
     } else if (menu === 'Loan') {
       // Toggle Loan submenu
       this.showUsersSubmenu = false;
@@ -360,6 +367,8 @@ export class HeaderMenuComponent implements OnInit {
       route = '/preclose-loan';
     } else if (submenu === 'Recovery Posting') {
       route = '/recovery-posting';
+    } else if (submenu === 'Master Data') {
+      route = '/master-data';
     }
     
     if (route) {

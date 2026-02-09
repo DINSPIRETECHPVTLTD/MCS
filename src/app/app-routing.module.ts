@@ -36,6 +36,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/branches/branches.module').then(m => m.BranchesPageModule)
   },
   {
+    path: 'master-data',
+    loadChildren: () => import('./pages/master-data/master-data.module').then(m => m.MasterDataPageModule)
+  },
+  {
     path: 'branch-dashboard',
     redirectTo: 'home',
     pathMatch: 'full'

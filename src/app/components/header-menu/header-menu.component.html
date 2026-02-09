@@ -65,6 +65,12 @@
         (click)="setActiveMenu('Branches')">
         Branches
       </button>
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Master Data'"
+        (click)="setActiveMenu('Master Data')">
+        Master Data
+      </button>
     </nav>
 
     <!-- Navigation Menu for Branch Mode (branch admin/staff, or owner viewing a branch) -->

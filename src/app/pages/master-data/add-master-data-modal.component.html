@@ -1,0 +1,53 @@
+<ion-header [translucent]="false">
+  <ion-toolbar>
+    <ion-title>{{ isEditing ? 'Edit Master Lookup' : 'Add Master Lookup' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <ion-item [class.ion-invalid]="isFieldInvalid('lookupKey')">
+      <ion-label position="stacked">Lookup Key (Category) <span class="required">*</span></ion-label>
+      <ion-select formControlName="lookupKey" placeholder="Select or enter category" interface="popover">
+        <ion-select-option *ngFor="let opt of lookupKeyOptions" [value]="opt.value">{{ opt.label }}</ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('lookupKey') }}</ion-note>
+    </ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('lookupCode')">
+      <ion-label position="stacked">Lookup Code <span class="required">*</span></ion-label>
+      <ion-input formControlName="lookupCode" placeholder="e.g. LT_12, MONTHLY" type="text"></ion-input>
+      <ion-note slot="error">{{ getFieldError('lookupCode') }}</ion-note>
+    </ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('lookupValue')">
+      <ion-label position="stacked">Lookup Value (Display text) <span class="required">*</span></ion-label>
+      <ion-input formControlName="lookupValue" placeholder="Display text" type="text"></ion-input>
+      <ion-note slot="error">{{ getFieldError('lookupValue') }}</ion-note>
+    </ion-item>
+    <ion-item>
+      <ion-label position="stacked">Numeric Value</ion-label>
+      <ion-input formControlName="numericValue" placeholder="Optional (e.g. months, %)" type="number" step="any"></ion-input>
+    </ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('sortOrder')">
+      <ion-label position="stacked">Sort Order <span class="required">*</span></ion-label>
+      <ion-input formControlName="sortOrder" type="number" min="0" placeholder="0"></ion-input>
+      <ion-note slot="error">{{ getFieldError('sortOrder') }}</ion-note>
+    </ion-item>
+    <ion-item>
+      <ion-label position="stacked">Active</ion-label>
+      <ion-toggle formControlName="isActive"></ion-toggle>
+    </ion-item>
+    <ion-item>
+      <ion-label position="stacked">Description</ion-label>
+      <ion-textarea formControlName="description" placeholder="Optional description" rows="3"></ion-textarea>
+    </ion-item>
+    <div class="form-actions">
+      <ion-button type="button" fill="outline" (click)="closeModal()">Cancel</ion-button>
+      <ion-button type="submit">{{ isEditing ? 'Update' : 'Save' }}</ion-button>
+    </div>
+  </form>
+</ion-content>
