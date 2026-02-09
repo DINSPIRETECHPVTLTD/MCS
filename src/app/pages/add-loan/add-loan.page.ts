@@ -1,53 +1,29 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
-import { ViewWillEnter } from '@ionic/angular';
+import { ModalController, ToastController, LoadingController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { MemberService } from '../../services/member.service';
 import { Member } from '../../models/member.models';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
-import { ToastController, LoadingController } from '@ionic/angular';
 import { Branch } from '../../models/branch.models';
-import { Loan, CreateLoanRequest } from '../../models/loan.models';
-import { LoanService } from '../../services/loan.service';
+import { AddLoanModalComponent } from './add-loan-modal.component';
 
 @Component({
   selector: 'app-add-loan',
   templateUrl: './add-loan.page.html',
   styleUrls: ['./add-loan.page.scss']
 })
-export class AddLoanComponent implements OnInit, ViewWillEnter {
+export class AddLoanComponent implements OnInit {
   activeMenu: string = 'Add Loan';
-  
-  // Step management
-  step1Expanded: boolean = true;
-  step2Expanded: boolean = false;
   
   // Member search (first name, last name, member ID)
   searchFirstName: string = '';
   searchLastName: string = '';
   searchMemberId: string = '';
   searchResults: Member[] = [];
-  selectedMember: Member | null = null;
   isSearching: boolean = false;
-  /** When true, grid is visible; after selecting a member, grid is hidden and details shown */
   showMemberGrid: boolean = false;
-
-  // Loan details form (Step 2)
-  loanId: number | null = null; // set after save; null when adding
-  isCreatingLoan: boolean = false;
-  /** Set after successful create; shows loan detail view with loan + member details */
-  createdLoan: Loan | null = null;
-  loanForm: CreateLoanRequest = {
-    loanCode: '',
-    memberId: 0,
-    loanAmount: 0,
-    interestAmount: 0,
-    processingFee: 0,
-    insuranceFee: 0,
-    isSavingEnabled: false,
-    savingAmount: 0
-  };
   
   // AG Grid configuration
   rowData: Member[] = [];
@@ -117,20 +93,13 @@ export class AddLoanComponent implements OnInit, ViewWillEnter {
     private authService: AuthService,
     private router: Router,
     private memberService: MemberService,
-    private loanService: LoanService,
     private toastController: ToastController,
     private loadingController: LoadingController,
+    private modalController: ModalController,
     private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
-    if (!this.authService.isAuthenticated()) {
-      this.router.navigate(['/login']);
-      return;
-    }
-  }
-
-  ionViewWillEnter(): void {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
@@ -143,14 +112,6 @@ export class AddLoanComponent implements OnInit, ViewWillEnter {
 
   onBranchChange(_branch: Branch): void {
     // Handle branch change if needed
-  }
-
-  toggleStep(step: number): void {
-    if (step === 1) {
-      this.step1Expanded = !this.step1Expanded;
-    } else if (step === 2) {
-      this.step2Expanded = !this.step2Expanded;
-    }
   }
 
   async searchMembers(): Promise<void> {
@@ -184,7 +145,6 @@ export class AddLoanComponent implements OnInit, ViewWillEnter {
         this.searchResults = members;
         this.rowData = members;
         this.showMemberGrid = true;
-        this.selectedMember = null;
         loading.dismiss();
         this.isSearching = false;
 
@@ -213,21 +173,28 @@ export class AddLoanComponent implements OnInit, ViewWillEnter {
     });
   }
 
-  /** Called when user clicks Select on a row; hides grid and shows member details */
-  selectMemberFromGrid(member: Member): void {
-    this.selectedMember = member;
-    this.showMemberGrid = false;
-    this.step1Expanded = false;
-    this.step2Expanded = true;
-    this.setLoanMemberId();
-    this.cdr.detectChanges(); // run change detection (click came from AG Grid outside Angular zone)
-  }
+  /** Called when user clicks Select on a row; opens loan modal */
+  async selectMemberFromGrid(member: Member): Promise<void> {
+    const modal = await this.modalController.create({
+      component: AddLoanModalComponent,
+      componentProps: {
+        selectedMember: member
+      },
+      cssClass: 'loan-modal'
+    });
 
-  /** Sync loan form MemberId from selected member */
-  private setLoanMemberId(): void {
-    if (this.selectedMember) {
-      const id = this.selectedMember.memberId ?? this.selectedMember.id;
-      this.loanForm.memberId = id != null ? Number(id) : 0;
+    await modal.present();
+    
+    const { data, role } = await modal.onWillDismiss();
+    
+    if (role === 'success' && data && data.reset) {
+      // Reset to initial search state
+      this.showMemberGrid = false;
+      this.rowData = [];
+      this.searchFirstName = '';
+      this.searchLastName = '';
+      this.searchMemberId = '';
+      this.cdr.detectChanges();
     }
   }
 
@@ -246,81 +213,5 @@ export class AddLoanComponent implements OnInit, ViewWillEnter {
     if (event.key === 'Enter') {
       this.searchMembers();
     }
-  }
-
-  /** Clear selected member and show grid again */
-  clearSelectedMember(): void {
-    this.selectedMember = null;
-    this.showMemberGrid = this.rowData.length > 0;
-    this.loanForm.memberId = 0;
-  }
-
-  isLoanFormValid(): boolean {
-    const f = this.loanForm;
-    return !!(
-      (f.loanCode ?? '').trim() &&
-      f.memberId > 0 &&
-      (f.loanAmount ?? 0) >= 0
-    );
-  }
-
-  createLoan(): void {
-    if (!this.isLoanFormValid() || this.isCreatingLoan) return;
-    this.isCreatingLoan = true;
-    const loadingPromise = this.loadingController.create({
-      message: 'Creating loan...',
-      spinner: 'crescent'
-    });
-    loadingPromise.then(loading => loading.present());
-
-    this.loanService.createLoan(this.loanForm).subscribe({
-      next: (loan: Loan) => {
-        this.loadingController.dismiss();
-        this.isCreatingLoan = false;
-        this.createdLoan = { ...loan };
-        this.loanId = loan.loanId ?? null;
-        this.cdr.detectChanges();
-        this.toastController.create({
-          message: 'Loan created successfully',
-          duration: 2000,
-          color: 'success',
-          position: 'top'
-        }).then(toast => toast.present());
-      },
-      error: (err: unknown) => {
-        this.loadingController.dismiss();
-        this.isCreatingLoan = false;
-        this.cdr.detectChanges();
-        console.error('Create loan error:', err);
-        this.toastController.create({
-          message: 'Failed to create loan. Please try again.',
-          duration: 3000,
-          color: 'danger',
-          position: 'top'
-        }).then(toast => toast.present());
-      }
-    });
-  }
-
-  /** Return to add-loan flow from loan detail view */
-  goBackToAddLoan(): void {
-    this.createdLoan = null;
-    this.loanId = null;
-    this.selectedMember = null;
-    this.showMemberGrid = false;
-    this.rowData = [];
-    this.loanForm = {
-      loanCode: '',
-      memberId: 0,
-      loanAmount: 0,
-      interestAmount: 0,
-      processingFee: 0,
-      insuranceFee: 0,
-      isSavingEnabled: false,
-      savingAmount: 0
-    };
-    this.step1Expanded = true;
-    this.step2Expanded = false;
-    this.cdr.detectChanges();
   }
 }

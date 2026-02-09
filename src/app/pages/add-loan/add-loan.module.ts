@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { AddLoanPageRoutingModule } from './add-loan-routing.module';
 import { AddLoanComponent } from './add-loan.page';
+import { AddLoanModalComponent } from './add-loan-modal.component';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 import { AgGridModule } from 'ag-grid-angular';
 
@@ -16,6 +17,6 @@ import { AgGridModule } from 'ag-grid-angular';
     HeaderMenuComponent,
     AgGridModule
   ],
-  declarations: [AddLoanComponent]
+  declarations: [AddLoanComponent, AddLoanModalComponent]
 })
 export class AddLoanPageModule {}

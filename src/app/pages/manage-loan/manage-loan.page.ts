@@ -24,46 +24,30 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
   isLoading: boolean = false;
 
   columnDefs: ColDef[] = [
-    { headerName: 'Loan ID', valueGetter: (p) => (p.data as Loan)?.loanId ?? '', width: 100, filter: 'agNumberColumnFilter', sortable: true },
-    { headerName: 'Loan Code', field: 'loanCode', width: 120, filter: 'agTextColumnFilter', sortable: true },
-    {
-      headerName: 'Member Name',
-      width: 180,
-      filter: 'agTextColumnFilter',
-      sortable: true,
+    { 
+      headerName: 'Loan ID', 
       valueGetter: (p) => {
-        const d = p.data as Loan;
-        const first = (d?.memberFirstName ?? d?.memberName ?? '').toString().trim();
-        const last = (d?.memberLastName ?? '').toString().trim();
-        const full = [first, last].filter(Boolean).join(' ').trim();
-        return full || (d?.memberId != null ? `Member ${d.memberId}` : '');
-      }
+        const loan = p.data as Loan;
+        return loan?.loanId ?? (loan as any)?.id ?? '';
+      }, 
+      width: 100, 
+      filter: 'agNumberColumnFilter', 
+      sortable: true 
+    },
+    { headerName: 'Loan Code', field: 'loanCode', width: 120, filter: 'agTextColumnFilter', sortable: true },
+    { 
+      headerName: 'Member ID', 
+      field: 'memberId', 
+      width: 120, 
+      filter: 'agNumberColumnFilter', 
+      sortable: true 
     },
     { headerName: 'Loan Amount', valueGetter: (p) => (p.data as Loan)?.loanAmount ?? 0, width: 130, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
     { headerName: 'Interest', valueGetter: (p) => (p.data as Loan)?.interestAmount ?? 0, width: 110, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
     { headerName: 'Processing Fee', valueGetter: (p) => (p.data as Loan)?.processingFee ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
     { headerName: 'Insurance Fee', valueGetter: (p) => (p.data as Loan)?.insuranceFee ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
     { headerName: 'Saving', valueGetter: (p) => (p.data as Loan)?.isSavingEnabled ? 'Yes' : 'No', width: 80, filter: 'agTextColumnFilter', sortable: true },
-    { headerName: 'Saving Amount', valueGetter: (p) => (p.data as Loan)?.savingAmount ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
-    {
-      headerName: 'Actions',
-      width: 100,
-      sortable: false,
-      filter: false,
-      cellRenderer: (params: { data: Loan; context?: { component: ManageLoanComponent } }) => {
-        const btn = document.createElement('button');
-        btn.className = 'ag-btn ag-view-btn';
-        btn.textContent = 'View';
-        btn.type = 'button';
-        const comp = (params.context as { component?: ManageLoanComponent })?.component ?? this;
-        btn.addEventListener('click', (e: Event) => {
-          e.preventDefault();
-          e.stopPropagation();
-          comp.viewLoan(params.data);
-        });
-        return btn;
-      }
-    }
+    { headerName: 'Saving Amount', valueGetter: (p) => (p.data as Loan)?.savingAmount ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' }
   ];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
   pagination = true;
@@ -179,6 +163,13 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
       next: (list: Loan[]) => {
         this.loans = list ?? [];
         this.rowData = [...this.loans];
+        
+        // Debug: Log first loan to see what fields API returns
+        if (this.loans.length > 0) {
+          console.log('Sample loan from API:', this.loans[0]);
+          console.log('Available fields:', Object.keys(this.loans[0]));
+        }
+        
         if (this.gridApi) {
           this.gridApi.setGridOption('rowData', this.rowData);
           setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
