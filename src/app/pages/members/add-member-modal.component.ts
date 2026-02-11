@@ -488,23 +488,6 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
       await this.modalController.dismiss(false);
     }
 
-    async onClear(): Promise<void> {
-      this.memberForm.reset({ status: 'New', age: '' });
-      this.submitted = false;
-      this.memberForm.markAsPristine();
-      this.memberForm.markAsUntouched();
-      this.memberForm.updateValueAndValidity();
-
-      const toast = await this.toastController.create({
-        message: 'cleared',
-        duration: 1500,
-        color: 'success',
-        position: 'top',
-        icon: 'trash-outline',
-        cssClass: 'app-toast app-toast--cleared'
-      });
-      await toast.present();
-    }
 
     isFieldInvalid(field: string): boolean {
       const control = this.memberForm.get(field);
