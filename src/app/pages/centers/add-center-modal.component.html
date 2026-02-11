@@ -39,13 +39,16 @@
       </ion-note>
     </ion-item>
 
-    <ion-item>
-      <ion-label position="stacked">Center Address</ion-label>
+    <ion-item [class.ion-invalid]="centerForm.get('centerAddress')?.invalid && centerForm.get('centerAddress')?.touched">
+      <ion-label position="stacked">Center Address <span class="required">*</span></ion-label>
       <ion-textarea
         formControlName="centerAddress"
-        placeholder="Enter center address (optional)"
+        placeholder="Enter center address"
         autoGrow="true">
       </ion-textarea>
+      <ion-note slot="error" *ngIf="centerForm.get('centerAddress')?.invalid && centerForm.get('centerAddress')?.touched">
+        <span *ngIf="centerForm.get('centerAddress')?.errors?.['required']">Center address is required</span>
+      </ion-note>
     </ion-item>
 
     <ion-item class="branch-field" [class.ion-invalid]="centerForm.get('branchId')?.invalid && centerForm.get('branchId')?.touched">
@@ -70,7 +73,7 @@
         [disabled]="isSubmitting || centerForm.invalid"
         class="save-button">
         <ion-icon name="add-outline" slot="start"></ion-icon>
-        Create Center
+        Save Center
       </ion-button>
       <ion-button
         fill="outline"

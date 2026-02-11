@@ -31,7 +31,7 @@ export class AddCenterModalComponent implements OnInit {
     this.centerForm = this.formBuilder.group({
       centerName: ['', [Validators.required, Validators.maxLength(100)]],
       city: ['', [Validators.required, Validators.maxLength(50)]],
-      centerAddress: [''],
+      centerAddress: ['', [Validators.required]],
       branchId: [savedBranchId, [Validators.required]]
     });
 
@@ -85,7 +85,7 @@ export class AddCenterModalComponent implements OnInit {
       const payload = {
         name: (value.centerName ?? '').toString().trim(),
         branchId: Number(this.centerForm.get('branchId')?.disabled ? this.readSavedBranchId() : value.branchId),
-        centerAddress: (value.centerAddress ?? '').toString(),
+        centerAddress: (value.centerAddress ?? '').toString().trim(),
         city: (value.city ?? '').toString().trim()
       };
 

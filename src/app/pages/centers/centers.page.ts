@@ -84,6 +84,12 @@ export class CentersPage implements OnInit, ViewWillEnter {
     private toastController: ToastController
   ) { }
 
+  private buildDisplayAddress(centerAddress: unknown, city: unknown): string {
+    const addr = (centerAddress ?? '').toString().trim();
+    const c = (city ?? '').toString().trim();
+    return [addr, c].filter(Boolean).join(', ');
+  }
+
   private normalizeCenter(raw: unknown, branchName: string, branchId?: number): Center {
     const rec = (raw ?? {}) as Record<string, unknown>;
     const idNum = Number(rec['id'] ?? rec['Id'] ?? (raw as any)?.id ?? 0);
@@ -93,13 +99,15 @@ export class CentersPage implements OnInit, ViewWillEnter {
       rec['centerName'] ?? rec['CenterName'] ?? rec['name'] ?? rec['Name'] ?? (raw as any)?.centerName ?? (raw as any)?.name ?? ''
     ).toString();
 
+    // Keep these as separate fields for Edit.
+    // We will combine them only for display in the grid column.
     const centerAddress = (
       rec['centerAddress'] ?? rec['CenterAddress'] ?? rec['address'] ?? rec['Address'] ?? (raw as any)?.centerAddress ?? ''
-    ).toString();
+    ).toString().trim();
 
     const city = (
       rec['city'] ?? rec['City'] ?? (raw as any)?.city ?? ''
-    ).toString();
+    ).toString().trim();
 
     return {
       id,
@@ -134,46 +142,65 @@ export class CentersPage implements OnInit, ViewWillEnter {
 
     this.columnDefs = [
       // Explicitly define these as hidden so they never show up as extra columns.
-      { field: 'id', hide: true },
+      {
+        headerName: 'Id',
+        field: 'id',
+        hide: false,
+        width: 70,
+        minWidth: 70,
+        maxWidth: 70,    
+        suppressSizeToFit: true,       
+      },
       { field: 'branchId', hide: true },
       {
         headerName: 'Center Name',
         field: 'centerName',
-        flex: 1,
-        pinned: 'left'
+         width:200,
+        minWidth: 200,
+        maxWidth: 300,
+        resizable: true,
+        
       },
       {
-        headerName: 'Center Address',
+        headerName: 'Address',
         field: 'centerAddress',
-        flex: 1.5,
-        tooltipField: 'centerAddress',
-        cellClass: 'truncate'
+        width:728,
+        minWidth: 300,
+        maxWidth: 800,
+        resizable: true,
+        suppressSizeToFit: true,
+        valueGetter: (p) => this.buildDisplayAddress(p.data?.centerAddress, p.data?.city),
+        tooltipValueGetter: (p) => this.buildDisplayAddress(p.data?.centerAddress, p.data?.city),
+        cellClass: 'truncate'    
       },
-      {
-        headerName: 'City',
-        field: 'city',
-        flex: 1
-      },
-      {
-        headerName: 'Branch Name',
-        field: 'branchName',
-        flex: 1,
-        hide: true
-      },
+      // {
+      //   headerName: 'City',
+      //   field: 'city',
+       
+      //   hide: true
+      // },
+      // {
+      //   headerName: 'Branch Name',
+      //   field: 'branchName',
+      //   flex: 1,
+      //   hide: true
+      // },
       {
         headerName: 'Actions',
         colId: 'actions',
-        pinned: 'right',
         width: 200,
+        minWidth: 200,
+        maxWidth: 200,
+        suppressSizeToFit: true,
         sortable: false,
         filter: false,
-        resizable: false,
+        //resizable: false,
         cellRenderer: (params: ICellRendererParams<Center>) => {
           const container = document.createElement('div');
           container.className = 'actions-cell';
           container.innerHTML = `
             <button class="ag-btn ag-edit">Edit</button>
-            <button class="ag-btn ag-delete">Delete</button>
+            <button class="ag-btn ag-delete">Inactive</button>
           `;
 
           const editBtn = container.querySelector('.ag-edit');
@@ -271,7 +298,7 @@ export class CentersPage implements OnInit, ViewWillEnter {
   }
 
   exportCentersToCSV(): void {
-    const exportableColumns = ['centerName', 'centerAddress', 'city', 'branchName'];
+    const exportableColumns = ['centerName', 'centerAddress', 'branchName'];
 
     if (this.gridApi) {
       this.gridApi.exportDataAsCsv({
@@ -289,7 +316,10 @@ export class CentersPage implements OnInit, ViewWillEnter {
         rows.map(row =>
           headers
             .map(h => {
-              const value = (row as unknown as Record<string, unknown>)[h] ?? '';
+              let value = (row as unknown as Record<string, unknown>)[h] ?? '';
+              if (h === 'centerAddress') {
+                value = this.buildDisplayAddress(row.centerAddress, row.city);
+              }
               return '"' + value.toString().replace(/"/g, '""') + '"';
             })
             .join(',')
@@ -307,7 +337,7 @@ export class CentersPage implements OnInit, ViewWillEnter {
 
   printCentersTable(): void {
     const rows = this.getPrintableRows();
-    const printableFields: Array<keyof Center> = ['centerName', 'centerAddress', 'city', 'branchName'];
+    const printableFields: Array<keyof Center> = ['centerName', 'centerAddress', 'branchName'];
     const columns = printableFields.map(field => {
       const def = this.columnDefs.find(c => c.field === field);
       return {
@@ -326,7 +356,10 @@ export class CentersPage implements OnInit, ViewWillEnter {
             '<tr>' +
             columns
               .map(c => {
-                const value = (row as unknown as Record<string, unknown>)[c.field] ?? '';
+                let value = (row as unknown as Record<string, unknown>)[c.field] ?? '';
+                if (c.field === 'centerAddress') {
+                  value = this.buildDisplayAddress(row.centerAddress, row.city);
+                }
                 return `<td style="padding:4px 8px">${value.toString()}</td>`;
               })
               .join('') +
