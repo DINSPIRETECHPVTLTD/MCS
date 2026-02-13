@@ -7,6 +7,7 @@ import { AddPocModalComponent } from './add-poc-modal.component';
 import { ColDef } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
 import { Poc, PocService } from '../../services/poc.service';
+import { MemberService } from '../../services/member.service';
 
 @Component({
   selector: 'app-pocs',
@@ -23,29 +24,48 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   columnDefs: ColDef[] = [
     { field: 'id', headerName: 'ID', width: 80, sortable: true, filter: true },
     { 
-      field: 'fullName',
-      headerName: 'Name', 
+      headerName: 'Full Name',
+      valueGetter: (params: any) => {
+        const first = params.data?.fullName || '';
+        const last = params.data?.surname || '';
+        return [first, last].filter(Boolean).join(' ');
+      },
       sortable: true, 
       filter: true, 
       flex: 1 
     },
-    { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 140 },
-    { field: 'altPhone', headerName: 'Phone Number2', sortable: true, filter: true, width: 140 },
+    {
+      headerName: 'Contact Numbers',
+      valueGetter: (params: any) => {
+        const p1 = params.data?.phoneNumber || '';
+        const p2 = params.data?.altPhone || '';
+        return [p1, p2].filter(Boolean).join(', ');
+      },
+      sortable: true,
+      filter: true,
+      width: 180
+    },
     { 
       headerName: 'Address', 
       valueGetter: (params: any) => {
         const a1 = params.data?.address1 || '';
         const a2 = params.data?.address2 || '';
-        return [a1, a2].filter(Boolean).join(', ');
+        const city = params.data?.city || '';
+        const state = params.data?.state || '';
+        const pin = params.data?.pinCode || '';
+        return [a1, a2, city, state, pin].filter(Boolean).join(', ');
       }, 
       sortable: true, 
       filter: true, 
       flex: 1 
     },
-    { field: 'city', headerName: 'City', sortable: true, filter: true, width: 120 },
-    { field: 'state', headerName: 'State', sortable: true, filter: true, width: 120 },
-    { field: 'pinCode', headerName: 'Pin Code', sortable: true, filter: true, width: 100 },
-    { field: 'centerId', headerName: 'Center ID', sortable: true, filter: true, width: 120 },
+    { 
+      headerName: 'Center Name',
+      valueGetter: (params: any) => params.context?.componentParent?.getCenterName(params.data?.centerId),
+      sortable: true,
+      filter: true,
+      width: 160
+    },
     {
       headerName: 'Actions',
       field: 'actions',
@@ -55,7 +75,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
         container.className = 'actions-cell';
         container.innerHTML = `
           <button class="ag-btn ag-edit">Edit</button>
-          <button class="ag-btn ag-delete">Delete</button>
+          <button class="ag-btn ag-delete">Inactive</button>
         `;
         const editBtn = container.querySelector('.ag-edit');
         const delBtn = container.querySelector('.ag-delete');
@@ -74,12 +94,15 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   paginationPageSize: number = 20;
   paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   gridOptions: any;
+  gridApi: any;
+  centerNameMap: Record<number, string> = {};
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private modalController: ModalController,
     private pocService: PocService,
+    private memberService: MemberService,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private alertController: AlertController
@@ -106,8 +129,13 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     }
     // Load POCs data
     if (this.selectedBranch) {
+      this.loadCenters(this.selectedBranch.id);
       this.loadPocs();
     }
+  }
+
+  onGridReady(params: any): void {
+    this.gridApi = params.api;
   }
 
   async loadPocs(): Promise<void> {
@@ -155,7 +183,38 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     console.log('Branch changed to:', branch);
     this.selectedBranch = branch;
     // Load POCs for the selected branch
+    this.loadCenters(branch.id);
     this.loadPocs();
+  }
+
+  loadCenters(branchId: number): void {
+    this.memberService.getCentersByBranch(branchId).subscribe({
+      next: (centers) => {
+        const map: Record<number, string> = {};
+        (centers || []).forEach(center => {
+          const id = Number(center?.id);
+          if (!Number.isNaN(id) && id > 0) {
+            map[id] = center?.name || '';
+          }
+        });
+        this.centerNameMap = map;
+        if (this.gridApi) {
+          this.gridApi.refreshCells({ force: true });
+        }
+      },
+      error: (error) => {
+        console.error('Error loading centers:', error);
+        this.centerNameMap = {};
+        if (this.gridApi) {
+          this.gridApi.refreshCells({ force: true });
+        }
+      }
+    });
+  }
+
+  getCenterName(centerId?: number): string {
+    if (!centerId) return '';
+    return this.centerNameMap[centerId] || centerId.toString();
   }
 
   async openAddPocModal(): Promise<void> {

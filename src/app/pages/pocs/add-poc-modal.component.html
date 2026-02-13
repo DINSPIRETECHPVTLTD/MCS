@@ -13,10 +13,10 @@
   <form [formGroup]="pocForm" (ngSubmit)="onSubmit()">
     <!-- Name Field -->
     <ion-item [class.ion-invalid]="isFieldInvalid('fullName')">
-      <ion-label position="stacked">Full Name <span class="required">*</span></ion-label>
+      <ion-label position="stacked">First Name <span class="required">*</span></ion-label>
       <ion-input
         formControlName="fullName"
-        placeholder="Enter full name"
+        placeholder="Enter first name"
         (ionInput)="onFullNameInput($event)"
         type="text"
         maxlength="200">
@@ -25,7 +25,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('surname')">
-      <ion-label position="stacked">Surname</ion-label>
+      <ion-label position="stacked">Surname <span class="required">*</span></ion-label>
       <ion-input
         formControlName="surname"
         placeholder="Enter surname"
