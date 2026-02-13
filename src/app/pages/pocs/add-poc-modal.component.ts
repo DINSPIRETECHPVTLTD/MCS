@@ -295,7 +295,7 @@ export class AddPocModalComponent implements OnInit {
           return 'PIN code must be exactly 6 digits';
         }
         if (fieldName === 'fullName') {
-          return 'Full name must contain only letters';
+          return 'First name must contain only letters';
         }
         if (fieldName === 'surname') {
           return 'Surname must contain only letters';
@@ -303,7 +303,7 @@ export class AddPocModalComponent implements OnInit {
       }
       if (field.errors['maxlength']) {
         if (fieldName === 'fullName') {
-          return 'Full name must be at most 200 characters';
+          return 'First name must be at most 200 characters';
         }
         if (fieldName === 'surname') {
           return 'Surname must be at most 100 characters';
