@@ -6,33 +6,29 @@ import { AuthService } from './auth.service';
 
 export interface Poc {
   id?: number;
-  firstName: string;
-  middleName?: string;
-  lastName: string;
+  fullName: string;
+  surname?: string;
   phoneNumber: string;
   altPhone?: string;
   address1?: string;
   address2?: string;
   city?: string;
   state?: string;
-  zipCode?: string;
-  country?: string;
+  pinCode?: string;
   centerId: number;
   branchId?: number;
 }
 
 export interface CreatePocRequest {
-  firstName: string;
-  middleName?: string;
-  lastName: string;
+  fullName: string;
+  surname?: string;
   phoneNumber: string;
   altPhone?: string;
   address1?: string;
   address2?: string;
   city?: string;
   state?: string;
-  zipCode?: string;
-  country?: string;
+  pinCode?: string;
   centerId: number;
   
 }

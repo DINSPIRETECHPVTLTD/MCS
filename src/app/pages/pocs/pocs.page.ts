@@ -23,19 +23,14 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   columnDefs: ColDef[] = [
     { field: 'id', headerName: 'ID', width: 80, sortable: true, filter: true },
     { 
+      field: 'fullName',
       headerName: 'Name', 
-      valueGetter: (params: any) => {
-        const first = params.data?.firstName || '';
-        const middle = params.data?.middleName || '';
-        const last = params.data?.lastName || '';
-        return [first, middle, last].filter(Boolean).join(' ');
-      }, 
       sortable: true, 
       filter: true, 
       flex: 1 
     },
     { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 140 },
-    { field: 'altPhone', headerName: 'Phone 2', sortable: true, filter: true, width: 140 },
+    { field: 'altPhone', headerName: 'Phone Number2', sortable: true, filter: true, width: 140 },
     { 
       headerName: 'Address', 
       valueGetter: (params: any) => {
@@ -49,7 +44,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     },
     { field: 'city', headerName: 'City', sortable: true, filter: true, width: 120 },
     { field: 'state', headerName: 'State', sortable: true, filter: true, width: 120 },
-    { field: 'zipCode', headerName: 'Zip', sortable: true, filter: true, width: 100 },
+    { field: 'pinCode', headerName: 'Pin Code', sortable: true, filter: true, width: 100 },
     { field: 'centerId', headerName: 'Center ID', sortable: true, filter: true, width: 120 },
     {
       headerName: 'Actions',
@@ -207,7 +202,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   }
 
   async deletePoc(poc: Poc): Promise<void> {
-    const fullName = [poc.firstName, poc.middleName, poc.lastName].filter(Boolean).join(' ');
+    const fullName = poc.fullName;
     const alert = await this.alertController.create({
       header: 'Confirm Delete',
       message: `Are you sure you want to delete POC "${fullName}"?`,
