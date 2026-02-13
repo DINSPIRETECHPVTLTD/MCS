@@ -47,7 +47,7 @@ export class AddPocModalComponent implements OnInit {
   ) {
     this.pocForm = this.formBuilder.group({
       fullName: ['', [Validators.required, Validators.maxLength(200), Validators.pattern(/^[a-zA-Z ]+$/)]],
-      surname: ['', [Validators.maxLength(100), Validators.pattern(/^[a-zA-Z ]+$/)]],
+      surname: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z ]+$/)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       altPhone: ['', [Validators.pattern(/^[0-9]{10}$/)]],
       address1: ['', [Validators.required, Validators.maxLength(100)]],
