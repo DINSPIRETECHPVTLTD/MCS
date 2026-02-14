@@ -6,7 +6,7 @@ import { Payment } from '../models/payment.models';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 
-// Shape returned by the .NET API (matches MCS.WebApi.Models.Payment)
+// Shape returned by the Payment Terms API (api/paymentterms)
 interface ApiPayment {
   paymentTermId: number;
   paymentTerm: string;
@@ -22,7 +22,8 @@ type PaymentsApiResponse = ApiPayment[] | { $values?: ApiPayment[]; data?: ApiPa
 
 @Injectable({ providedIn: 'root' })
 export class PaymentsService {
-  private readonly baseUrl = `${environment.apiUrl}/payments`;
+  /** All CRUD via api/paymentterms (GET, POST, PUT, DELETE). */
+  private readonly baseUrl = `${environment.apiUrl}/paymentterms`;
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 

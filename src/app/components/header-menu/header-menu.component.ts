@@ -63,8 +63,8 @@ export class HeaderMenuComponent implements OnInit {
         this.activeMenu === 'Manage Loan' || this.activeMenu === 'Preclose Loan') {
       this.showLoanSubmenu = true;
     }
-    // Show Master submenu if active menu is Master Data or Payments (Org Mode)
-    if (this.activeMenu === 'Master Data' || this.activeMenu === 'Payments') {
+    // Show Master submenu if active menu is Master Data or Payment Terms (Org Mode)
+    if (this.activeMenu === 'Master Data' || this.activeMenu === 'Payment Terms') {
       this.showMasterSubmenu = true;
     }
   }
@@ -336,7 +336,7 @@ export class HeaderMenuComponent implements OnInit {
     this.showUsersSubmenu = false;
     this.showLoanSubmenu = false;
     // Keep Master submenu open when selecting its items (Org Mode)
-    if (submenu === 'Master Data' || submenu === 'Payments') {
+    if (submenu === 'Master Data' || submenu === 'Payment Terms') {
       this.showMasterSubmenu = true;
     } else {
       this.showMasterSubmenu = false;
@@ -380,8 +380,8 @@ export class HeaderMenuComponent implements OnInit {
       route = '/recovery-posting';
     } else if (submenu === 'Master Data') {
       route = '/master-data';
-    } else if (submenu === 'Payments') {
-      route = '/payments';
+    } else if (submenu === 'Payment Terms') {
+      route = '/payment-terms';
     }
     
     if (route) {

@@ -5,23 +5,23 @@
   <ion-content [fullscreen]="true" class="ion-padding">
     <div class="payments-list-container">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h2>All Payments</h2>
+        <h2>All Payment Terms</h2>
         <ion-button (click)="openAddPaymentModal()">
           <ion-icon name="add-outline" slot="start"></ion-icon>
-          Add Payment
+          Add Payment Term
         </ion-button>
       </div>
 
       <div *ngIf="isLoading" style="text-align: center; padding: 20px;">
         <ion-spinner></ion-spinner>
-        <p>Loading payments...</p>
+        <p>Loading payment terms...</p>
       </div>
 
       <div *ngIf="!isLoading && payments.length === 0" class="empty-state">
         <ion-icon name="card-outline" size="large"></ion-icon>
-        <p>No payments found</p>
+        <p>No payment terms found</p>
         <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
-          Click "Add Payment" to create a new payment
+          Click "Add Payment Term" to create a new payment term
         </p>
       </div>
 

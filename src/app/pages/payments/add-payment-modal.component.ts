@@ -46,11 +46,11 @@ export class AddPaymentModalComponent {
       next: () => {
         this.isSubmitting = false;
         this.dismiss(true);
-        this.showToast('Payment added successfully', 'success');
+        this.showToast('Payment term added successfully', 'success');
       },
       error: (err) => {
         this.isSubmitting = false;
-        const msg = err?.error?.message || err?.message || 'Failed to add payment. Please try again.';
+        const msg = err?.error?.message || err?.message || 'Failed to add payment term. Please try again.';
         this.showToast(msg, 'danger');
       }
     });

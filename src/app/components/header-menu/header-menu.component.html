@@ -68,14 +68,14 @@
       <div class="nav-item-container">
         <button 
           class="nav-item" 
-          [class.active]="activeMenu === 'Master' || activeMenu === 'Master Data' || activeMenu === 'Payments'"
+          [class.active]="activeMenu === 'Master' || activeMenu === 'Master Data' || activeMenu === 'Payment Terms'"
           (click)="setActiveMenu('Master')">
           <span>Master</span>
           <ion-icon [name]="showMasterSubmenu ? 'chevron-forward-outline' : 'chevron-down-outline'" class="submenu-icon"></ion-icon>
         </button>
         <div class="submenu-vertical" *ngIf="showMasterSubmenu">
           <button class="submenu-item" [class.active]="activeMenu === 'Master Data'" (click)="selectSubmenu('Master Data')">Master Data</button>
-          <button class="submenu-item" [class.active]="activeMenu === 'Payments'" (click)="selectSubmenu('Payments')">Payments</button>
+          <button class="submenu-item" [class.active]="activeMenu === 'Payment Terms'" (click)="selectSubmenu('Payment Terms')">Payment Terms</button>
         </div>
       </div>
     </nav>

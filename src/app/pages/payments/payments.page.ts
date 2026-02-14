@@ -14,7 +14,7 @@ import { agGridTheme } from '../../ag-grid-theme';
   styleUrls: ['./payments.page.scss']
 })
 export class PaymentsPage implements OnInit {
-  activeMenu: string = 'Payments';
+  activeMenu: string = 'Payment Terms';
   payments: Payment[] = [];
   rowData: Payment[] = [];
   isLoading = false;
@@ -126,7 +126,7 @@ export class PaymentsPage implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.showToast('Error loading payments: ' + (err?.error?.message || err?.message || 'Unknown error'), 'danger');
+        this.showToast('Error loading payment terms: ' + (err?.error?.message || err?.message || 'Unknown error'), 'danger');
       }
     });
   }
@@ -138,7 +138,7 @@ export class PaymentsPage implements OnInit {
     modal.onDidDismiss().then((result) => {
       if (result.data?.refresh) {
         this.loadPayments();
-        this.showToast('Payment added successfully', 'success');
+        this.showToast('Payment term added successfully', 'success');
       }
     });
     return modal.present();
@@ -152,21 +152,21 @@ export class PaymentsPage implements OnInit {
     modal.onDidDismiss().then((result) => {
       if (result.data?.refresh) {
         this.loadPayments();
-        if (!readOnly) this.showToast('Payment updated successfully', 'success');
+        if (!readOnly) this.showToast('Payment term updated successfully', 'success');
       }
     });
     return modal.present();
   }
 
   confirmDelete(payment: Payment) {
-    if (confirm('Are you sure you want to delete this payment?')) {
+    if (confirm('Are you sure you want to delete this payment term?')) {
       this.paymentsService.deletePayment(payment.id).subscribe({
         next: () => {
           this.loadPayments();
-          this.showToast('Payment deleted successfully', 'success');
+          this.showToast('Payment term deleted successfully', 'success');
         },
         error: (err) => {
-          this.showToast(err?.error?.message || 'Failed to delete payment', 'danger');
+          this.showToast(err?.error?.message || 'Failed to delete payment term', 'danger');
         }
       });
     }

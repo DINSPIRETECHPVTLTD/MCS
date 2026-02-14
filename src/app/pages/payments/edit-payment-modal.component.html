@@ -1,6 +1,6 @@
 <ion-header [translucent]="false">
   <ion-toolbar>
-    <ion-title>{{ readOnly ? 'View Payment' : 'Edit Payment' }}</ion-title>
+    <ion-title>{{ readOnly ? 'View Payment Term' : 'Edit Payment Term' }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="onCancel()">
         <ion-icon name="close-outline" slot="icon-only"></ion-icon>
@@ -82,7 +82,7 @@
         [disabled]="isSubmitting || paymentForm.invalid"
         class="save-button">
         <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-        Update Payment
+        Update Payment Term
       </ion-button>
       <ion-button
         fill="outline"

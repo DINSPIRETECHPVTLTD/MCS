@@ -56,11 +56,11 @@ export class EditPaymentModalComponent implements OnInit {
       next: () => {
         this.isSubmitting = false;
         this.dismiss(true);
-        this.showToast('Payment updated successfully', 'success');
+        this.showToast('Payment term updated successfully', 'success');
       },
       error: (err) => {
         this.isSubmitting = false;
-        const msg = err?.error?.message || err?.message || 'Failed to update payment. Please try again.';
+        const msg = err?.error?.message || err?.message || 'Failed to update payment term. Please try again.';
         this.showToast(msg, 'danger');
       }
     });
