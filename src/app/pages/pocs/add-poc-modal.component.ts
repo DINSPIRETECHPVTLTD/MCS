@@ -2,7 +2,6 @@ import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController, IonContent } from '@ionic/angular';
 import { UserContextService } from '../../services/user-context.service';
-import { BranchService } from '../../services/branch.service';
 import { PocService, CreatePocRequest } from '../../services/poc.service';
 import { MemberService } from '../../services/member.service';
 import { MasterDataService } from '../../services/master-data.service';
@@ -300,7 +299,7 @@ export class AddPocModalComponent implements OnInit {
   }
 
   focusOnFirstInvalidField(): void {
-    const fieldOrder = ['fullName', 'surname', 'phoneNumber', 'altPhone', 'address1', 'address2', 'city', 'state', 'pinCode', 'centerId'];
+    const fieldOrder = ['firstName', 'lastName', 'phoneNumber', 'altPhone', 'address1', 'address2', 'city', 'state', 'pinCode', 'centerId'];
     
     for (const fieldName of fieldOrder) {
       const control = this.pocForm.get(fieldName);
