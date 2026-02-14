@@ -53,6 +53,15 @@ const routes: Routes = [
     loadChildren: () => import('./pages/centers/centers.module').then(m => m.CentersPageModule)
   },
   {
+    path: 'payment-terms',
+    loadChildren: () => import('./pages/payments/payments.module').then(m => m.PaymentsPageModule)
+  },
+  {
+    path: 'payments',
+    redirectTo: 'payment-terms',
+    pathMatch: 'full'
+  },
+  {
     path: 'pocs',
     loadChildren: () => import('./pages/pocs/pocs.module').then(m => m.PocsPageModule)
   },

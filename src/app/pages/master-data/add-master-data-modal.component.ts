@@ -15,6 +15,7 @@ export class AddMasterDataModalComponent implements OnInit {
 
   form: FormGroup;
   submitted = false;
+  isSubmitting = false;
   lookupKeyOptions: { value: string; label: string }[] = [
     { value: LookupKeys.LoanTerm, label: 'Loan Term (LOAN_TERM)' },
     { value: LookupKeys.PaymentType, label: 'Payment Type (PAYMENT_TYPE)' }
@@ -80,6 +81,7 @@ export class AddMasterDataModalComponent implements OnInit {
   async onSubmit(): Promise<void> {
     this.submitted = true;
     if (this.form.invalid) return;
+    this.isSubmitting = true;
     const value = this.form.value;
     const request: CreateMasterLookupRequest = {
       lookupKey: value.lookupKey,
@@ -100,11 +102,13 @@ export class AddMasterDataModalComponent implements OnInit {
       : this.masterDataService.createMasterData(request);
     apiCall.subscribe({
       next: async (saved) => {
+        this.isSubmitting = false;
         await loading.dismiss();
         this.showToast(this.isEditing ? 'Updated successfully' : 'Saved successfully', 'success');
         this.modalController.dismiss({ success: true, data: saved });
       },
       error: async (err) => {
+        this.isSubmitting = false;
         await loading.dismiss();
         this.showToast(err?.error?.message || 'Failed to save', 'danger');
       }

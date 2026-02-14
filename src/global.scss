@@ -167,4 +167,11 @@
   }
 }
 
+/* Master Data Add/Edit modal: tall enough so form + footer are visible and content scrolls */
+ion-modal.add-master-data-modal {
+  --height: 90%;
+  --max-height: 90vh;
+  --border-radius: 12px;
+}
+
 
