@@ -7,34 +7,35 @@ import { AuthService } from './auth.service';
 export interface Poc {
   id?: number;
   firstName: string;
-  middleName?: string;
-  lastName: string;
+  lastName?: string;
   phoneNumber: string;
   altPhone?: string;
   address1?: string;
   address2?: string;
   city?: string;
   state?: string;
-  zipCode?: string;
-  country?: string;
+  pinCode?: string;
   centerId: number;
   branchId?: number;
+  collectionDay?: string;
+  collectionFrequency: string;
+  collectionBy: number;
 }
 
 export interface CreatePocRequest {
   firstName: string;
-  middleName?: string;
-  lastName: string;
+  lastName?: string;
   phoneNumber: string;
   altPhone?: string;
   address1?: string;
   address2?: string;
   city?: string;
   state?: string;
-  zipCode?: string;
-  country?: string;
+  pinCode?: string;
   centerId: number;
-  
+  collectionDay?: string;
+  collectionFrequency: string;
+  collectionBy: number;
 }
 
 @Injectable({
@@ -77,7 +78,7 @@ export class PocService {
     return this.http.put<Poc>(`${this.apiUrl}/POCs/${id}`, poc, { headers: this.getHeaders() });
   }
 
-  deletePoc(id: number): Observable<any> {
+  deletePoc(id: number): Observable<unknown> {
     return this.http.delete(`${this.apiUrl}/POCs/${id}`, { headers: this.getHeaders() });
   }
 }
