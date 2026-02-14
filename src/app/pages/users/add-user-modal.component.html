@@ -22,15 +22,6 @@
       <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
     </ion-item>
 
-    <ion-item>
-      <ion-label position="stacked">Middle Name</ion-label>
-      <ion-input
-        formControlName="middleName"
-        placeholder="Enter middle name"
-        type="text">
-      </ion-input>
-    </ion-item>
-
     <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
       <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
       <ion-input

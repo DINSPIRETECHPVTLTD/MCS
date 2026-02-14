@@ -29,7 +29,6 @@ export class AddUserModalComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       firstName: ['', [Validators.required]],
-      middleName: [''],
       lastName: ['', [Validators.required]],
       phoneNumber: ['', [Validators.pattern(/^[0-9]{10}$/), Validators.required]],
       address1: [''],
@@ -73,7 +72,6 @@ export class AddUserModalComponent implements OnInit {
         // Patch form with user data
         this.userForm.patchValue({
           firstName: user.firstName || '',
-          middleName: user.middleName || '',
           lastName: user.lastName || '',
           phoneNumber: user.phoneNumber || '',
           address1: user.address1 || '',
@@ -128,7 +126,6 @@ export class AddUserModalComponent implements OnInit {
 
     const userData: CreateUserRequest = {
       firstName: this.userForm.value.firstName.trim(),
-      middleName: this.userForm.value.middleName?.trim() || '',
       lastName: this.userForm.value.lastName.trim(),
       phoneNumber: this.userForm.value.phoneNumber?.trim() || '',
       address1: this.userForm.value.address1?.trim() || '',

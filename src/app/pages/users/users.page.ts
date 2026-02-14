@@ -53,7 +53,6 @@ export class UsersComponent implements OnInit, ViewWillEnter {
     this.columnDefs = [
       { headerName: 'User ID', field: 'id', width: 100, sortable: true, filter: true },
       { headerName: 'First Name', field: 'firstName', width: 150, sortable: true, filter: true },
-      { headerName: 'Middle Name', field: 'middleName', width: 150, sortable: true, filter: true },
       { headerName: 'Last Name', field: 'lastName', width: 150, sortable: true, filter: true },
       { headerName: 'Email', field: 'email', width: 200, sortable: true, filter: true },
       { 

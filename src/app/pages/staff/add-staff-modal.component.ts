@@ -29,7 +29,6 @@ export class AddStaffModalComponent implements OnInit {
       email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
       password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(12)]],
       firstName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
-      middleName: ['', [Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       lastName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       address1: ['', [Validators.required, Validators.maxLength(100)]],
@@ -67,16 +66,6 @@ export class AddStaffModalComponent implements OnInit {
     const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
     const truncated = sanitized.slice(0, 100);
     const control = this.staffForm.get('firstName');
-    if (control && control.value !== truncated) {
-      control.setValue(truncated);
-    }
-  }
-
-  onMiddleNameInput(event: any): void {
-    const raw = event?.detail?.value ?? '';
-    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
-    const truncated = sanitized.slice(0, 100);
-    const control = this.staffForm.get('middleName');
     if (control && control.value !== truncated) {
       control.setValue(truncated);
     }
@@ -149,7 +138,7 @@ export class AddStaffModalComponent implements OnInit {
       }
 
       // Relax validators for non-essential fields during edit so partial updates work
-      const relaxFields = ['middleName', 'phoneNumber', 'address1', 'address2', 'city', 'state', 'pinCode'];
+      const relaxFields = ['phoneNumber', 'address1', 'address2', 'city', 'state', 'pinCode'];
       relaxFields.forEach(fn => {
         const c = this.staffForm.get(fn);
         if (c) {
@@ -163,7 +152,6 @@ export class AddStaffModalComponent implements OnInit {
           this.staffForm.patchValue({
             email: user.email || '',
             firstName: user.firstName || '',
-            middleName: user.middleName || '',
             lastName: user.lastName || '',
             phoneNumber: user.phoneNumber || '',
             address1: user.address1 || '',
@@ -204,7 +192,6 @@ export class AddStaffModalComponent implements OnInit {
 
     const staffData: any = {
       firstName: this.staffForm.value.firstName.trim(),
-      middleName: this.staffForm.value.middleName?.trim() || '',
       lastName: this.staffForm.value.lastName.trim(),
       phoneNumber: this.staffForm.value.phoneNumber?.trim() || '',
       address1: this.staffForm.value.address1?.trim() || '',
@@ -228,7 +215,6 @@ export class AddStaffModalComponent implements OnInit {
       // Map to backend column names requested by user for PUT (preserve other required metadata)
       const putPayload: any = {
         FirstName: staffData.firstName,
-        MiddleName: staffData.middleName,
         LastName: staffData.lastName,
         Email: staffData.email,
         PhoneNumber: staffData.phoneNumber,
@@ -326,7 +312,7 @@ export class AddStaffModalComponent implements OnInit {
   getFieldLabel(fieldName: string): string {
     const labels: { [key: string]: string } = {
       firstName: 'First name',
-      lastName: 'Last name',
+      lastName: 'Surname',
       phoneNumber: 'Phone number',
       email: 'Email',
       password: 'Password',
