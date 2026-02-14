@@ -22,23 +22,14 @@
       <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
     </ion-item>
 
-    <ion-item>
-      <ion-label position="stacked">Middle Name</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('SurName')">
+      <ion-label position="stacked">Surname <span class="required">*</span></ion-label>
       <ion-input
-        formControlName="middleName"
-        placeholder="Enter middle name"
+        formControlName="SurName"
+        placeholder="Enter Surname"
         type="text">
       </ion-input>
-    </ion-item>
-
-    <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
-      <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
-      <ion-input
-        formControlName="lastName"
-        placeholder="Enter last name"
-        type="text">
-      </ion-input>
-      <ion-note slot="error">{{ getFieldError('lastName') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('SurName') }}</ion-note>
     </ion-item>
 
     <!-- Contact Fields -->
@@ -115,10 +106,10 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
-      <ion-label position="stacked">Zip Code</ion-label>
+      <ion-label position="stacked">Pin Code</ion-label>
       <ion-input
         formControlName="zipCode"
-        placeholder="Enter 6-digit zip code"
+        placeholder="Enter 6-digit Pin code"
         type="tel"
         inputmode="numeric"
         pattern="[0-9]*"
@@ -140,7 +131,6 @@
         (click)="onSubmit()"
         [disabled]="userForm.invalid && submitted"
         class="save-button">
-        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
         {{ isEditing ? 'Update User' : 'Save User' }}
       </ion-button>
 

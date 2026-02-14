@@ -73,5 +73,16 @@ export class UserService {
     }
     return this.http.delete(`${this.apiUrl}/Users/${id}`, { headers });
   }
+
+  resetUserPassword(id: number, newPassword: string): Observable<unknown> {
+    const token = this.authService.getToken();
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+    return this.http.post(`${this.apiUrl}/Users/${id}/reset-password`, { password: newPassword }, { headers });
+  }
 }
 
