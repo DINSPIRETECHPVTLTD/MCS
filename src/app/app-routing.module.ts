@@ -53,6 +53,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/centers/centers.module').then(m => m.CentersPageModule)
   },
   {
+    path: 'payments',
+    loadChildren: () => import('./pages/payments/payments.module').then(m => m.PaymentsPageModule)
+  },
+  {
     path: 'pocs',
     loadChildren: () => import('./pages/pocs/pocs.module').then(m => m.PocsPageModule)
   },

@@ -4,13 +4,14 @@ import { Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 import { MasterLookup, CreateMasterLookupRequest } from '../models/master-data.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MasterDataService {
-  private apiUrl = '/api/MasterLookups';
+  private readonly baseUrl = `${environment.apiUrl}/MasterLookups`;
 
   constructor(
     private http: HttpClient,
@@ -26,7 +27,7 @@ export class MasterDataService {
   }
 
   getMasterData(includeInactive = false): Observable<MasterLookup[]> {
-    return this.http.get<{ $values?: MasterLookup[] } | MasterLookup[]>(this.apiUrl, {
+    return this.http.get<{ $values?: MasterLookup[] } | MasterLookup[]>(this.baseUrl, {
       headers: this.getHeaders()
     }).pipe(
       map((response: { $values?: MasterLookup[] } | MasterLookup[]) => {
@@ -41,7 +42,7 @@ export class MasterDataService {
   }
 
   getMasterDataById(id: number): Observable<MasterLookup | null> {
-    return this.http.get<MasterLookup>(`${this.apiUrl}/${id}`, {
+    return this.http.get<MasterLookup>(`${this.baseUrl}/${id}`, {
       headers: this.getHeaders()
     }).pipe(
       catchError(() => of(null))
@@ -49,20 +50,20 @@ export class MasterDataService {
   }
 
   createMasterData(request: CreateMasterLookupRequest): Observable<MasterLookup> {
-    return this.http.post<MasterLookup>(this.apiUrl, request, {
+    return this.http.post<MasterLookup>(this.baseUrl, request, {
       headers: this.getHeaders()
     });
   }
 
   updateMasterData(id: number, request: Partial<CreateMasterLookupRequest>): Observable<MasterLookup> {
-    return this.http.put<MasterLookup>(`${this.apiUrl}/${id}`, request, {
+    return this.http.put<MasterLookup>(`${this.baseUrl}/${id}`, request, {
       headers: this.getHeaders()
     });
   }
 
-  /** Soft delete: set isActive = false */
-  softDeleteMasterData(id: number): Observable<MasterLookup> {
-    return this.http.patch<MasterLookup>(`${this.apiUrl}/${id}`, { isActive: false }, {
+  /** Soft delete: calls DELETE api/MasterLookups/{id} (backend sets IsActive = false) */
+  softDeleteMasterData(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`, {
       headers: this.getHeaders()
     });
   }

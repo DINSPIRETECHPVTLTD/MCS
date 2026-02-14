@@ -1,12 +1,12 @@
-/* Modal content: scrollable with space for footer */
-ion-content.add-master-data-content {
+ion-content.add-payment-content {
   --padding-start: 16px;
   --padding-end: 16px;
   --padding-top: 16px;
-  --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 100px);
+  --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 120px);
 }
 
-ion-content.add-master-data-content::part(scroll) {
+/* Scrollbar visible like other app modals (e.g. Add POC) - use default browser scrollbar */
+ion-content.add-payment-content::part(scroll) {
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -18,18 +18,17 @@ form {
   ion-item {
     --padding-start: 0;
     --inner-padding-end: 0;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     --border-radius: 8px;
     --background: var(--ion-color-light);
     border-radius: 8px;
 
     ion-label {
       font-weight: 500;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     ion-input,
-    ion-textarea,
     ion-select {
       --padding-start: 12px;
     }
@@ -38,6 +37,10 @@ form {
       --border-color: var(--ion-color-danger);
       --highlight-color-invalid: var(--ion-color-danger);
     }
+  }
+
+  .required {
+    color: var(--ion-color-danger);
   }
 
   ion-note {
@@ -80,8 +83,4 @@ ion-footer ion-toolbar {
 .action-row.footer-row .cancel-button {
   font-weight: 600;
   text-transform: none;
-}
-
-.required {
-  color: var(--ion-color-danger);
 }
