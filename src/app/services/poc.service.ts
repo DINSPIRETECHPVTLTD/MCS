@@ -6,8 +6,8 @@ import { AuthService } from './auth.service';
 
 export interface Poc {
   id?: number;
-  fullName: string;
-  surname?: string;
+  firstName: string;
+  lastName?: string;
   phoneNumber: string;
   altPhone?: string;
   address1?: string;
@@ -20,8 +20,8 @@ export interface Poc {
 }
 
 export interface CreatePocRequest {
-  fullName: string;
-  surname?: string;
+  firstName: string;
+  lastName?: string;
   phoneNumber: string;
   altPhone?: string;
   address1?: string;

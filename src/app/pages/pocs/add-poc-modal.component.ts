@@ -46,8 +46,8 @@ export class AddPocModalComponent implements OnInit {
     private toastController: ToastController
   ) {
     this.pocForm = this.formBuilder.group({
-      fullName: ['', [Validators.required, Validators.maxLength(200), Validators.pattern(/^[a-zA-Z ]+$/)]],
-      surname: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z ]+$/)]],
+      firstName: ['', [Validators.required, Validators.maxLength(200), Validators.pattern(/^[a-zA-Z ]+$/)]],
+      lastName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z ]+$/)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       altPhone: ['', [Validators.pattern(/^[0-9]{10}$/)]],
       address1: ['', [Validators.required, Validators.maxLength(100)]],
@@ -96,8 +96,8 @@ export class AddPocModalComponent implements OnInit {
         const poc = pocs.find(p => p.id === pocId);
         if (poc) {
           this.pocForm.patchValue({
-            fullName: poc.fullName,
-            surname: poc.surname || '',
+            firstName: poc.firstName,
+            lastName: poc.lastName || '',
             phoneNumber: poc.phoneNumber,
             altPhone: poc.altPhone || '',
             address1: poc.address1 || '',
@@ -138,21 +138,21 @@ export class AddPocModalComponent implements OnInit {
     });
   }
 
-  onFullNameInput(event: any): void {
+  onFirstNameInput(event: any): void {
     const raw = event?.detail?.value ?? '';
     const sanitized = (raw || '').replace(/[^a-zA-Z ]/g, '');
     const truncated = sanitized.slice(0, 200);
-    const control = this.pocForm.get('fullName');
+    const control = this.pocForm.get('firstName');
     if (control && control.value !== truncated) {
       control.setValue(truncated);
     }
   }
 
-  onSurnameInput(event: any): void {
+  onLastNameInput(event: any): void {
     const raw = event?.detail?.value ?? '';
     const sanitized = (raw || '').replace(/[^a-zA-Z ]/g, '');
     const truncated = sanitized.slice(0, 100);
-    const control = this.pocForm.get('surname');
+    const control = this.pocForm.get('lastName');
     if (control && control.value !== truncated) {
       control.setValue(truncated);
     }
@@ -210,8 +210,8 @@ export class AddPocModalComponent implements OnInit {
     await loading.present();
 
     const pocData: CreatePocRequest = {
-      fullName: this.pocForm.value.fullName.trim(),
-      surname: this.pocForm.value.surname?.trim() || '',
+      firstName: this.pocForm.value.firstName.trim(),
+      lastName: this.pocForm.value.lastName?.trim() || '',
       phoneNumber: this.pocForm.value.phoneNumber?.trim() || '',
       altPhone: this.pocForm.value.altPhone?.trim() || '',
       address1: this.pocForm.value.address1?.trim() || '',
@@ -294,18 +294,18 @@ export class AddPocModalComponent implements OnInit {
         if (fieldName === 'pinCode') {
           return 'PIN code must be exactly 6 digits';
         }
-        if (fieldName === 'fullName') {
+        if (fieldName === 'firstName') {
           return 'First name must contain only letters';
         }
-        if (fieldName === 'surname') {
+        if (fieldName === 'lastName') {
           return 'Surname must contain only letters';
         }
       }
       if (field.errors['maxlength']) {
-        if (fieldName === 'fullName') {
+        if (fieldName === 'firstName') {
           return 'First name must be at most 200 characters';
         }
-        if (fieldName === 'surname') {
+        if (fieldName === 'lastName') {
           return 'Surname must be at most 100 characters';
         }
         if (fieldName === 'address1' || fieldName === 'address2') {

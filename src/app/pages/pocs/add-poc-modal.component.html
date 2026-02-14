@@ -12,28 +12,28 @@
 <ion-content [fullscreen]="true" class="ion-padding">
   <form [formGroup]="pocForm" (ngSubmit)="onSubmit()">
     <!-- Name Field -->
-    <ion-item [class.ion-invalid]="isFieldInvalid('fullName')">
+    <ion-item [class.ion-invalid]="isFieldInvalid('firstName')">
       <ion-label position="stacked">First Name <span class="required">*</span></ion-label>
       <ion-input
-        formControlName="fullName"
+        formControlName="firstName"
         placeholder="Enter first name"
-        (ionInput)="onFullNameInput($event)"
+        (ionInput)="onFirstNameInput($event)"
         type="text"
         maxlength="200">
       </ion-input>
-      <ion-note slot="error">{{ getFieldError('fullName') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
     </ion-item>
 
-    <ion-item [class.ion-invalid]="isFieldInvalid('surname')">
+    <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
       <ion-label position="stacked">Surname <span class="required">*</span></ion-label>
       <ion-input
-        formControlName="surname"
+        formControlName="lastName"
         placeholder="Enter surname"
-        (ionInput)="onSurnameInput($event)"
+        (ionInput)="onLastNameInput($event)"
         type="text"
         maxlength="100">
       </ion-input>
-      <ion-note slot="error">{{ getFieldError('surname') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('lastName') }}</ion-note>
     </ion-item>
 
     <!-- Contact Fields -->
