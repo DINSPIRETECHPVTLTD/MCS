@@ -12,6 +12,7 @@ import { CenterOption, Member, POCOption } from '../../models/member.models';
 import { BranchService } from '../../services/branch.service';
 import { AddMemberModalComponent } from './add-member-modal.component';
 import { EditMemberModalComponent } from './edit-member-modal.component';
+import { AddLoanModalComponent } from '../add-loan/add-loan-modal.component';
 
 @Component({
   selector: 'app-members',
@@ -63,7 +64,14 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
         const loanBtn = document.createElement('button');
         loanBtn.textContent = 'Add/View Loan';
         loanBtn.className = 'ag-btn ag-loan';
-        loanBtn.addEventListener('click', () => console.log('Loan action:', params.data));
+        
+        loanBtn.addEventListener('click', async () => {
+          if (params.data.loanId && params.data.loanId > 0) {
+            this.openViewLoan(params.data);
+          } else {
+              await this.openAddLoanModal(params.data);
+          }
+        });
 
         container.appendChild(editBtn);
         container.appendChild(deleteBtn);
@@ -334,7 +342,8 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       memberPhone: phoneNumber,
       branch: this.selectedBranch?.name ?? (branchId ? this.branchMap.get(Number(branchId)) : ''),
       center: centerMap.get(centerId) ?? '',
-      poc: pocDisplay
+      poc: pocDisplay,
+      loanId: m.loanId ?? null
     };
   }
 
@@ -506,5 +515,31 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     await modal.present();
 
   }
+  openViewLoan(member: any): void {
+    if (!member || !member.loanId) return;
+    this.router.navigate(['/view-loan', member.loanId]);
+  }
+  
+  async openAddLoanModal(member: any): Promise<void> {
+    const modal = await this.modalController.create({
+      component: AddLoanModalComponent,
+      cssClass: 'add-loan-modal',
+      breakpoints: [0, 0.5, 1],
+      initialBreakpoint: 1,
+      componentProps: {
+        selectedMember: member
+      }
+    });
+    
+    await modal.present();
+
+    const { data } = await modal.onWillDismiss();
+    if (data?.loan) {
+      this.showToast('Loan added successfully!', 'success');
+      await this.refreshMembers(); // refresh members so button changes to "View Loan"
+    }
+  }
+
+
 }
 
