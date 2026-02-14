@@ -78,7 +78,7 @@ export class PocService {
     return this.http.put<Poc>(`${this.apiUrl}/POCs/${id}`, poc, { headers: this.getHeaders() });
   }
 
-  deletePoc(id: number): Observable<any> {
+  deletePoc(id: number): Observable<unknown> {
     return this.http.delete(`${this.apiUrl}/POCs/${id}`, { headers: this.getHeaders() });
   }
 }

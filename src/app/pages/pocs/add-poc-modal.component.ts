@@ -42,7 +42,6 @@ export class AddPocModalComponent implements OnInit {
     private formBuilder: FormBuilder,
     private modalController: ModalController,
     private userContext: UserContextService,
-    private branchService: BranchService,
     private pocService: PocService,
     private memberService: MemberService,
     private masterDataService: MasterDataService,
@@ -170,8 +169,8 @@ export class AddPocModalComponent implements OnInit {
     });
   }
 
-  onFirstNameInput(event: any): void {
-    const raw = event?.detail?.value ?? '';
+  onFirstNameInput(event: Event): void {
+    const raw = (event.target as HTMLInputElement)?.value ?? '';
     const sanitized = (raw || '').replace(/[^a-zA-Z ]/g, '');
     const truncated = sanitized.slice(0, 200);
     const control = this.pocForm.get('firstName');
@@ -180,8 +179,8 @@ export class AddPocModalComponent implements OnInit {
     }
   }
 
-  onLastNameInput(event: any): void {
-    const raw = event?.detail?.value ?? '';
+  onLastNameInput(event: Event): void {
+    const raw = (event.target as HTMLInputElement)?.value ?? '';
     const sanitized = (raw || '').replace(/[^a-zA-Z ]/g, '');
     const truncated = sanitized.slice(0, 100);
     const control = this.pocForm.get('lastName');
@@ -190,8 +189,8 @@ export class AddPocModalComponent implements OnInit {
     }
   }
 
-  onPinCodeInput(event: any): void {
-    const raw = event?.detail?.value ?? '';
+  onPinCodeInput(event: Event): void {
+    const raw = (event.target as HTMLInputElement)?.value ?? '';
     const sanitized = (raw || '').replace(/[^0-9]/g, '');
     const truncated = sanitized.slice(0, 6);
     const control = this.pocForm.get('pinCode');
@@ -210,7 +209,6 @@ export class AddPocModalComponent implements OnInit {
           branchId: center.branchId
         }));
         this.isLoadingCenters = false;
-        console.log('Loaded centers:', this.centers);
       },
       error: (error) => {
         console.error('Error loading centers:', error);
@@ -229,7 +227,6 @@ export class AddPocModalComponent implements OnInit {
         // Filter for active users only - you can adjust the filter criteria as needed
         this.users = users.filter(user => user.id);
         this.isLoadingUsers = false;
-        console.log('Loaded users:', this.users.length);
       },
       error: (error) => {
         console.error('Error loading users:', error);
