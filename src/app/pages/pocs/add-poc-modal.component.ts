@@ -7,6 +7,8 @@ import { PocService, CreatePocRequest } from '../../services/poc.service';
 import { MemberService } from '../../services/member.service';
 import { MasterDataService } from '../../services/master-data.service';
 import { MasterLookup } from '../../models/master-data.models';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.models';
 
 export interface Center {
   id: number;
@@ -31,8 +33,10 @@ export class AddPocModalComponent implements OnInit {
   submitted: boolean = false;
   centers: Center[] = [];
   states: MasterLookup[] = [];
+  users: User[] = [];
   isLoadingCenters: boolean = false;
   isLoadingStates: boolean = false;
+  isLoadingUsers: boolean = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -42,6 +46,7 @@ export class AddPocModalComponent implements OnInit {
     private pocService: PocService,
     private memberService: MemberService,
     private masterDataService: MasterDataService,
+    private userService: UserService,
     private loadingController: LoadingController,
     private toastController: ToastController
   ) {
@@ -56,6 +61,9 @@ export class AddPocModalComponent implements OnInit {
       state: [''],
       pinCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
       centerId: [null, [Validators.required]],
+      collectionFrequency: ['Weekly', [Validators.required]],
+      collectionDay: [''],
+      collectionBy: [null, [Validators.required]],
       branchId: [null]
     });
   }
@@ -73,8 +81,29 @@ export class AddPocModalComponent implements OnInit {
       console.warn('No branch ID available for POC creation');
     }
 
+    // Watch for collection frequency changes to conditionally require collection day
+    this.pocForm.get('collectionFrequency')?.valueChanges.subscribe(frequency => {
+      const collectionDayControl = this.pocForm.get('collectionDay');
+      if (frequency === 'Weekly') {
+        collectionDayControl?.setValidators([Validators.required]);
+      } else {
+        collectionDayControl?.clearValidators();
+        collectionDayControl?.setValue('');
+      }
+      collectionDayControl?.updateValueAndValidity();
+    });
+
+    // Set initial validation based on default value
+    if (this.pocForm.get('collectionFrequency')?.value === 'Weekly') {
+      this.pocForm.get('collectionDay')?.setValidators([Validators.required]);
+      this.pocForm.get('collectionDay')?.updateValueAndValidity();
+    }
+
     // Load states from master data
     this.loadStates();
+
+    // Load active users
+    this.loadUsers();
 
     // Load POC data if editing
     if (this.isEditing && this.editingPocId) {
@@ -105,7 +134,10 @@ export class AddPocModalComponent implements OnInit {
             city: poc.city || '',
             state: poc.state || '',
             pinCode: poc.pinCode || '',
-            centerId: poc.centerId
+            centerId: poc.centerId,
+            collectionFrequency: poc.collectionFrequency || 'Weekly',
+            collectionDay: poc.collectionDay || '',
+            collectionBy: poc.collectionBy || null
           });
         } else {
           this.showToast('POC not found', 'danger');
@@ -189,6 +221,25 @@ export class AddPocModalComponent implements OnInit {
     });
   }
 
+  async loadUsers(): Promise<void> {
+    this.isLoadingUsers = true;
+    
+    this.userService.getUsers().subscribe({
+      next: (users) => {
+        // Filter for active users only - you can adjust the filter criteria as needed
+        this.users = users.filter(user => user.id);
+        this.isLoadingUsers = false;
+        console.log('Loaded users:', this.users.length);
+      },
+      error: (error) => {
+        console.error('Error loading users:', error);
+        this.users = [];
+        this.isLoadingUsers = false;
+        this.showToast('Failed to load users. Please try again.', 'danger');
+      }
+    });
+  }
+
   async onSubmit(): Promise<void> {
     this.submitted = true;
     
@@ -219,8 +270,10 @@ export class AddPocModalComponent implements OnInit {
       city: this.pocForm.value.city?.trim() || '',
       state: this.pocForm.value.state?.trim() || '',
       pinCode: this.pocForm.value.pinCode?.trim() || '',
-      centerId: this.pocForm.value.centerId
-      
+      centerId: this.pocForm.value.centerId,
+      collectionFrequency: this.pocForm.value.collectionFrequency || 'Weekly',
+      collectionDay: this.pocForm.value.collectionDay || '',
+      collectionBy: this.pocForm.value.collectionBy || 0
     };
 
     const apiCall = this.isEditing && this.editingPocId

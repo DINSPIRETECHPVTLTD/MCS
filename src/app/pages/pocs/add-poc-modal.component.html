@@ -132,6 +132,52 @@
       <ion-note slot="error">{{ getFieldError('centerId') }}</ion-note>
     </ion-item>
 
+    <!-- Collection Frequency Dropdown -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('collectionFrequency')">
+      <ion-label position="stacked">Collection Frequency <span class="required">*</span></ion-label>
+      <ion-select
+        formControlName="collectionFrequency"
+        placeholder="Select collection frequency"
+        interface="popover">
+        <ion-select-option value="Daily">Daily</ion-select-option>
+        <ion-select-option value="Weekly">Weekly</ion-select-option>
+        <ion-select-option value="Monthly">Monthly</ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('collectionFrequency') }}</ion-note>
+    </ion-item>
+
+    <!-- Collection Day Dropdown (only for Weekly) -->
+    <ion-item *ngIf="pocForm.get('collectionFrequency')?.value === 'Weekly'" [class.ion-invalid]="isFieldInvalid('collectionDay')">
+      <ion-label position="stacked">Collection Day <span class="required">*</span></ion-label>
+      <ion-select
+        formControlName="collectionDay"
+        placeholder="Select collection day"
+        interface="popover">
+        <ion-select-option value="Sunday">Sunday</ion-select-option>
+        <ion-select-option value="Monday">Monday</ion-select-option>
+        <ion-select-option value="Tuesday">Tuesday</ion-select-option>
+        <ion-select-option value="Wednesday">Wednesday</ion-select-option>
+        <ion-select-option value="Thursday">Thursday</ion-select-option>
+        <ion-select-option value="Friday">Friday</ion-select-option>
+        <ion-select-option value="Saturday">Saturday</ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('collectionDay') }}</ion-note>
+    </ion-item>
+
+    <!-- Collection By Dropdown -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('collectionBy')">
+      <ion-label position="stacked">Collection By <span class="required">*</span></ion-label>
+      <ion-select
+        formControlName="collectionBy"
+        placeholder="Select collection by"
+        interface="popover">
+        <ion-select-option *ngFor="let user of users" [value]="user.id">
+          {{ user.firstName }} {{ user.lastName }}
+        </ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('collectionBy') }}</ion-note>
+    </ion-item>
+
     <div *ngIf="isLoadingCenters" class="loading-message">
       <ion-spinner name="crescent"></ion-spinner>
       <ion-text color="medium">Loading centers...</ion-text>

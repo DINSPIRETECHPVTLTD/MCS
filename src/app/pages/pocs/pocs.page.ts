@@ -8,6 +8,7 @@ import { ColDef } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
 import { Poc, PocService } from '../../services/poc.service';
 import { MemberService } from '../../services/member.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-pocs',
@@ -22,7 +23,6 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   // AG Grid configuration
   rowData: Poc[] = [];
   columnDefs: ColDef[] = [
-    { field: 'id', headerName: 'ID', width: 80, sortable: true, filter: true },
     { 
       headerName: 'Name',
       valueGetter: (params: any) => {
@@ -67,6 +67,27 @@ export class PocsComponent implements OnInit, ViewWillEnter {
       width: 160
     },
     {
+      headerName: 'Collection Frequency',
+      field: 'collectionFrequency',
+      sortable: true,
+      filter: true,
+      width: 150
+    },
+    {
+      headerName: 'Collection Day',
+      field: 'collectionDay',
+      sortable: true,
+      filter: true,
+      width: 130
+    },
+    {
+      headerName: 'Collection By',
+      valueGetter: (params: any) => params.context?.componentParent?.getUserName(params.data?.collectionBy),
+      sortable: true,
+      filter: true,
+      width: 150
+    },
+    {
       headerName: 'Actions',
       field: 'actions',
       width: 160,
@@ -96,6 +117,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   gridOptions: any;
   gridApi: any;
   centerNameMap: Record<number, string> = {};
+  userNameMap: Record<number, string> = {};
 
   constructor(
     private authService: AuthService,
@@ -103,6 +125,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     private modalController: ModalController,
     private pocService: PocService,
     private memberService: MemberService,
+    private userService: UserService,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private alertController: AlertController
@@ -130,6 +153,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     // Load POCs data
     if (this.selectedBranch) {
       this.loadCenters(this.selectedBranch.id);
+      this.loadUsers();
       this.loadPocs();
     }
   }
@@ -184,6 +208,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     this.selectedBranch = branch;
     // Load POCs for the selected branch
     this.loadCenters(branch.id);
+    this.loadUsers();
     this.loadPocs();
   }
 
@@ -215,6 +240,38 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   getCenterName(centerId?: number): string {
     if (!centerId) return '';
     return this.centerNameMap[centerId] || centerId.toString();
+  }
+
+  loadUsers(): void {
+    this.userService.getUsers().subscribe({
+      next: (users) => {
+        const map: Record<number, string> = {};
+        (users || []).forEach(user => {
+          const id = Number(user?.id);
+          if (!Number.isNaN(id) && id > 0) {
+            const firstName = user?.firstName || '';
+            const lastName = user?.lastName || '';
+            map[id] = [firstName, lastName].filter(Boolean).join(' ') || id.toString();
+          }
+        });
+        this.userNameMap = map;
+        if (this.gridApi) {
+          this.gridApi.refreshCells({ force: true });
+        }
+      },
+      error: (error) => {
+        console.error('Error loading users:', error);
+        this.userNameMap = {};
+        if (this.gridApi) {
+          this.gridApi.refreshCells({ force: true });
+        }
+      }
+    });
+  }
+
+  getUserName(userId?: number): string {
+    if (!userId) return '';
+    return this.userNameMap[userId] || userId.toString();
   }
 
   async openAddPocModal(): Promise<void> {

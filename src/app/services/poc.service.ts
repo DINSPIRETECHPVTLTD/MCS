@@ -17,6 +17,9 @@ export interface Poc {
   pinCode?: string;
   centerId: number;
   branchId?: number;
+  collectionDay?: string;
+  collectionFrequency: string;
+  collectionBy: number;
 }
 
 export interface CreatePocRequest {
@@ -30,7 +33,9 @@ export interface CreatePocRequest {
   state?: string;
   pinCode?: string;
   centerId: number;
-  
+  collectionDay?: string;
+  collectionFrequency: string;
+  collectionBy: number;
 }
 
 @Injectable({
