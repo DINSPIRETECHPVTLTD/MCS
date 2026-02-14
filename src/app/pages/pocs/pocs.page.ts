@@ -311,12 +311,12 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   async deletePoc(poc: Poc): Promise<void> {
     const fullName = [poc.firstName, poc.lastName].filter(Boolean).join(' ');
     const alert = await this.alertController.create({
-      header: 'Confirm Delete',
-      message: `Are you sure you want to delete POC "${fullName}"?`,
+      header: 'Confirm Inactive',
+      message: `Are you sure you want to inactive POC "${fullName}"?`,
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Inactive',
           handler: async () => {
             if (!poc.id) {
               this.showToast('Invalid POC ID', 'danger');
