@@ -84,6 +84,12 @@
         (click)="setActiveMenu('Investments')">
         Investments
       </button>
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Investments'"
+        (click)="setActiveMenu('Investments')">
+        Investments
+      </button>
     </nav>
 
     <!-- Navigation Menu for Branch Mode (branch admin/staff, or owner viewing a branch) -->
