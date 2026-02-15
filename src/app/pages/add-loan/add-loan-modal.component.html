@@ -22,24 +22,8 @@
           <span>{{ selectedMember.memberId || selectedMember.id || 'N/A' }}</span>
         </div>
         <div class="detail-item">
-          <div class="detail-label">First Name:</div>
-          <span>{{ selectedMember.firstName || 'N/A' }}</span>
-        </div>
-        <div class="detail-item" *ngIf="selectedMember.middleName">
-          <div class="detail-label">Middle Name:</div>
-          <span>{{ selectedMember.middleName }}</span>
-        </div>
-        <div class="detail-item">
-          <div class="detail-label">Last Name:</div>
-          <span>{{ selectedMember.lastName || 'N/A' }}</span>
-        </div>
-        <div class="detail-item">
-          <div class="detail-label">Age:</div>
-          <span>{{ selectedMember.age || 'N/A' }}</span>
-        </div>
-        <div class="detail-item" *ngIf="selectedMember.phone || selectedMember.phoneNumber">
-          <div class="detail-label">Phone:</div>
-          <span>{{ selectedMember.phone || selectedMember.phoneNumber }}</span>
+          <div class="detail-label">Name:</div>
+          <span>{{ (selectedMember.lastName || '') + ' ' + (selectedMember.firstName || '') || 'N/A' }}</span>
         </div>
       </div>
     </ion-card-content>
@@ -49,15 +33,6 @@
   <form class="loan-details-form">
     <h3 class="detail-section-title">Loan Details</h3>
     <div class="loan-form-grid">
-      <ion-item class="loan-form-field">
-        <ion-label position="stacked">Member ID</ion-label>
-        <ion-input
-          [value]="loanForm.memberId"
-          readonly
-          type="text">
-        </ion-input>
-      </ion-item>
-
       <ion-item class="loan-form-field">
         <ion-label position="stacked">Loan Amount *</ion-label>
         <ion-input
@@ -149,7 +124,8 @@
         <ion-input
           [(ngModel)]="loanForm.disbursementDate"
           name="disbursementDate"
-          type="date">
+          type="date"
+          (ionChange)="onDisbursementDateChange()">
         </ion-input>
       </ion-item>
 

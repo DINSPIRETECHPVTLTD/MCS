@@ -42,6 +42,11 @@ export class AddLoanModalComponent implements OnInit {
       const id = this.selectedMember.memberId ?? this.selectedMember.id;
       this.loanForm.memberId = id != null ? Number(id) : 0;
     }
+    // Set default disbursement date to today
+    const today = new Date();
+    this.loanForm.disbursementDate = this.formatDate(today);
+    // Set default collection start date to disbursement date + 7 days
+    this.updateCollectionStartDate();
   }
 
   closeModal(): void {
@@ -116,6 +121,26 @@ export class AddLoanModalComponent implements OnInit {
       input.value = input.value.replace(/[^0-9.]/g, '');
       const numValue = parseFloat(input.value) || 0;
       (this.loanForm[fieldName] as number) = numValue;
+    }
+  }
+
+  onDisbursementDateChange(): void {
+    this.updateCollectionStartDate();
+  }
+
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private updateCollectionStartDate(): void {
+    if (this.loanForm.disbursementDate) {
+      const disbursementDate = new Date(this.loanForm.disbursementDate);
+      const collectionDate = new Date(disbursementDate);
+      collectionDate.setDate(collectionDate.getDate() + 7);
+      this.loanForm.collectionStartDate = this.formatDate(collectionDate);
     }
   }
 }
