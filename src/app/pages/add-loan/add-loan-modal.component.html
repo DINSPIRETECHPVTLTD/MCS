@@ -60,7 +60,8 @@
           [(ngModel)]="selectedPaymentType"
           name="paymentType"
           placeholder="Select payment type"
-          interface="popover">
+          interface="popover"
+          (ionChange)="onPaymentTypeChange()">
           <ion-select-option *ngFor="let type of uniquePaymentTypes" [value]="type">
             {{ type }}
           </ion-select-option>

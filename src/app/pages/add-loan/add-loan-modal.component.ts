@@ -197,6 +197,18 @@ export class AddLoanModalComponent implements OnInit {
     }
   }
 
+  onPaymentTypeChange(): void {
+    // Update selected payment term when payment type changes
+    if (this.selectedPaymentType) {
+      this.selectedPaymentTerm = this.paymentTerms.find(
+        pt => pt.paymentType === this.selectedPaymentType
+      ) || null;
+    } else {
+      this.selectedPaymentTerm = null;
+    }
+    this.calculateLoanDetails();
+  }
+
   onPaymentTermChange(): void {
     this.calculateLoanDetails();
   }
