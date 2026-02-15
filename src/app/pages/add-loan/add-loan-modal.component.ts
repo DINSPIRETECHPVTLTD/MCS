@@ -172,13 +172,40 @@ export class AddLoanModalComponent implements OnInit {
         this.isCreatingLoan = false;
         console.error('Create loan error:', err);
         
-        const toast = await this.toastController.create({
-          message: 'Failed to create loan. Please try again.',
-          duration: 3000,
-          color: 'danger',
-          position: 'top'
+        // Extract error details from response
+        let errorTitle = 'Error';
+        let errorMessage = 'Failed to create loan. Please try again.';
+        
+        if (err && typeof err === 'object' && 'error' in err) {
+          const errorResponse = (err as any).error;
+          if (errorResponse) {
+            // Extract error and message fields
+            if (errorResponse.error) {
+              errorTitle = errorResponse.error;
+            }
+            if (errorResponse.message) {
+              errorMessage = errorResponse.message;
+            }
+          }
+        }
+        
+        // Show alert with error details
+        const alert = await this.alertController.create({
+          header: errorTitle,
+          message: errorMessage,
+          buttons: [
+            {
+              text: 'OK',
+              handler: () => {
+                // Close modal after error alert
+                this.modalController.dismiss(null, 'error');
+              }
+            }
+          ],
+          cssClass: 'error-alert',
+          backdropDismiss: false
         });
-        await toast.present();
+        await alert.present();
       }
     });
   }
