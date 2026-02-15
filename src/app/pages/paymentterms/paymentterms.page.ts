@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ModalController, ToastController } from '@ionic/angular';
+import { ModalController, ToastController, AlertController, LoadingController } from '@ionic/angular';
 import { PaymentsService } from '../../services/payments.service';
 import { Payment } from '../../models/payment.models';
 import { Branch } from '../../models/branch.models';
-import { AddPaymentTermModalComponent } from './add-paymentterm-modal.component';
-import { EditPaymentTermModalComponent } from './edit-paymentterm-modal.component';
+import { PaymentTermModalComponent } from './payment-term-modal.component';
 import { ColDef, GridApi, GridOptions, ICellRendererParams } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
 
@@ -23,7 +22,7 @@ export class PaymentTermsPage implements OnInit {
     { headerName: 'Payment Term ID', field: 'id', width: 120, sortable: true, filter: true },
     {
       headerName: 'Payment Term',
-      field: 'paymentTerm',
+      field: 'paymentTermName',
       sortable: true,
       filter: true,
       flex: 1,
@@ -46,7 +45,7 @@ export class PaymentTermsPage implements OnInit {
       flex: 1,
       minWidth: 140
     },
-    { headerName: 'ROI', field: 'roi', sortable: true, filter: true, width: 100 },
+    { headerName: 'Rate of Interest', field: 'rateOfInterest', sortable: true, filter: true, width: 140 },
     {
       headerName: 'Insurance Fee',
       field: 'insuranceFee',
@@ -111,7 +110,9 @@ export class PaymentTermsPage implements OnInit {
   constructor(
     private paymentsService: PaymentsService,
     private modalController: ModalController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private alertController: AlertController,
+    private loadingController: LoadingController
   ) {}
 
   ngOnInit(): void {
@@ -141,7 +142,7 @@ export class PaymentTermsPage implements OnInit {
 
   async openAddPaymentTermModal() {
     const modal = await this.modalController.create({
-      component: AddPaymentTermModalComponent
+      component: PaymentTermModalComponent
     });
     modal.onDidDismiss().then((result) => {
       if (result.data?.refresh) {
@@ -154,7 +155,7 @@ export class PaymentTermsPage implements OnInit {
 
   async openEditPaymentTermModal(payment: Payment, readOnly = false) {
     const modal = await this.modalController.create({
-      component: EditPaymentTermModalComponent,
+      component: PaymentTermModalComponent,
       componentProps: { payment, readOnly }
     });
     modal.onDidDismiss().then((result) => {
@@ -166,18 +167,40 @@ export class PaymentTermsPage implements OnInit {
     return modal.present();
   }
 
-  confirmDelete(payment: Payment) {
-    if (confirm('Are you sure you want to delete this payment term?')) {
-      this.paymentsService.deletePayment(payment.id).subscribe({
-        next: () => {
-          this.loadPayments();
-          this.showToast('Payment term deleted successfully', 'success');
-        },
-        error: (err) => {
-          this.showToast(err?.error?.message || 'Failed to delete payment term', 'danger');
+  async confirmDelete(payment: Payment): Promise<void> {
+    const alert = await this.alertController.create({
+      header: 'Confirm Inactive',
+      message: `Are you sure you want to inactive payment term "${payment.paymentTermName}"?`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Inactive',
+          handler: async () => {
+            if (!payment.id) {
+              this.showToast('Invalid payment term ID', 'danger');
+              return;
+            }
+            const loading = await this.loadingController.create({
+              message: 'Deleting...',
+              spinner: 'crescent'
+            });
+            await loading.present();
+            this.paymentsService.deletePayment(payment.id).subscribe({
+              next: async () => {
+                await loading.dismiss();
+                this.showToast('Payment term deleted successfully', 'success');
+                this.loadPayments();
+              },
+              error: async (err: Error) => {
+                await loading.dismiss();
+                this.showToast('Failed to delete payment term: ' + err.message, 'danger');
+              }
+            });
+          }
         }
-      });
-    }
+      ]
+    });
+    await alert.present();
   }
 
   private async showToast(message: string, color: 'success' | 'danger' | 'warning' = 'success'): Promise<void> {

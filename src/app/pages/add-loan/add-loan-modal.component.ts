@@ -3,6 +3,9 @@ import { ModalController, LoadingController, ToastController, AlertController } 
 import { Member } from '../../models/member.models';
 import { CreateLoanRequest, Loan } from '../../models/loan.models';
 import { LoanService } from '../../services/loan.service';
+import { Poc, PocService } from '../../services/poc.service';
+import { Payment } from '../../models/payment.models';
+import { PaymentsService } from '../../services/payments.service';
 
 @Component({
   selector: 'app-add-loan-modal',
@@ -13,31 +16,105 @@ export class AddLoanModalComponent implements OnInit {
   @Input() selectedMember!: Member;
   
   loanForm: CreateLoanRequest = {
-    loanCode: '',
     memberId: 0,
     loanAmount: 0,
     interestAmount: 0,
     processingFee: 0,
     insuranceFee: 0,
     isSavingEnabled: false,
-    savingAmount: 0
+    savingAmount: 0,
+    totalAmount: 0,
+    disbursementDate: undefined,
+    collectionStartDate: undefined,
+    collectionTerm: '',
+    noOfTerms: 0
   };
   
   isCreatingLoan: boolean = false;
+  memberPoc: Poc | null = null;
+  paymentTerms: Payment[] = [];
+  selectedPaymentTerm: Payment | null = null;
+  selectedPaymentType: string = '';
 
   constructor(
     private modalController: ModalController,
     private loanService: LoanService,
     private loadingController: LoadingController,
     private toastController: ToastController,
-    private alertController: AlertController
+    private alertController: AlertController,
+    private pocService: PocService,
+    private paymentsService: PaymentsService
   ) {}
 
   ngOnInit(): void {
     if (this.selectedMember) {
       const id = this.selectedMember.memberId ?? this.selectedMember.id;
       this.loanForm.memberId = id != null ? Number(id) : 0;
+      // Load POC data for the selected member
+      this.loadMemberPoc();
     }
+    // Set default disbursement date to today
+    const today = new Date();
+    this.loanForm.disbursementDate = this.formatDate(today);
+    // Set default collection start date to disbursement date + 7 days
+    this.updateCollectionStartDate();
+    // Load payment terms
+    this.loadPaymentTerms();
+  }
+
+  loadMemberPoc(): void {
+    if (!this.selectedMember?.pocId) return;
+    
+    this.pocService.getPocs().subscribe({
+      next: (pocs: Poc[]) => {
+        this.memberPoc = pocs.find(p => p.id === this.selectedMember.pocId) || null;
+        // Auto-populate collection term from POC's collection frequency
+        if (this.memberPoc?.collectionFrequency) {
+          this.loanForm.collectionTerm = this.memberPoc.collectionFrequency;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading POC:', err);
+        this.memberPoc = null;
+      }
+    });
+  }
+
+  loadPaymentTerms(): void {
+    this.paymentsService.getPayments().subscribe({
+      next: (payments: Payment[]) => {
+        this.paymentTerms = payments;
+      },
+      error: (err) => {
+        console.error('Error loading payment terms:', err);
+        this.paymentTerms = [];
+      }
+    });
+  }
+
+  get showCollectionDay(): boolean {
+    return !!(this.memberPoc && 
+             this.memberPoc.collectionFrequency && 
+             this.memberPoc.collectionFrequency.toLowerCase() === 'weekly' &&
+             this.memberPoc.collectionDay);
+  }
+
+  get pocName(): string {
+    if (!this.memberPoc) return 'N/A';
+    const firstName = this.memberPoc.firstName || '';
+    const lastName = this.memberPoc.lastName || '';
+    return [firstName, lastName].filter(Boolean).join(' ') || 'N/A';
+  }
+
+  get uniquePaymentTypes(): string[] {
+    const types = this.paymentTerms
+      .map(pt => pt.paymentType)
+      .filter(type => type && type.trim() !== '');
+    return [...new Set(types)];
+  }
+
+  comparePaymentTerms(p1: Payment, p2: Payment): boolean {
+    return p1 && p2 ? p1.id === p2.id : p1 === p2;
   }
 
   closeModal(): void {
@@ -47,9 +124,11 @@ export class AddLoanModalComponent implements OnInit {
   isLoanFormValid(): boolean {
     const f = this.loanForm;
     return !!(
-      (f.loanCode ?? '').trim() &&
       f.memberId > 0 &&
-      (f.loanAmount ?? 0) >= 0
+      (f.loanAmount ?? 0) > 0 &&
+      (f.totalAmount ?? 0) > 0 &&
+      (f.collectionTerm ?? '').trim() &&
+      (f.noOfTerms ?? 0) > 0
     );
   }
 
@@ -74,7 +153,7 @@ export class AddLoanModalComponent implements OnInit {
         // Show alert with member name and loan ID
         const alert = await this.alertController.create({
           header: 'Loan Created Successfully',
-          message: `Member: ${memberName} loan created with Loan ID: ${loan.loanId}`,
+          message: `Member: ${memberName} loan created with Loan ID: ${loan.id}`,
           buttons: [
             {
               text: 'OK',
@@ -110,6 +189,77 @@ export class AddLoanModalComponent implements OnInit {
       input.value = input.value.replace(/[^0-9.]/g, '');
       const numValue = parseFloat(input.value) || 0;
       (this.loanForm[fieldName] as number) = numValue;
+      
+      // Recalculate fees when loan amount changes
+      if (fieldName === 'loanAmount') {
+        this.calculateLoanDetails();
+      }
+    }
+  }
+
+  onPaymentTypeChange(): void {
+    // Update selected payment term when payment type changes
+    if (this.selectedPaymentType) {
+      this.selectedPaymentTerm = this.paymentTerms.find(
+        pt => pt.paymentType === this.selectedPaymentType
+      ) || null;
+    } else {
+      this.selectedPaymentTerm = null;
+    }
+    this.calculateLoanDetails();
+  }
+
+  onPaymentTermChange(): void {
+    this.calculateLoanDetails();
+  }
+
+  calculateLoanDetails(): void {
+    if (!this.selectedPaymentTerm || !this.loanForm.loanAmount) {
+      return;
+    }
+
+    const loanAmount = this.loanForm.loanAmount;
+    const paymentTerm = this.selectedPaymentTerm;
+
+    // Calculate Interest Amount = (rateOfInterest * loanAmount) / 100
+    this.loanForm.interestAmount = paymentTerm.rateOfInterest 
+      ? (paymentTerm.rateOfInterest * loanAmount) / 100 
+      : 0;
+
+    // Calculate Processing Fee = (processingFee * loanAmount) / 100
+    this.loanForm.processingFee = paymentTerm.processingFee 
+      ? (paymentTerm.processingFee * loanAmount) / 100 
+      : 0;
+
+    // Calculate Insurance Fee = (insuranceFee * loanAmount) / 100
+    this.loanForm.insuranceFee = paymentTerm.insuranceFee 
+      ? (paymentTerm.insuranceFee * loanAmount) / 100 
+      : 0;
+
+    // Set No of Terms from payment term
+    this.loanForm.noOfTerms = paymentTerm.noOfTerms || 0;
+
+    // Calculate Total Amount = loanAmount + interestAmount
+    this.loanForm.totalAmount = loanAmount + this.loanForm.interestAmount;
+  }
+
+  onDisbursementDateChange(): void {
+    this.updateCollectionStartDate();
+  }
+
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private updateCollectionStartDate(): void {
+    if (this.loanForm.disbursementDate) {
+      const disbursementDate = new Date(this.loanForm.disbursementDate);
+      const collectionDate = new Date(disbursementDate);
+      collectionDate.setDate(collectionDate.getDate() + 7);
+      this.loanForm.collectionStartDate = this.formatDate(collectionDate);
     }
   }
 }

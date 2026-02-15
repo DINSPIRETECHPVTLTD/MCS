@@ -3,25 +3,29 @@
  */
 
 export interface Loan {
-  loanId?: number;
-  loanCode: string;
+  id?: number;
   memberId: number;
-  /** Member first name (when returned with loan list) */
-  memberFirstName?: string;
-  /** Member last name (when returned with loan list) */
-  memberLastName?: string;
-  /** Member full name (alternative when API returns single name field) */
-  memberName?: string;
   loanAmount: number;
   interestAmount: number;
   processingFee: number;
   insuranceFee: number;
   isSavingEnabled: boolean;
   savingAmount: number;
+  totalAmount: number;
+  status: string;
+  disbursementDate?: string | null;
+  closureDate?: string | null;
+  collectionStartDate?: string | null;
+  collectionTerm: string;
+  noOfTerms: number;
+  createdBy: number;
+  createdAt: string;
+  modifiedBy?: number | null;
+  modifiedAt?: string | null;
+  isDeleted: boolean;
 }
 
 export interface CreateLoanRequest {
-  loanCode: string;
   memberId: number;
   loanAmount: number;
   interestAmount: number;
@@ -29,4 +33,9 @@ export interface CreateLoanRequest {
   insuranceFee: number;
   isSavingEnabled: boolean;
   savingAmount: number;
+  totalAmount: number;
+  disbursementDate?: string;
+  collectionStartDate?: string;
+  collectionTerm: string;
+  noOfTerms: number;
 }

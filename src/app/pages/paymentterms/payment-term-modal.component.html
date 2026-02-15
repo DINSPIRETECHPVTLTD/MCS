@@ -1,6 +1,6 @@
 <ion-header [translucent]="false">
   <ion-toolbar>
-    <ion-title>{{ readOnly ? 'View Payment Term' : 'Edit Payment Term' }}</ion-title>
+    <ion-title>{{ modalTitle }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="onCancel()">
         <ion-icon name="close-outline" slot="icon-only"></ion-icon>
@@ -9,19 +9,21 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="ion-padding edit-paymentterm-content">
+<ion-content [fullscreen]="true" class="ion-padding payment-term-modal-content">
   <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
-    <ion-item [class.ion-invalid]="paymentForm.get('paymentTerm')?.invalid && paymentForm.get('paymentTerm')?.touched">
+    <ion-item [class.ion-invalid]="paymentForm.get('paymentTermName')?.invalid && paymentForm.get('paymentTermName')?.touched">
       <ion-label position="stacked">Payment Term <span class="required">*</span></ion-label>
       <ion-select
-        formControlName="paymentTerm"
-        interface="popover"
+        formControlName="paymentTermName"
         placeholder="Select payment term"
-        [disabled]="readOnly">
-        <ion-select-option *ngFor="let term of paymentTerms" [value]="term">{{ term }}</ion-select-option>
+        [disabled]="readOnly"
+        interface="popover">
+        <ion-select-option value="Daily">Daily</ion-select-option>
+        <ion-select-option value="Weekly">Weekly</ion-select-option>
+        <ion-select-option value="Monthly">Monthly</ion-select-option>
       </ion-select>
-      <ion-note slot="error" *ngIf="paymentForm.get('paymentTerm')?.invalid && paymentForm.get('paymentTerm')?.touched">
-        <span *ngIf="paymentForm.get('paymentTerm')?.errors?.['required']">Payment term is required</span>
+      <ion-note slot="error" *ngIf="paymentForm.get('paymentTermName')?.invalid && paymentForm.get('paymentTermName')?.touched">
+        <span *ngIf="paymentForm.get('paymentTermName')?.errors?.['required']">Payment term is required</span>
       </ion-note>
     </ion-item>
 
@@ -40,13 +42,13 @@
       <ion-input
         formControlName="noOfTerms"
         placeholder="Enter number of terms"
-        type="text"
+        type="number"
         inputmode="numeric"
         [readonly]="readOnly">
       </ion-input>
       <ion-note slot="error" *ngIf="paymentForm.get('noOfTerms')?.invalid && paymentForm.get('noOfTerms')?.touched">
         <span *ngIf="paymentForm.get('noOfTerms')?.errors?.['required']">No. of terms is required</span>
-        <span *ngIf="paymentForm.get('noOfTerms')?.errors?.['pattern']">Enter a valid number</span>
+        <span *ngIf="paymentForm.get('noOfTerms')?.errors?.['min']">Must be at least 1</span>
       </ion-note>
     </ion-item>
 
@@ -55,17 +57,19 @@
       <ion-input
         formControlName="processingFee"
         placeholder="Enter processing fee"
-        type="text"
+        type="number"
+        step="0.01"
         [readonly]="readOnly">
       </ion-input>
     </ion-item>
 
     <ion-item>
-      <ion-label position="stacked">ROI</ion-label>
+      <ion-label position="stacked">Rate of Interest</ion-label>
       <ion-input
-        formControlName="roi"
-        placeholder="Enter ROI"
-        type="text"
+        formControlName="rateOfInterest"
+        placeholder="Enter rate of interest"
+        type="number"
+        step="0.01"
         [readonly]="readOnly">
       </ion-input>
     </ion-item>
@@ -75,7 +79,8 @@
       <ion-input
         formControlName="insuranceFee"
         placeholder="Enter insurance fee"
-        type="text"
+        type="number"
+        step="0.01"
         [readonly]="readOnly">
       </ion-input>
     </ion-item>
@@ -92,13 +97,16 @@
         [disabled]="isSubmitting || paymentForm.invalid"
         class="save-button">
         <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-        Update Payment Term
+        {{ isSubmitting ? 'Saving...' : submitButtonText }}
       </ion-button>
+
       <ion-button
         fill="outline"
         type="button"
         (click)="onCancel()"
-        class="cancel-button">
+        class="cancel-button"
+        [disabled]="isSubmitting">
+        <ion-icon name="close-outline" slot="start"></ion-icon>
         {{ readOnly ? 'Close' : 'Cancel' }}
       </ion-button>
     </div>
