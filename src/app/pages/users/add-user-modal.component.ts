@@ -35,7 +35,7 @@ export class AddUserModalComponent implements OnInit {
       address2: [''],
       city: [''],      state: [''],      zipCode: ['', [Validators.pattern(/^[0-9]{6}$/)]],
       level: ['Org', [Validators.required]],
-      role: ['Owner', [Validators.required]],
+      role: ['',[Validators.required]],
       organizationId: [0]
     });
   }
@@ -49,10 +49,38 @@ export class AddUserModalComponent implements OnInit {
       });
     }
 
+    // Subscribe to role changes to update validators
+    this.userForm.get('role')?.valueChanges.subscribe((role) => {
+      this.updateValidatorsForRole(role);
+    });
+
     // Load user data if editing
     if (this.isEditing && this.editingUserId) {
       this.loadUserData();
+      this.userForm.get('role')?.disable(); // Disable role selection when editing
     }
+  }
+
+  updateValidatorsForRole(role: string): void {
+    const emailControl = this.userForm.get('email');
+    const passwordControl = this.userForm.get('password');
+
+    if (role === 'Investor') {
+      // For Investor role, clear validators for email and password
+      emailControl?.clearValidators();
+      emailControl?.setValue('');
+      passwordControl?.clearValidators();
+      passwordControl?.setValue('');
+    } else {
+      // For other roles, add validators for email and password
+      emailControl?.setValidators([Validators.required, Validators.email]);
+      if (!this.isEditing) {
+        passwordControl?.setValidators([Validators.required, Validators.minLength(6)]);
+      }
+    }
+
+    emailControl?.updateValueAndValidity();
+    passwordControl?.updateValueAndValidity();
   }
 
   async loadUserData(): Promise<void> {
@@ -82,6 +110,8 @@ export class AddUserModalComponent implements OnInit {
           role: user.role || 'Owner',
           organizationId: user.organizationId || this.userContext.organizationId
         });
+        // Update validators based on role
+        this.updateValidatorsForRole(user.role || 'Owner');
         // Make password optional when editing
         this.userForm.get('password')?.clearValidators();
         this.userForm.get('password')?.updateValueAndValidity();
@@ -122,25 +152,33 @@ export class AddUserModalComponent implements OnInit {
     });
     await loading.present();
 
+    const firstName = this.userForm.value.firstName.trim();
+    const lastName = this.userForm.value.SurName.trim() || '';
+    const role = this.userForm.value.role;
+
     const userData: CreateUserRequest = {
-      firstName: this.userForm.value.firstName.trim(),
-      lastName: this.userForm.value.SurName.trim() || '',
+      firstName: firstName,
+      lastName: lastName,
       phoneNumber: this.userForm.value.phoneNumber?.trim() || '',
       address1: this.userForm.value.address1?.trim() || '',
       address2: this.userForm.value.address2?.trim() || '',
       city: this.userForm.value.city?.trim() || '',
       state: this.userForm.value.state?.trim() || '',
       zipCode: this.userForm.value.zipCode?.trim() || '',
-      email: this.userForm.value.email?.trim() || '',
+      email: role === 'Investor' ? `${firstName}${lastName}@investor.com` : (this.userForm.value.email?.trim() || ''),
       level: this.userForm.value.level,
-      role: this.userForm.value.role,
+      role: role,
       organizationId: this.userForm.value.organizationId,
       branchId: null
-    };
+    }as CreateUserRequest;
 
     // Add password for new user creation
-    if (!this.isEditing && this.userForm.value.password) {
-      userData.password = this.userForm.value.password;
+    if (!this.isEditing) {
+      if (role === 'Investor') {
+        userData.password = 'Dummy@123'; // Dummy password for Investor role
+      } else if (this.userForm.value.password) {
+        userData.password = this.userForm.value.password;
+      }
     }
 
     if (this.isEditing && this.editingUserId) {
@@ -160,6 +198,7 @@ export class AddUserModalComponent implements OnInit {
       });
     } else {
       // Create new user
+      console.log('Creating user with data:', userData); // Debug log
       this.userService.createUser(userData).subscribe({
         next: async (user) => {
           await loading.dismiss();
@@ -223,7 +262,8 @@ export class AddUserModalComponent implements OnInit {
       phoneNumber: 'Phone number',
       email: 'Email',
       password: 'Password',
-      zipCode: 'Pin code'
+      zipCode: 'Pin code',
+      role: 'Role'
     };
     return labels[fieldName] || fieldName;
   }

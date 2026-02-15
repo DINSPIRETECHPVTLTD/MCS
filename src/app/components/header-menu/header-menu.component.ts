@@ -226,6 +226,13 @@ export class HeaderMenuComponent implements OnInit {
       this.activeMenu = 'Master Data';
       this.menuChange.emit('Master Data');
       setTimeout(() => this.navigateToRoute('/master-data'), 0);
+    } else if (menu === 'Investments' && this.isOrgOwner) {
+      this.showUsersSubmenu = false;
+      this.showBranchesSubmenu = false;
+      this.showLoanSubmenu = false;
+      this.activeMenu = 'Investments';
+      this.menuChange.emit('Investments');
+      setTimeout(() => this.navigateToRoute('/investments'), 0);
     } else if (menu === 'Loan') {
       // Toggle Loan submenu
       this.showUsersSubmenu = false;
