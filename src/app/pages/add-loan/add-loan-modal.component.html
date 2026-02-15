@@ -50,16 +50,6 @@
     <h3 class="detail-section-title">Loan Details</h3>
     <div class="loan-form-grid">
       <ion-item class="loan-form-field">
-        <ion-label position="stacked">Loan Code *</ion-label>
-        <ion-input
-          [(ngModel)]="loanForm.loanCode"
-          name="loanCode"
-          placeholder="Enter loan code"
-          type="text">
-        </ion-input>
-      </ion-item>
-
-      <ion-item class="loan-form-field">
         <ion-label position="stacked">Member ID</ion-label>
         <ion-input
           [value]="loanForm.memberId"
@@ -138,6 +128,59 @@
           min="0"
           step="0.01"
           (ionInput)="onNumericInput($event, 'savingAmount')">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Total Amount *</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.totalAmount"
+          name="totalAmount"
+          placeholder="0"
+          type="number"
+          min="0"
+          step="0.01"
+          (ionInput)="onNumericInput($event, 'totalAmount')">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Disbursement Date</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.disbursementDate"
+          name="disbursementDate"
+          type="date">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Collection Start Date</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.collectionStartDate"
+          name="collectionStartDate"
+          type="date">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Collection Term *</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.collectionTerm"
+          name="collectionTerm"
+          placeholder="Enter collection term"
+          type="text">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Number of Terms *</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.noOfTerms"
+          name="noOfTerms"
+          placeholder="0"
+          type="number"
+          min="0"
+          (ionInput)="onNumericInput($event, 'noOfTerms')">
         </ion-input>
       </ion-item>
     </div>

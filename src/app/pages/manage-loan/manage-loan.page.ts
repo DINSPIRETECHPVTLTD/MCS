@@ -28,13 +28,12 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
       headerName: 'Loan ID', 
       valueGetter: (p) => {
         const loan = p.data as Loan;
-        return loan?.loanId ?? (loan as any)?.id ?? '';
+        return loan?.id;
       }, 
       width: 100, 
       filter: 'agNumberColumnFilter', 
       sortable: true 
     },
-    { headerName: 'Loan Code', field: 'loanCode', width: 120, filter: 'agTextColumnFilter', sortable: true },
     { 
       headerName: 'Member ID', 
       field: 'memberId', 
@@ -54,7 +53,7 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
   paginationPageSize = 20;
   paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   private gridApi?: GridApi;
-  gridOptions = { theme: agGridTheme, getRowNodeId: (data: Loan) => String(data.loanId ?? data.loanCode ?? '') };
+  gridOptions = { theme: agGridTheme, getRowNodeId: (data: Loan) => String(data.id ?? '') };
   get gridContext(): { component: ManageLoanComponent } {
     return { component: this };
   }
@@ -109,7 +108,7 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
   }
 
   viewLoan(loan: Loan): void {
-    const id = loan.loanId ?? (loan as { id?: number }).id;
+    const id = loan.id ?? (loan as { id?: number }).id;
     if (id != null) {
       this.ngZone.run(() => {
         this.router.navigate(['/loan-detail', String(id)], { replaceUrl: true });

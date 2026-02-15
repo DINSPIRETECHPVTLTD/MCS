@@ -13,14 +13,18 @@ export class AddLoanModalComponent implements OnInit {
   @Input() selectedMember!: Member;
   
   loanForm: CreateLoanRequest = {
-    loanCode: '',
     memberId: 0,
     loanAmount: 0,
     interestAmount: 0,
     processingFee: 0,
     insuranceFee: 0,
     isSavingEnabled: false,
-    savingAmount: 0
+    savingAmount: 0,
+    totalAmount: 0,
+    disbursementDate: undefined,
+    collectionStartDate: undefined,
+    collectionTerm: '',
+    noOfTerms: 0
   };
   
   isCreatingLoan: boolean = false;
@@ -47,9 +51,11 @@ export class AddLoanModalComponent implements OnInit {
   isLoanFormValid(): boolean {
     const f = this.loanForm;
     return !!(
-      (f.loanCode ?? '').trim() &&
       f.memberId > 0 &&
-      (f.loanAmount ?? 0) >= 0
+      (f.loanAmount ?? 0) > 0 &&
+      (f.totalAmount ?? 0) > 0 &&
+      (f.collectionTerm ?? '').trim() &&
+      (f.noOfTerms ?? 0) > 0
     );
   }
 
@@ -74,7 +80,7 @@ export class AddLoanModalComponent implements OnInit {
         // Show alert with member name and loan ID
         const alert = await this.alertController.create({
           header: 'Loan Created Successfully',
-          message: `Member: ${memberName} loan created with Loan ID: ${loan.loanId}`,
+          message: `Member: ${memberName} loan created with Loan ID: ${loan.id}`,
           buttons: [
             {
               text: 'OK',
