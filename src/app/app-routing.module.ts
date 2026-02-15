@@ -54,7 +54,7 @@ const routes: Routes = [
   },
   {
     path: 'payment-terms',
-    loadChildren: () => import('./pages/payments/payments.module').then(m => m.PaymentsPageModule)
+    loadChildren: () => import('./pages/paymentterms/paymentterms.module').then(m => m.PaymentTermsPageModule)
   },
   {
     path: 'payments',

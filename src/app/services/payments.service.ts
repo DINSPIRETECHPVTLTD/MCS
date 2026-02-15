@@ -10,6 +10,7 @@ import { environment } from '../../environments/environment';
 interface ApiPayment {
   paymentTermId: number;
   paymentTerm: string;
+  paymentType: string | null;
   noOfTerms: number;
   processingFee: number | null;
   rateOfInterest: number | null;
@@ -42,6 +43,7 @@ export class PaymentsService {
   private mapFromApi(p: Record<string, unknown>): Payment {
     const id = p['paymentTermId'] ?? p['PaymentTermId'];
     const paymentTerm = (p['paymentTerm'] ?? p['PaymentTerm'] ?? '') as string;
+    const paymentType = (p['paymentType'] ?? p['PaymentType'] ?? '') as string;
     const noOfTerms = p['noOfTerms'] ?? p['NoOfTerms'] ?? 0;
     const processingFee = p['processingFee'] ?? p['ProcessingFee'];
     const rateOfInterest = p['rateOfInterest'] ?? p['RateOfInterest'];
@@ -49,6 +51,7 @@ export class PaymentsService {
     return {
       id: typeof id === 'number' ? id : Number(id) || 0,
       paymentTerm: paymentTerm as Payment['paymentTerm'],
+      paymentType: paymentType != null ? String(paymentType) : '',
       noOfTerms: typeof noOfTerms === 'number' ? noOfTerms : Number(noOfTerms) || 0,
       processingFee: processingFee != null ? String(processingFee) : '',
       roi: rateOfInterest != null ? String(rateOfInterest) : '',
@@ -63,6 +66,7 @@ export class PaymentsService {
   private mapToApi(payment: Partial<Payment>): Partial<ApiPayment> {
     return {
       paymentTerm: payment.paymentTerm ?? '',
+      paymentType: payment.paymentType != null && payment.paymentType !== '' ? payment.paymentType : null,
       noOfTerms: payment.noOfTerms != null ? Number(payment.noOfTerms) : 0,
       processingFee:
         payment.processingFee != null && payment.processingFee !== ''
@@ -161,6 +165,7 @@ export class PaymentsService {
     return {
       id,
       paymentTerm,
+      paymentType: payment.paymentType ?? '',
       noOfTerms: payment.noOfTerms ?? 0,
       processingFee: payment.processingFee ?? '',
       roi: payment.roi ?? '',

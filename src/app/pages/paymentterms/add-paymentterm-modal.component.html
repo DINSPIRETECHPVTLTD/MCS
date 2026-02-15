@@ -1,6 +1,6 @@
 <ion-header [translucent]="false">
   <ion-toolbar>
-    <ion-title>{{ readOnly ? 'View Payment Term' : 'Edit Payment Term' }}</ion-title>
+    <ion-title>Add Payment Term</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="onCancel()">
         <ion-icon name="close-outline" slot="icon-only"></ion-icon>
@@ -9,20 +9,28 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="ion-padding edit-payment-content">
+<ion-content [fullscreen]="true" class="ion-padding add-paymentterm-content">
   <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
     <ion-item [class.ion-invalid]="paymentForm.get('paymentTerm')?.invalid && paymentForm.get('paymentTerm')?.touched">
       <ion-label position="stacked">Payment Term <span class="required">*</span></ion-label>
       <ion-select
         formControlName="paymentTerm"
         interface="popover"
-        placeholder="Select payment term"
-        [disabled]="readOnly">
+        placeholder="Select payment term">
         <ion-select-option *ngFor="let term of paymentTerms" [value]="term">{{ term }}</ion-select-option>
       </ion-select>
       <ion-note slot="error" *ngIf="paymentForm.get('paymentTerm')?.invalid && paymentForm.get('paymentTerm')?.touched">
         <span *ngIf="paymentForm.get('paymentTerm')?.errors?.['required']">Payment term is required</span>
       </ion-note>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="stacked">Payment Type</ion-label>
+      <ion-input
+        formControlName="paymentType"
+        placeholder="Enter payment type"
+        type="text">
+      </ion-input>
     </ion-item>
 
     <ion-item [class.ion-invalid]="paymentForm.get('noOfTerms')?.invalid && paymentForm.get('noOfTerms')?.touched">
@@ -31,8 +39,7 @@
         formControlName="noOfTerms"
         placeholder="Enter number of terms"
         type="text"
-        inputmode="numeric"
-        [readonly]="readOnly">
+        inputmode="numeric">
       </ion-input>
       <ion-note slot="error" *ngIf="paymentForm.get('noOfTerms')?.invalid && paymentForm.get('noOfTerms')?.touched">
         <span *ngIf="paymentForm.get('noOfTerms')?.errors?.['required']">No. of terms is required</span>
@@ -45,8 +52,7 @@
       <ion-input
         formControlName="processingFee"
         placeholder="Enter processing fee"
-        type="text"
-        [readonly]="readOnly">
+        type="text">
       </ion-input>
     </ion-item>
 
@@ -55,8 +61,7 @@
       <ion-input
         formControlName="roi"
         placeholder="Enter ROI"
-        type="text"
-        [readonly]="readOnly">
+        type="text">
       </ion-input>
     </ion-item>
 
@@ -65,8 +70,7 @@
       <ion-input
         formControlName="insuranceFee"
         placeholder="Enter insurance fee"
-        type="text"
-        [readonly]="readOnly">
+        type="text">
       </ion-input>
     </ion-item>
   </form>
@@ -76,20 +80,19 @@
   <ion-toolbar>
     <div class="action-row footer-row">
       <ion-button
-        *ngIf="!readOnly"
         type="button"
         (click)="onSubmit()"
         [disabled]="isSubmitting || paymentForm.invalid"
         class="save-button">
         <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-        Update Payment Term
+        Save Payment Term
       </ion-button>
       <ion-button
         fill="outline"
         type="button"
         (click)="onCancel()"
         class="cancel-button">
-        {{ readOnly ? 'Close' : 'Cancel' }}
+        Cancel
       </ion-button>
     </div>
   </ion-toolbar>

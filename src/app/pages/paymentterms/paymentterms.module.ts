@@ -2,10 +2,10 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-import { PaymentsPageRoutingModule } from './payments-routing.module';
-import { PaymentsPage } from './payments.page';
-import { AddPaymentModalComponent } from './add-payment-modal.component';
-import { EditPaymentModalComponent } from './edit-payment-modal.component';
+import { PaymentTermsPageRoutingModule } from './paymentterms-routing.module';
+import { PaymentTermsPage } from './paymentterms.page';
+import { AddPaymentTermModalComponent } from './add-paymentterm-modal.component';
+import { EditPaymentTermModalComponent } from './edit-paymentterm-modal.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -31,10 +31,10 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     MatIconModule,
     MatTooltipModule,
     MatButtonModule,
-    PaymentsPageRoutingModule,
+    PaymentTermsPageRoutingModule,
     AgGridModule,
     HeaderMenuComponent
   ],
-  declarations: [PaymentsPage, AddPaymentModalComponent, EditPaymentModalComponent]
+  declarations: [PaymentTermsPage, AddPaymentTermModalComponent, EditPaymentTermModalComponent]
 })
-export class PaymentsPageModule {}
+export class PaymentTermsPageModule {}

@@ -4,11 +4,11 @@ import { ModalController, ToastController } from '@ionic/angular';
 import { PaymentsService } from '../../services/payments.service';
 
 @Component({
-  selector: 'app-add-payment-modal',
-  templateUrl: './add-payment-modal.component.html',
-  styleUrls: ['./add-payment-modal.component.scss']
+  selector: 'app-add-paymentterm-modal',
+  templateUrl: './add-paymentterm-modal.component.html',
+  styleUrls: ['./add-paymentterm-modal.component.scss']
 })
-export class AddPaymentModalComponent {
+export class AddPaymentTermModalComponent {
   paymentForm: FormGroup;
   isSubmitting = false;
   paymentTerms = ['Daily', 'Weekly', 'Monthly'];
@@ -21,6 +21,7 @@ export class AddPaymentModalComponent {
   ) {
     this.paymentForm = this.formBuilder.group({
       paymentTerm: ['', Validators.required],
+      paymentType: [''],
       noOfTerms: ['', [Validators.required, Validators.pattern('^[0-9]+$')]],
       processingFee: [''],
       roi: [''],

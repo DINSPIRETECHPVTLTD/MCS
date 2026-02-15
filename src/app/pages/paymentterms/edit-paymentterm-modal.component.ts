@@ -6,11 +6,11 @@ import { Payment } from '../../models/payment.models';
 
 
 @Component({
-  selector: 'app-edit-payment-modal',
-  templateUrl: './edit-payment-modal.component.html',
-  styleUrls: ['./edit-payment-modal.component.scss']
+  selector: 'app-edit-paymentterm-modal',
+  templateUrl: './edit-paymentterm-modal.component.html',
+  styleUrls: ['./edit-paymentterm-modal.component.scss']
 })
-export class EditPaymentModalComponent implements OnInit {
+export class EditPaymentTermModalComponent implements OnInit {
   @Input() payment!: Payment;
   @Input() readOnly = false;
   paymentForm!: FormGroup;
@@ -31,6 +31,7 @@ export class EditPaymentModalComponent implements OnInit {
     }
     this.paymentForm = this.formBuilder.group({
       paymentTerm: [{ value: this.payment.paymentTerm, disabled: this.readOnly }, Validators.required],
+      paymentType: [{ value: this.payment.paymentType ?? '', disabled: this.readOnly }],
       noOfTerms: [{ value: this.payment.noOfTerms, disabled: this.readOnly }, [Validators.required, Validators.pattern('^[0-9]+$')]],
       processingFee: [{ value: this.payment.processingFee, disabled: this.readOnly }],
       roi: [{ value: this.payment.roi, disabled: this.readOnly }],

@@ -1,4 +1,4 @@
-ion-content.edit-payment-content {
+ion-content.edit-paymentterm-content {
   --padding-start: 16px;
   --padding-end: 16px;
   --padding-top: 16px;
@@ -6,7 +6,7 @@ ion-content.edit-payment-content {
 }
 
 /* Scrollbar visible like other app modals (e.g. Add POC) - use default browser scrollbar */
-ion-content.edit-payment-content::part(scroll) {
+ion-content.edit-paymentterm-content::part(scroll) {
   overflow-y: auto;
   overflow-x: hidden;
 }

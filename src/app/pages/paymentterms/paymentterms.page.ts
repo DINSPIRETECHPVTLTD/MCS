@@ -3,17 +3,17 @@ import { ModalController, ToastController } from '@ionic/angular';
 import { PaymentsService } from '../../services/payments.service';
 import { Payment } from '../../models/payment.models';
 import { Branch } from '../../models/branch.models';
-import { AddPaymentModalComponent } from './add-payment-modal.component';
-import { EditPaymentModalComponent } from './edit-payment-modal.component';
+import { AddPaymentTermModalComponent } from './add-paymentterm-modal.component';
+import { EditPaymentTermModalComponent } from './edit-paymentterm-modal.component';
 import { ColDef, GridApi, GridOptions, ICellRendererParams } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
 
 @Component({
-  selector: 'app-payments',
-  templateUrl: './payments.page.html',
-  styleUrls: ['./payments.page.scss']
+  selector: 'app-paymentterms',
+  templateUrl: './paymentterms.page.html',
+  styleUrls: ['./paymentterms.page.scss']
 })
-export class PaymentsPage implements OnInit {
+export class PaymentTermsPage implements OnInit {
   activeMenu: string = 'Payment Terms';
   payments: Payment[] = [];
   rowData: Payment[] = [];
@@ -24,6 +24,14 @@ export class PaymentsPage implements OnInit {
     {
       headerName: 'Payment Term',
       field: 'paymentTerm',
+      sortable: true,
+      filter: true,
+      flex: 1,
+      minWidth: 140
+    },
+    {
+      headerName: 'Payment Type',
+      field: 'paymentType',
       sortable: true,
       filter: true,
       flex: 1,
@@ -67,7 +75,7 @@ export class PaymentsPage implements OnInit {
         const delBtn = container.querySelector('.ag-delete');
         if (editBtn) editBtn.addEventListener('click', () => {
           const row = params.data;
-          if (row) params.context.componentParent.openEditPaymentModal(row);
+          if (row) params.context.componentParent.openEditPaymentTermModal(row);
         });
         if (delBtn) delBtn.addEventListener('click', () => {
           const row = params.data;
@@ -131,9 +139,9 @@ export class PaymentsPage implements OnInit {
     });
   }
 
-  async openAddPaymentModal() {
+  async openAddPaymentTermModal() {
     const modal = await this.modalController.create({
-      component: AddPaymentModalComponent
+      component: AddPaymentTermModalComponent
     });
     modal.onDidDismiss().then((result) => {
       if (result.data?.refresh) {
@@ -144,9 +152,9 @@ export class PaymentsPage implements OnInit {
     return modal.present();
   }
 
-  async openEditPaymentModal(payment: Payment, readOnly = false) {
+  async openEditPaymentTermModal(payment: Payment, readOnly = false) {
     const modal = await this.modalController.create({
-      component: EditPaymentModalComponent,
+      component: EditPaymentTermModalComponent,
       componentProps: { payment, readOnly }
     });
     modal.onDidDismiss().then((result) => {
