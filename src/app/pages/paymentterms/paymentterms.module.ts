@@ -4,8 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { PaymentTermsPageRoutingModule } from './paymentterms-routing.module';
 import { PaymentTermsPage } from './paymentterms.page';
-import { AddPaymentTermModalComponent } from './add-paymentterm-modal.component';
-import { EditPaymentTermModalComponent } from './edit-paymentterm-modal.component';
+import { PaymentTermModalComponent } from './payment-term-modal.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -35,6 +34,6 @@ import { HeaderMenuComponent } from '../../components/header-menu/header-menu.co
     AgGridModule,
     HeaderMenuComponent
   ],
-  declarations: [PaymentTermsPage, AddPaymentTermModalComponent, EditPaymentTermModalComponent]
+  declarations: [PaymentTermsPage, PaymentTermModalComponent]
 })
 export class PaymentTermsPageModule {}
