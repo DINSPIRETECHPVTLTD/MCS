@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 import { User, CreateUserRequest } from '../models/user.models';
@@ -32,6 +32,7 @@ export class UserService {
 
   createUser(user: CreateUserRequest): Observable<User> {
     const token = this.authService.getToken();
+    console.log('user data in service:', user); // Debug log
     let headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
@@ -83,6 +84,19 @@ export class UserService {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
     return this.http.post(`${this.apiUrl}/Users/${id}/reset-password`, { password: newPassword }, { headers });
+  }
+
+  getUsersByIds(ids: number[]): Observable<User[]> {
+    if (!ids || ids.length === 0) {
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+
+    // Call getUser for each ID and combine results
+    const requests = ids.map(id => this.getUser(id));
+    return forkJoin(requests);
   }
 }
 

@@ -78,6 +78,12 @@
           <button class="submenu-item" [class.active]="activeMenu === 'Payment Terms'" (click)="selectSubmenu('Payment Terms')">Payment Terms</button>
         </div>
       </div>
+      <button 
+        class="nav-item" 
+        [class.active]="activeMenu === 'Investments'"
+        (click)="setActiveMenu('Investments')">
+        Investments
+      </button>
     </nav>
 
     <!-- Navigation Menu for Branch Mode (branch admin/staff, or owner viewing a branch) -->
