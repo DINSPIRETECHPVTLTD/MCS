@@ -4,9 +4,11 @@ import { ViewWillEnter, ModalController, LoadingController, ToastController, Ale
 import { AuthService } from '../../services/auth.service';
 import { Branch } from '../../models/branch.models';
 import { AddPocModalComponent } from './add-poc-modal.component';
-import { ColDef } from 'ag-grid-community';
+import { ColDef, ValueGetterParams, ICellRendererParams, GridOptions, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
 import { Poc, PocService } from '../../services/poc.service';
+import { MemberService } from '../../services/member.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-pocs',
@@ -21,46 +23,80 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   // AG Grid configuration
   rowData: Poc[] = [];
   columnDefs: ColDef[] = [
-    { field: 'id', headerName: 'ID', width: 80, sortable: true, filter: true },
     { 
-      headerName: 'Name', 
-      valueGetter: (params: any) => {
+      headerName: 'Name',
+      valueGetter: (params: ValueGetterParams) => {
         const first = params.data?.firstName || '';
-        const middle = params.data?.middleName || '';
         const last = params.data?.lastName || '';
-        return [first, middle, last].filter(Boolean).join(' ');
-      }, 
+        return [first, last].filter(Boolean).join(' ');
+      },
       sortable: true, 
       filter: true, 
       flex: 1 
     },
-    { field: 'phoneNumber', headerName: 'Phone', sortable: true, filter: true, width: 140 },
-    { field: 'altPhone', headerName: 'Phone 2', sortable: true, filter: true, width: 140 },
+    {
+      headerName: 'Contact Numbers',
+      valueGetter: (params: ValueGetterParams) => {
+        const p1 = params.data?.phoneNumber || '';
+        const p2 = params.data?.altPhone || '';
+        return [p1, p2].filter(Boolean).join(', ');
+      },
+      sortable: true,
+      filter: true,
+      width: 180
+    },
     { 
       headerName: 'Address', 
-      valueGetter: (params: any) => {
+      valueGetter: (params: ValueGetterParams) => {
         const a1 = params.data?.address1 || '';
         const a2 = params.data?.address2 || '';
-        return [a1, a2].filter(Boolean).join(', ');
+        const city = params.data?.city || '';
+        const state = params.data?.state || '';
+        const pin = params.data?.pinCode || '';
+        return [a1, a2, city, state, pin].filter(Boolean).join(', ');
       }, 
       sortable: true, 
       filter: true, 
       flex: 1 
     },
-    { field: 'city', headerName: 'City', sortable: true, filter: true, width: 120 },
-    { field: 'state', headerName: 'State', sortable: true, filter: true, width: 120 },
-    { field: 'zipCode', headerName: 'Zip', sortable: true, filter: true, width: 100 },
-    { field: 'centerId', headerName: 'Center ID', sortable: true, filter: true, width: 120 },
+    { 
+      headerName: 'Center Name',
+      valueGetter: (params: ValueGetterParams) => params.context?.componentParent?.getCenterName(params.data?.centerId),
+      sortable: true,
+      filter: true,
+      width: 160
+    },
+    {
+      headerName: 'Collection Frequency',
+      field: 'collectionFrequency',
+      sortable: true,
+      filter: true,
+      width: 150
+    },
+    {
+      headerName: 'Collection Day',
+      field: 'collectionDay',
+      sortable: true,
+      filter: true,
+      width: 130
+    },
+    {
+      headerName: 'Collection By',
+      valueGetter: (params: ValueGetterParams) => params.context?.componentParent?.getUserName(params.data?.collectionBy),
+      sortable: true,
+      filter: true,
+      width: 150
+    },
     {
       headerName: 'Actions',
       field: 'actions',
       width: 160,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const container = document.createElement('div');
         container.className = 'actions-cell';
         container.innerHTML = `
           <button class="ag-btn ag-edit">Edit</button>
-          <button class="ag-btn ag-delete">Delete</button>
+          <button class="ag-btn ag-delete">Inactive</button>
         `;
         const editBtn = container.querySelector('.ag-edit');
         const delBtn = container.querySelector('.ag-delete');
@@ -78,13 +114,18 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   pagination: boolean = true;
   paginationPageSize: number = 20;
   paginationPageSizeSelector: number[] = [10, 20, 50, 100];
-  gridOptions: any;
+  gridOptions: GridOptions;
+  gridApi!: GridApi;
+  centerNameMap: Record<number, string> = {};
+  userNameMap: Record<number, string> = {};
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private modalController: ModalController,
     private pocService: PocService,
+    private memberService: MemberService,
+    private userService: UserService,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private alertController: AlertController
@@ -93,7 +134,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     this.gridOptions = {
       theme: agGridTheme,
       context: { componentParent: this }
-    } as any;
+    } as GridOptions;
   }
 
   ngOnInit(): void {
@@ -111,13 +152,18 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     }
     // Load POCs data
     if (this.selectedBranch) {
+      this.loadCenters(this.selectedBranch.id);
+      this.loadUsers();
       this.loadPocs();
     }
   }
 
+  onGridReady(params: GridReadyEvent): void {
+    this.gridApi = params.api;
+  }
+
   async loadPocs(): Promise<void> {
     if (!this.selectedBranch) {
-      console.log('No branch selected, cannot load POCs');
       return;
     }
 
@@ -134,18 +180,15 @@ export class PocsComponent implements OnInit, ViewWillEnter {
         this.isLoading = false;
         this.pocs = pocs;
         this.rowData = pocs;
-        console.log('POCs loaded:', this.pocs.length);
       },
       error: (error) => {
         loading.dismiss();
         this.isLoading = false;
-        console.error('Error loading POCs:', error);
         this.pocs = [];
         this.rowData = [];
         if (error.status !== 404) {
           this.showToast('Error loading POCs: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
         } else {
-          console.log('No POCs found for this branch');
           this.showToast('No POCs found for this branch', 'warning');
         }
       }
@@ -157,10 +200,71 @@ export class PocsComponent implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
-    console.log('Branch changed to:', branch);
     this.selectedBranch = branch;
     // Load POCs for the selected branch
+    this.loadCenters(branch.id);
+    this.loadUsers();
     this.loadPocs();
+  }
+
+  loadCenters(branchId: number): void {
+    this.memberService.getCentersByBranch(branchId).subscribe({
+      next: (centers) => {
+        const map: Record<number, string> = {};
+        (centers || []).forEach(center => {
+          const id = Number(center?.id);
+          if (!Number.isNaN(id) && id > 0) {
+            map[id] = center?.name || '';
+          }
+        });
+        this.centerNameMap = map;
+        if (this.gridApi) {
+          this.gridApi.refreshCells({ force: true });
+        }
+      },
+      error: () => {
+        this.centerNameMap = {};
+        if (this.gridApi) {
+          this.gridApi.refreshCells({ force: true });
+        }
+      }
+    });
+  }
+
+  getCenterName(centerId?: number): string {
+    if (!centerId) return '';
+    return this.centerNameMap[centerId] || centerId.toString();
+  }
+
+  loadUsers(): void {
+    this.userService.getUsers().subscribe({
+      next: (users) => {
+        const map: Record<number, string> = {};
+        (users || []).forEach(user => {
+          const id = Number(user?.id);
+          if (!Number.isNaN(id) && id > 0) {
+            const firstName = user?.firstName || '';
+            const lastName = user?.lastName || '';
+            map[id] = [firstName, lastName].filter(Boolean).join(' ') || id.toString();
+          }
+        });
+        this.userNameMap = map;
+        if (this.gridApi) {
+          this.gridApi.refreshCells({ force: true });
+        }
+      },
+      error: () => {
+        this.userNameMap = {};
+        if (this.gridApi) {
+          this.gridApi.refreshCells({ force: true });
+        }
+      }
+    });
+  }
+
+  getUserName(userId?: number): string {
+    if (!userId) return '';
+    return this.userNameMap[userId] || userId.toString();
   }
 
   async openAddPocModal(): Promise<void> {
@@ -177,7 +281,6 @@ export class PocsComponent implements OnInit, ViewWillEnter {
 
     const { data } = await modal.onWillDismiss();
     if (data && data.success) {
-      console.log('POC created successfully:', data.data);
       this.loadPocs();
     }
   }
@@ -201,20 +304,19 @@ export class PocsComponent implements OnInit, ViewWillEnter {
 
     const { data } = await modal.onWillDismiss();
     if (data && data.success) {
-      console.log('POC updated successfully:', data.data);
       this.loadPocs();
     }
   }
 
   async deletePoc(poc: Poc): Promise<void> {
-    const fullName = [poc.firstName, poc.middleName, poc.lastName].filter(Boolean).join(' ');
+    const fullName = [poc.firstName, poc.lastName].filter(Boolean).join(' ');
     const alert = await this.alertController.create({
-      header: 'Confirm Delete',
-      message: `Are you sure you want to delete POC "${fullName}"?`,
+      header: 'Confirm Inactive',
+      message: `Are you sure you want to inactive POC "${fullName}"?`,
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Inactive',
           handler: async () => {
             if (!poc.id) {
               this.showToast('Invalid POC ID', 'danger');
@@ -231,10 +333,9 @@ export class PocsComponent implements OnInit, ViewWillEnter {
                 this.showToast('POC deleted successfully', 'success');
                 this.loadPocs();
               },
-              error: async (err: any) => {
+              error: async (err: Error) => {
                 await loading.dismiss();
-                console.error('Delete error', err);
-                this.showToast('Failed to delete POC', 'danger');
+                this.showToast('Failed to delete POC: ' + err.message, 'danger');
               }
             });
           }

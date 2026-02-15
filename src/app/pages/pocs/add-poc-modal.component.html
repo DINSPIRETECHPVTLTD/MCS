@@ -11,7 +11,7 @@
 
 <ion-content [fullscreen]="true" class="ion-padding">
   <form [formGroup]="pocForm" (ngSubmit)="onSubmit()">
-    <!-- Name Fields -->
+    <!-- Name Field -->
     <ion-item [class.ion-invalid]="isFieldInvalid('firstName')">
       <ion-label position="stacked">First Name <span class="required">*</span></ion-label>
       <ion-input
@@ -24,23 +24,11 @@
       <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
     </ion-item>
 
-    <ion-item [class.ion-invalid]="isFieldInvalid('middleName')">
-      <ion-label position="stacked">Middle Name</ion-label>
-      <ion-input
-        formControlName="middleName"
-        placeholder="Enter middle name"
-        (ionInput)="onMiddleNameInput($event)"
-        type="text"
-        maxlength="100">
-      </ion-input>
-      <ion-note slot="error">{{ getFieldError('middleName') }}</ion-note>
-    </ion-item>
-
     <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
-      <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
+      <ion-label position="stacked">Surname <span class="required">*</span></ion-label>
       <ion-input
         formControlName="lastName"
-        placeholder="Enter last name"
+        placeholder="Enter surname"
         (ionInput)="onLastNameInput($event)"
         type="text"
         maxlength="100">
@@ -61,7 +49,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('altPhone')">
-      <ion-label position="stacked">Phone 2</ion-label>
+      <ion-label position="stacked">Alternate Phone Number</ion-label>
       <ion-input
         formControlName="altPhone"
         placeholder="Enter alternate 10-digit phone number"
@@ -73,7 +61,7 @@
 
     <!-- Address Fields -->
     <ion-item [class.ion-invalid]="isFieldInvalid('address1')">
-      <ion-label position="stacked">Address Line 1</ion-label>
+      <ion-label position="stacked">Address 1 <span class="required">*</span></ion-label>
       <ion-input
         formControlName="address1"
         placeholder="Enter address line 1"
@@ -84,7 +72,7 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('address2')">
-      <ion-label position="stacked">Address Line 2</ion-label>
+      <ion-label position="stacked">Address 2</ion-label>
       <ion-input
         formControlName="address2"
         placeholder="Enter address line 2"
@@ -106,33 +94,28 @@
 
     <ion-item>
       <ion-label position="stacked">State</ion-label>
-      <ion-input
+      <ion-select
         formControlName="state"
-        placeholder="Enter state"
-        type="text"
-        maxlength="100">
-      </ion-input>
+        placeholder="Select a state"
+        interface="popover">
+        <ion-select-option value="">Select a state</ion-select-option>
+        <ion-select-option *ngFor="let state of states" [value]="state.lookupCode">
+          {{ state.lookupValue }}
+        </ion-select-option>
+      </ion-select>
     </ion-item>
 
-    <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
-      <ion-label position="stacked">Zip Code</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('pinCode')">
+      <ion-label position="stacked">Pin Code</ion-label>
       <ion-input
-        formControlName="zipCode"
-        placeholder="Enter zip/postal code"
+        formControlName="pinCode"
+        placeholder="Enter 6-digit pin code"
+        (ionInput)="onPinCodeInput($event)"
         type="text"
-        maxlength="10">
+        maxlength="6"
+        inputmode="numeric">
       </ion-input>
-      <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
-    </ion-item>
-
-    <ion-item>
-      <ion-label position="stacked">Country</ion-label>
-      <ion-input
-        formControlName="country"
-        placeholder="Country"
-        type="text"
-        readonly>
-      </ion-input>
+      <ion-note slot="error">{{ getFieldError('pinCode') }}</ion-note>
     </ion-item>
 
     <!-- Center Dropdown -->
@@ -147,6 +130,52 @@
         </ion-select-option>
       </ion-select>
       <ion-note slot="error">{{ getFieldError('centerId') }}</ion-note>
+    </ion-item>
+
+    <!-- Collection Frequency Dropdown -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('collectionFrequency')">
+      <ion-label position="stacked">Collection Frequency <span class="required">*</span></ion-label>
+      <ion-select
+        formControlName="collectionFrequency"
+        placeholder="Select collection frequency"
+        interface="popover">
+        <ion-select-option value="Daily">Daily</ion-select-option>
+        <ion-select-option value="Weekly">Weekly</ion-select-option>
+        <ion-select-option value="Monthly">Monthly</ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('collectionFrequency') }}</ion-note>
+    </ion-item>
+
+    <!-- Collection Day Dropdown (only for Weekly) -->
+    <ion-item *ngIf="pocForm.get('collectionFrequency')?.value === 'Weekly'" [class.ion-invalid]="isFieldInvalid('collectionDay')">
+      <ion-label position="stacked">Collection Day <span class="required">*</span></ion-label>
+      <ion-select
+        formControlName="collectionDay"
+        placeholder="Select collection day"
+        interface="popover">
+        <ion-select-option value="Sunday">Sunday</ion-select-option>
+        <ion-select-option value="Monday">Monday</ion-select-option>
+        <ion-select-option value="Tuesday">Tuesday</ion-select-option>
+        <ion-select-option value="Wednesday">Wednesday</ion-select-option>
+        <ion-select-option value="Thursday">Thursday</ion-select-option>
+        <ion-select-option value="Friday">Friday</ion-select-option>
+        <ion-select-option value="Saturday">Saturday</ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('collectionDay') }}</ion-note>
+    </ion-item>
+
+    <!-- Collection By Dropdown -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('collectionBy')">
+      <ion-label position="stacked">Collection By <span class="required">*</span></ion-label>
+      <ion-select
+        formControlName="collectionBy"
+        placeholder="Select collection by"
+        interface="popover">
+        <ion-select-option *ngFor="let user of users" [value]="user.id">
+          {{ user.firstName }} {{ user.lastName }}
+        </ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('collectionBy') }}</ion-note>
     </ion-item>
 
     <div *ngIf="isLoadingCenters" class="loading-message">
@@ -170,7 +199,6 @@
         (click)="onSubmit()"
         [disabled]="pocForm.invalid || isLoadingCenters"
         class="save-button">
-        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
         {{ isEditing ? 'Update POC' : 'Save POC' }}
       </ion-button>
 
