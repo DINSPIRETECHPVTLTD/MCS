@@ -116,3 +116,24 @@ ion-footer ion-toolbar {
   font-weight: 600;
   text-transform: none;
 }
+
+/* Error message styling */
+.error-message-item {
+  --background: transparent;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  margin-bottom: 8px;
+  
+  .error-text {
+    color: var(--ion-color-danger);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    .error-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+  }
+}
