@@ -11,14 +11,14 @@ import { User } from 'src/app/models/user.models';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-add-investments',
+  selector: 'app-add-fund-transfer',
   standalone: true,
   imports: [IonicModule, ReactiveFormsModule, DatePipe, CommonModule],
-  templateUrl: './add-investments.component.html',
-  styleUrl: './add-investments.component.scss',
+  templateUrl: './fund-transfer-modal.component.html',
+  styleUrl: './fund-transfer-modal.component.scss',
   providers: [DatePipe]
 })
-export class AddInvestmentsComponent implements OnInit {
+export class AddFundTransferComponent implements OnInit {
 
   @ViewChild('datePickerModal') datePickerModal!: IonDatetime;
   investmentForm: FormGroup;
@@ -57,7 +57,7 @@ export class AddInvestmentsComponent implements OnInit {
   loadUsers(): void {
     this.userService.getUsers().subscribe({
       next: (users) => {
-        this.users = (users || []).filter(user => user.role === 'Investor' || user.role === 'Owner');
+        this.users = (users || []).filter(user => user.role === 'Investor');
       },
       error: (error) => {
         console.error('Error loading users:', error);

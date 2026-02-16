@@ -5,24 +5,23 @@ import { AuthService } from '../../services/auth.service';
 import { ColDef, GridApi, GridReadyEvent, RowSelectionOptions } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
 import { ToastController, LoadingController } from '@ionic/angular';
-import { Investments } from 'src/app/models/investments.models';
+import { LedgerBalances } from 'src/app/models/ledger-balance.modal';
+import { AddFundTransferComponent } from './fund-transfer-modal.component';
 import { ModalController } from '@ionic/angular';
-import { InvestmentsService } from '../../services/investments.service';
-import { AddInvestmentsComponent } from './add-investments.component';
+import { LedgerBalanceService } from '../../services/ledger-balance.service';
 import { UserService } from '../../services/user.service';
 import { forkJoin } from 'rxjs';
-//import { AddInvestmentModalComponent } from './add-investment-modal.component';
 
 @Component({
-  selector: 'app-investments',
-  templateUrl: './investments.page.html',
-  styleUrls: ['./investments.page.scss']
+  selector: 'app-ledger-balance',
+  templateUrl: './ledger-balance.page.html',
+  styleUrls: ['./ledger-balance.page.scss']
 })
-export class InvestmentsComponent implements OnInit, ViewWillEnter {
-  activeMenu: string = 'investments';
+export class LedgerBalanceComponent implements OnInit, ViewWillEnter {
+  activeMenu: string = 'Ledger Balances';
 
-  investments: Investments[] = [];
-  rowData: Investments[] = [];
+  ledgerbalances: LedgerBalances[] = [];
+  rowData: LedgerBalances[] = [];
   columnDefs: ColDef[] = [];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
   pagination: boolean = true;
@@ -30,8 +29,8 @@ export class InvestmentsComponent implements OnInit, ViewWillEnter {
   paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   isLoading: boolean = false;
   
-    private gridApi?: GridApi;
-    gridOptions = { theme: agGridTheme, context: { componentParent: this } };
+  private gridApi?: GridApi;
+  gridOptions = { theme: agGridTheme, context: { componentParent: this } };
 
   constructor(
     private authService: AuthService,
@@ -39,7 +38,7 @@ export class InvestmentsComponent implements OnInit, ViewWillEnter {
     private toastController: ToastController,
     private loadingController: LoadingController,
     private modalController: ModalController,
-    private investmentsService: InvestmentsService,
+    private ledgerBalanceService: LedgerBalanceService,
     private userService: UserService
   ) {
     
@@ -52,50 +51,43 @@ export class InvestmentsComponent implements OnInit, ViewWillEnter {
     }
 
     this.columnDefs = [
-      { headerName: 'Investment ID', field: 'id', width: 100, sortable: true, filter: true },
-      { headerName: 'User Name', field: 'userName', width: 150, sortable: true, filter: true },
-      { headerName: 'Amount', field: 'amount', width: 100, sortable: true, filter: true },
-      { headerName: 'Investment Date', field: 'investmentDate', width: 150, sortable: true, filter: true, 
-        valueFormatter: (params) => {
-        if (!params.value) return '';
-        return new Date(params.value).toLocaleDateString();
-        }
-      },
+      { headerName: 'User Name', field: 'userName', width: 100, sortable: true, filter: true },
+      { headerName: 'Amount', field: 'amount', width: 100, sortable: true, filter: true }
     ]; 
   }
 
   ionViewWillEnter(): void {
     if (this.authService.isAuthenticated()) {
-      this.loadInvestments();
+      this.loadLedgerBalances();
     }
   }
 
-  async loadInvestments(): Promise<void> {
+  async loadLedgerBalances(): Promise<void> {
   this.isLoading = true;
   const loading = await this.loadingController.create({
-    message: 'Loading investments...',
+    message: 'Loading ledger balances...',
     spinner: 'crescent'
   });
   await loading.present();
 
-  // Fetch both investments and all users in parallel
+  // Fetch both ledger balances and all users in parallel
   forkJoin([
-    this.investmentsService.getInvestments(),
+    this.ledgerBalanceService.getLedgerBalances(),
     this.userService.getUsers()
   ]).subscribe({
-    next: ([investments, users]) => {
-      this.investments = investments || [];
+    next: ([ledgerBalances, users]) => {
+      this.ledgerbalances = ledgerBalances || [];
 
-      // Create user map with full name (single map, reuse for all investments)
+      // Create user map with full name (single map, reuse for all ledger balances)
       const userMap = new Map();
       users.forEach(user => {
         userMap.set(user.id, `${user.firstName} ${user.lastName}`);
       });
 
-      // Map investments with userName
-      this.rowData = this.investments.map(inv => ({
-        ...inv,
-        userName: userMap.get(inv.userId) || 'Unknown'
+      // Map ledger balances with userName
+      this.rowData = this.ledgerbalances.map(lb => ({
+        ...lb,
+        userName: userMap.get(lb.userId) || 'Unknown'
       }));
 
       // Update grid
@@ -112,11 +104,11 @@ export class InvestmentsComponent implements OnInit, ViewWillEnter {
     error: (error) => {
       loading.dismiss();
       this.isLoading = false;
-      this.investments = [];
+      this.ledgerbalances = [];
       this.rowData = [];
       console.error('Error loading data:', error);
       if (error.status !== 404) {
-        this.showToast('Error loading investments: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
+        this.showToast('Error loading ledger balances: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
       }
     }
   });
@@ -144,18 +136,18 @@ export class InvestmentsComponent implements OnInit, ViewWillEnter {
     }, 100);
   }
 
-  async openAddInvestmentModal(): Promise<void> {
+  async openAddFundTransferModal(): Promise<void> {
     const modal = await this.modalController.create({
-      component: AddInvestmentsComponent,
-      cssClass: 'add-investment-modal'
+      component: AddFundTransferComponent,
+      cssClass: 'add-fund-transfer-modal'
     });
 
     await modal.present();
 
     const { data } = await modal.onWillDismiss();
     if (data && data.success) {
-      // Refresh investments list after successful save
-      this.loadInvestments();
+      // Refresh ledger balances list after successful save
+      this.loadLedgerBalances();
     }
   }
 

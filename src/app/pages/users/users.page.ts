@@ -133,7 +133,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
       next: (users) => {
         loading.dismiss();
         this.isLoading = false;
-        this.users = users || [];
+        this.users = (users || []).filter(u => u.role === 'Owner' || u.role === 'Investor');
         this.rowData = [...this.users]; // Create new array reference for change detection
 
         // Update grid if it's already initialized
