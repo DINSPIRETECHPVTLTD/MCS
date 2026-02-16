@@ -145,10 +145,8 @@ export class StaffComponent implements OnInit, ViewWillEnter {
       return;
     }
     
-    // Load selected branch from localStorage or user context
-    this.loadSelectedBranch();
-
-    // grid options with row id resolver and context
+    // Grid options and column definitions setup (no data loading here)
+    // Data loading happens in ionViewWillEnter via loadSelectedBranch
     this.gridOptions = {
       theme: agGridTheme,
       context: { componentParent: this },
@@ -183,36 +181,22 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         filter: 'agTextColumnFilter'
       },
       { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter' },
-      {
-        headerName: 'Status',
-        valueGetter: (p: any) => {
-          const isActive = p.data?.isActive !== false;
-          return isActive ? 'Active' : 'Inactive';
-        },
-        field: 'status',
-        width: 110,
-        editable: false,
-        filter: 'agTextColumnFilter'
-      },
-      // keep actions column (edit/inactive/save) at end
+      // keep actions column (edit/delete/reset) at end
       {
         headerName: 'Actions', field: 'actions', width: 300, cellRenderer: (params: any) => {
           const container = document.createElement('div');
           container.className = 'actions-cell';
-          const isActive = params.data?.isActive !== false; // Default to active if not specified
-          const inactiveLabel = isActive ? 'Inactive' : 'Activate';
-          const inactiveClass = isActive ? 'ag-delete' : 'ag-activate';
           container.innerHTML = `
             <button class="ag-btn ag-edit">Edit</button>
             <button class="ag-btn ag-reset">Reset Password</button>
-            <button class="ag-btn ${inactiveClass}">${inactiveLabel}</button>
+            <button class="ag-btn ag-delete">Inactive</button>
           `;
           const editBtn = container.querySelector('.ag-edit');
           const resetBtn = container.querySelector('.ag-reset');
-          const toggleBtn = container.querySelector(`.${inactiveClass}`);
+          const deleteBtn = container.querySelector('.ag-delete');
           if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editStaff(params.data));
           if (resetBtn) resetBtn.addEventListener('click', () => params.context.componentParent.resetPassword(params.data));
-          if (toggleBtn) toggleBtn.addEventListener('click', () => params.context.componentParent.toggleStaffStatus(params.data));
+          if (deleteBtn) deleteBtn.addEventListener('click', () => params.context.componentParent.deleteStaff(params.data));
           return container;
         }
       }
@@ -230,22 +214,28 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         const branch = branchesFromLogin.find(b => b.id.toString() === savedBranchId);
         if (branch) {
           this.selectedBranch = branch;
-          this.loadStaff(); // Reload staff for the selected branch
+          this.loadStaff(); // Found in cache, load once and return
           return;
         }
       }
       
-      // Fallback: Load branches from API
+      // Cache miss or no branches from login: try API (async)
       this.branchService.getBranches().subscribe({
         next: (branches) => {
           const branch = branches.find(b => b.id.toString() === savedBranchId);
           if (branch) {
             this.selectedBranch = branch;
-            this.loadStaff(); // Reload staff for the selected branch
+          } else {
+            // Fallback to user context if saved branch not found
+            const branchId = this.userContext.branchId;
+            if (branchId) {
+              this.selectedBranch = { id: branchId } as Branch;
+            }
           }
+          this.loadStaff();
         },
         error: () => {
-          // Fallback to user context branch
+          // API failed, use user context branch
           const branchId = this.userContext.branchId;
           if (branchId) {
             this.selectedBranch = { id: branchId } as Branch;
@@ -254,7 +244,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         }
       });
     } else {
-      // Fallback to user context branch
+      // No saved branch, use user context
       const branchId = this.userContext.branchId;
       if (branchId) {
         this.selectedBranch = { id: branchId } as Branch;
@@ -288,6 +278,10 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         let filteredStaff = (users || []).filter(user => {
           const lvl = (user.level || '').toString().toLowerCase();
           const role = (user.role || '').toString().toLowerCase();
+          // Exclude investor users
+          if (lvl.includes('Investor') || role.includes('Investor')) {
+            return false;
+          }
           // accept if level contains 'branch' OR role contains 'branch'/'staff' OR no level provided
           const levelMatch = !lvl || lvl.includes('branch');
           const roleMatch = !role || role.includes('branch') || role.includes('staff');
@@ -481,6 +475,54 @@ export class StaffComponent implements OnInit, ViewWillEnter {
     })();
   }
 
+  async deleteStaff(member: User): Promise<void> {
+    if (!member || !member.id) return;
+    const alert = await this.alertController.create({
+      header: 'Confirm Inactive',
+      message: `Are you sure you want to permanently Inactive staff "${member.firstName} ${member.lastName}"? This action cannot be undone.`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Inactive',
+          role: 'destructive',
+          handler: async () => {
+            const loading = await this.loadingController.create({ message: 'Deleting staff...', spinner: 'crescent' });
+            await loading.present();
+            this.userService.deleteUser(member.id!).subscribe({
+              next: async () => {
+                await loading.dismiss();
+                this.showToast('Staff deleted successfully', 'success');
+                // remove from local arrays and update grid
+                const idx = this.rowData.findIndex(r => r.id === member.id);
+                if (idx >= 0) this.rowData.splice(idx, 1);
+                this.staff = [...this.rowData];
+                this.displayedStaff = [...this.rowData];
+                if (this.gridApi) {
+                  try {
+                    if (typeof this.gridApi.applyTransaction === 'function') {
+                      this.gridApi.applyTransaction({ remove: [member] });
+                    } else {
+                      this.gridApi.setRowData(this.rowData);
+                    }
+                  } catch (e) {
+                    this.gridApi.setRowData(this.rowData);
+                  }
+                }
+              },
+              error: async (err) => {
+                await loading.dismiss();
+                console.error('Delete staff error', err);
+                const msg = err?.error?.message || err?.message || 'Failed to delete staff';
+                this.showToast(msg, 'danger');
+              }
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
   // Cancel inline edit and restore original data
   cancelEdit(id: number | undefined, node: any): void {
     if (!id || !node) return;
@@ -504,60 +546,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
     }
   }
 
-  async toggleStaffStatus(member: User): Promise<void> {
-    if (!member || !member.id) return;
-    const isCurrentlyActive = member.isActive !== false; // Default to active if undefined
-    const action = isCurrentlyActive ? 'deactivate' : 'activate';
-    const actionCapitalized = isCurrentlyActive ? 'Deactivate' : 'Activate';
-    
-    const alert = await this.alertController.create({
-      header: `Confirm ${action}`,
-      message: `Are you sure you want to ${action} staff "${member.firstName} ${member.lastName}"?`,
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        {
-          text: actionCapitalized,
-          role: 'destructive',
-          handler: async () => {
-            const loading = await this.loadingController.create({ 
-              message: `${actionCapitalized}ing staff...`, 
-              spinner: 'crescent' 
-            });
-            await loading.present();
-            
-            const payload: Partial<CreateUserRequest> = {
-              isActive: !isCurrentlyActive
-            } as Partial<CreateUserRequest>;
-            
-            this.userService.updateUser(member.id!, payload).subscribe({
-              next: async (res) => {
-                await loading.dismiss();
-                const successMsg = isCurrentlyActive ? 'Staff deactivated' : 'Staff activated';
-                this.showToast(successMsg, 'success');
-                // Update the local data
-                const idx = this.rowData.findIndex(r => r.id === member.id);
-                if (idx >= 0) {
-                  this.rowData[idx] = { ...this.rowData[idx], ...payload };
-                  this.staff = [...this.rowData];
-                  this.displayedStaff = [...this.rowData];
-                  if (this.gridApi) {
-                    const rowNode = this.gridApi.getRowNode(member.id!.toString());
-                    if (rowNode) rowNode.setData(this.rowData[idx]);
-                  }
-                }
-              },
-              error: async (err) => {
-                await loading.dismiss();
-                console.error('Toggle staff status error', err);
-                this.showToast(`Failed to ${action} staff`, 'danger');
-              }
-            });
-          }
-        }
-      ]
-    });
-    await alert.present();
-  }
+  
 
   async openAddStaffModal(): Promise<void> {
     // Get selected branch ID
