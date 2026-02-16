@@ -40,6 +40,14 @@ const routes: Routes = [
     loadChildren: () => import('./pages/master-data/master-data.module').then(m => m.MasterDataPageModule)
   },
   {
+    path: 'investments',
+    loadChildren: () => import('./pages/investments/investments.module').then(m => m.InvestmentsPageModule)
+  },
+  {
+    path: 'ledger-balances',
+    loadChildren: () => import('./pages/ledger-balance/ledger-balance.module').then(m => m.LedgerBalanceModule)
+  },
+  {
     path: 'branch-dashboard',
     redirectTo: 'home',
     pathMatch: 'full'

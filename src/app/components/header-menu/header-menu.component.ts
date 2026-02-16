@@ -28,6 +28,7 @@ export class HeaderMenuComponent implements OnInit {
   showBranchesSubmenu: boolean = false;
   showLoanSubmenu: boolean = false;
   showMasterSubmenu: boolean = false;
+  showFundsSubmenu: boolean = false;
   branches: Branch[] = [];
   selectedBranch: Branch | null = null;
   
@@ -66,6 +67,11 @@ export class HeaderMenuComponent implements OnInit {
     // Show Master submenu if active menu is Master Data or Payment Terms (Org Mode)
     if (this.activeMenu === 'Master Data' || this.activeMenu === 'Payment Terms') {
       this.showMasterSubmenu = true;
+    }
+
+    // Show Funds submenu if active menu is related to Funds (Org Mode)
+    if (this.activeMenu === 'Investments' || this.activeMenu === 'Funds Transfer') {
+      this.showFundsSubmenu = true;
     }
   }
 
@@ -231,6 +237,13 @@ export class HeaderMenuComponent implements OnInit {
       this.showMasterSubmenu = !this.showMasterSubmenu;
       this.activeMenu = 'Master';
       this.menuChange.emit('Master');
+    } else if (menu === 'Funds' && this.isOrgOwner) {
+      this.showUsersSubmenu = false;
+      this.showBranchesSubmenu = false;
+      this.showLoanSubmenu = false;
+      this.showFundsSubmenu = !this.showFundsSubmenu;
+      this.activeMenu = 'Funds';
+      this.menuChange.emit('Funds');
     } else if (menu === 'Loan') {
       // Toggle Loan submenu
       this.showUsersSubmenu = false;
@@ -341,6 +354,12 @@ export class HeaderMenuComponent implements OnInit {
     } else {
       this.showMasterSubmenu = false;
     }
+    // Keep Funds submenu open when selecting its items (Org Mode)
+    if (submenu === 'Investments' || submenu === 'Ledger Balances') {
+      this.showFundsSubmenu = true;
+    } else {
+      this.showFundsSubmenu = false;
+    }
     // Keep Branches submenu open for Org Owner when selecting Loan submenu items
     if (this.isOrgOwner && (submenu === 'Add Loan' || submenu === 'Manage Loan' || submenu === 'Preclose Loan')) {
       this.showBranchesSubmenu = true;
@@ -382,6 +401,11 @@ export class HeaderMenuComponent implements OnInit {
       route = '/master-data';
     } else if (submenu === 'Payment Terms') {
       route = '/payment-terms';
+    }
+      else if (submenu === 'Investments') {
+      route = '/investments';
+    } else if (submenu === 'Ledger Balances') {
+      route = '/ledger-balances';
     }
     
     if (route) {
