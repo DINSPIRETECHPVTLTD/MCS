@@ -28,34 +28,19 @@
       </ion-note>
     </ion-item>
 
-    <ion-item [class.ion-invalid]="isFieldInvalid('middleName')">
-      <ion-label position="stacked">Middle Name</ion-label>
-      <ion-input
-        formControlName="middleName"
-        placeholder="Enter middle name"
-        type="text"
-        maxlength="100"
-        (ionInput)="onMiddleNameInput($event)">
-      </ion-input>
-      <ion-note slot="error">
-        <div *ngIf="staffForm.get('middleName')?.errors?.['maxlength']">Middle name must be at most 100 characters</div>
-        <div *ngIf="staffForm.get('middleName')?.errors?.['pattern']">Middle name must be alphanumeric</div>
-      </ion-note>
-    </ion-item>
-
     <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
-      <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
+      <ion-label position="stacked">Surname <span class="required">*</span></ion-label>
       <ion-input
         formControlName="lastName"
-        placeholder="Enter last name"
+        placeholder="Enter surname"
         type="text"
         maxlength="100"
         (ionInput)="onLastNameInput($event)">
       </ion-input>
       <ion-note slot="error">
-        <div *ngIf="staffForm.get('lastName')?.errors?.['required']">Last name is required</div>
-        <div *ngIf="staffForm.get('lastName')?.errors?.['maxlength']">Last name must be at most 100 characters</div>
-        <div *ngIf="staffForm.get('lastName')?.errors?.['pattern']">Last name must be alphanumeric</div>
+        <div *ngIf="staffForm.get('lastName')?.errors?.['required']">Surname is required</div>
+        <div *ngIf="staffForm.get('lastName')?.errors?.['maxlength']">Surname must be at most 100 characters</div>
+        <div *ngIf="staffForm.get('lastName')?.errors?.['pattern']">Surname must be alphanumeric</div>
       </ion-note>
     </ion-item>
 
@@ -99,10 +84,10 @@
 
     <!-- Address Fields -->
     <ion-item>
-      <ion-label position="stacked">Address Line 1 <span class="required">*</span></ion-label>
+      <ion-label position="stacked">Address1 <span class="required">*</span></ion-label>
       <ion-input
         formControlName="address1"
-        placeholder="Enter address line 1"
+        placeholder="Enter Address1"
         type="text"
         maxlength="100"
         (ionInput)="onAddressInput($event, 'address1')">
@@ -111,10 +96,10 @@
     </ion-item>
 
     <ion-item>
-      <ion-label position="stacked">Address Line 2</ion-label>
+      <ion-label position="stacked">Address2</ion-label>
       <ion-input
         formControlName="address2"
-        placeholder="Enter address line 2"
+        placeholder="Enter Address2"
         type="text"
         maxlength="100"
         (ionInput)="onAddressInput($event, 'address2')">
@@ -177,8 +162,7 @@
     <div class="footer-actions">
       <div class="left-action">
         <ion-button class="save-btn" color="primary" fill="solid" (click)="onSubmit()" [disabled]="staffForm.invalid">
-          <ion-icon slot="start" name="checkmark-outline"></ion-icon>
-          <span class="btn-text">Save Changes</span>
+          <span class="btn-text">Save Staff</span>
         </ion-button>
       </div>
 

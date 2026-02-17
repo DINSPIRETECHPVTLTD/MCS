@@ -6,7 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { UserService } from '../../services/user.service';
 import { BranchService } from '../../services/branch.service';
-import { User } from '../../models/user.models';
+import { User, CreateUserRequest } from '../../models/user.models';
 import { Branch } from '../../models/branch.models';
 import { AddStaffModalComponent } from './add-staff-modal.component';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
@@ -61,15 +61,79 @@ export class StaffComponent implements OnInit, ViewWillEnter {
     this.gridOptions = { theme: agGridTheme, context: { componentParent: this } } as any;
   }
 
+  // Open reset password prompt and update password
+  async resetPassword(member: User): Promise<void> {
+    if (!member || !member.id) return;
+
+    const alert = await this.alertController.create({
+      header: 'Reset Password',
+      inputs: [
+        {
+          name: 'newPassword',
+          type: 'password',
+          placeholder: 'New Password'
+        },
+        {
+          name: 'confirmPassword',
+          type: 'password',
+          placeholder: 'Confirm Password'
+        }
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Submit',
+          handler: async (data: any) => {
+            const newPwd = (data?.newPassword || '').toString();
+            const confirm = (data?.confirmPassword || '').toString();
+
+            // Basic validation: non-empty, match, and password policy
+            if (!newPwd || !confirm) {
+              this.showToast('Please fill both password fields', 'warning');
+              return false; // prevent dismiss
+            }
+            if (newPwd !== confirm) {
+              this.showToast('Passwords do not match', 'danger');
+              return false;
+            }
+
+            // Password policy: at least one uppercase, one lowercase or digit, one digit, one special char, min length 8
+            const policy = /(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}/;
+            if (!policy.test(newPwd)) {
+              this.showToast('Password must include uppercase letters, numbers and special characters (min 8 chars)', 'danger');
+              return false;
+            }
+
+            const loading = await this.loadingController.create({ message: 'Resetting password...', spinner: 'crescent' });
+            await loading.present();
+
+            const payload: Partial<CreateUserRequest> = { password: newPwd } as Partial<CreateUserRequest>;
+            this.userService.updateUser(member.id!, payload).subscribe({
+              next: async () => {
+                await loading.dismiss();
+                this.showToast('Password Reset Successfully.', 'success');
+              },
+              error: async (err) => {
+                await loading.dismiss();
+                console.error('Password reset error', err);
+                this.showToast('Failed to reset password', 'danger');
+              }
+            });
+
+            return true; // allow dismiss
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
   // simple client-side filters
   filters: any = {
     id: '',
-    name: '',
-    city: '',
-    state: '',
+    fullname: '',
     address: '',
-    country: '',
-    zip: '',
     phone: '',
     role: ''
   };
@@ -91,50 +155,64 @@ export class StaffComponent implements OnInit, ViewWillEnter {
       getRowNodeId: (data: any) => data.id?.toString()
     } as any;
 
-    // configure AG Grid columns to match requested layout (ID, Name, City, State, Address, Country, Zip, Phone)
+    // configure AG Grid columns to match requested layout (ID, Name, City, State, Address, Zip, Phone)
     this.columnDefs = [
       { headerName: 'ID', field: 'id', width: 80, editable: false, filter: 'agNumberColumnFilter' },
       {
-        headerName: 'Name',
+        headerName: 'Full Name',
         valueGetter: (p: any) => {
           const d = p.data || {};
-          const parts = [d.firstName, d.middleName, d.lastName].filter((x: any) => !!x);
+          const parts = [d.firstName, d.lastName].filter((x: any) => !!x);
           return parts.join(' ');
         },
-        field: 'name',
+        field: 'fullName',
         flex: 1.6,
         editable: false,
         filter: 'agTextColumnFilter'
       },
-      { headerName: 'City', field: 'city', editable: false, width: 140, filter: 'agTextColumnFilter' },
-      { headerName: 'State', field: 'state', editable: false, width: 140, filter: 'agTextColumnFilter' },
       {
         headerName: 'Address',
         valueGetter: (p: any) => {
           const d = p.data || {};
-          return [d.address1, d.address2].filter((x: any) => !!x).join(' ');
+          const parts = [d.address1, d.address2, d.city, d.state, d.zipCode].filter((x: any) => !!x);
+          return parts.join(', ');
         },
         field: 'address',
-        flex: 2,
+        flex: 2.5,
         editable: false,
         filter: 'agTextColumnFilter'
       },
-      { headerName: 'Country', field: 'country', editable: false, width: 140, filter: 'agTextColumnFilter', valueGetter: (p: any) => (p.data?.country || 'India') },
-      { headerName: 'Zip Code', field: 'zipCode', editable: false, width: 120, filter: 'agTextColumnFilter' },
       { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter' },
-      // keep actions column (edit/delete/save) at end
       {
-        headerName: 'Actions', field: 'actions', width: 160, cellRenderer: (params: any) => {
+        headerName: 'Status',
+        valueGetter: (p: any) => {
+          const isActive = p.data?.isActive !== false;
+          return isActive ? 'Active' : 'Inactive';
+        },
+        field: 'status',
+        width: 110,
+        editable: false,
+        filter: 'agTextColumnFilter'
+      },
+      // keep actions column (edit/inactive/save) at end
+      {
+        headerName: 'Actions', field: 'actions', width: 300, cellRenderer: (params: any) => {
           const container = document.createElement('div');
           container.className = 'actions-cell';
+          const isActive = params.data?.isActive !== false; // Default to active if not specified
+          const inactiveLabel = isActive ? 'Inactive' : 'Activate';
+          const inactiveClass = isActive ? 'ag-delete' : 'ag-activate';
           container.innerHTML = `
             <button class="ag-btn ag-edit">Edit</button>
-            <button class="ag-btn ag-delete">Delete</button>
+            <button class="ag-btn ag-reset">Reset Password</button>
+            <button class="ag-btn ${inactiveClass}">${inactiveLabel}</button>
           `;
           const editBtn = container.querySelector('.ag-edit');
-          const deleteBtn = container.querySelector('.ag-delete');
+          const resetBtn = container.querySelector('.ag-reset');
+          const toggleBtn = container.querySelector(`.${inactiveClass}`);
           if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editStaff(params.data));
-          if (deleteBtn) deleteBtn.addEventListener('click', () => params.context.componentParent.deleteStaff(params.data));
+          if (resetBtn) resetBtn.addEventListener('click', () => params.context.componentParent.resetPassword(params.data));
+          if (toggleBtn) toggleBtn.addEventListener('click', () => params.context.componentParent.toggleStaffStatus(params.data));
           return container;
         }
       }
@@ -269,34 +347,15 @@ export class StaffComponent implements OnInit, ViewWillEnter {
       if (this.filters.id) {
         list = list.filter(s => (s.id?.toString() || '').includes(this.filters.id));
       }
-      // name (first/middle/last)
-      if (this.filters.name) {
-        const v = this.filters.name.toLowerCase();
-        list = list.filter(s => ((s.firstName||'') + ' ' + (s.middleName||'') + ' ' + (s.lastName||'')).toLowerCase().includes(v));
+      // full name (first/last)
+      if (this.filters.fullname) {
+        const v = this.filters.fullname.toLowerCase();
+        list = list.filter(s => ((s.firstName||'') + ' ' + (s.lastName||'')).toLowerCase().includes(v));
       }
-      // city
-      if (this.filters.city) {
-        const v = this.filters.city.toLowerCase();
-        list = list.filter(s => (s.city||'').toLowerCase().includes(v));
-      }
-      // state
-      if (this.filters.state) {
-        const v = this.filters.state.toLowerCase();
-        list = list.filter(s => (s.state||'').toLowerCase().includes(v));
-      }
-      // address
+      // address (includes address1, address2, city, state, zipCode)
       if (this.filters.address) {
         const v = this.filters.address.toLowerCase();
-        list = list.filter(s => ((s.address1||'') + ' ' + (s.address2||'')).toLowerCase().includes(v));
-      }
-      // country
-      if (this.filters.country) {
-        const v = this.filters.country.toLowerCase();
-        list = list.filter(s => ((s as any)['country']||'').toString().toLowerCase().includes(v));
-      }
-      // zip
-      if (this.filters.zip) {
-        list = list.filter(s => (s.zipCode||'').toString().includes(this.filters.zip));
+        list = list.filter(s => ((s.address1||'') + ' ' + (s.address2||'') + ' ' + (s.city||'') + ' ' + (s.state||'') + ' ' + (s.zipCode||'')).toLowerCase().includes(v));
       }
       // phone
       if (this.filters.phone) {
@@ -378,7 +437,6 @@ export class StaffComponent implements OnInit, ViewWillEnter {
     // Build clean payload similar to modal to avoid sending unexpected fields
     const payload: any = {
       firstName: (data.firstName || '').toString().trim(),
-      middleName: (data.middleName || '').toString().trim(),
       lastName: (data.lastName || '').toString().trim(),
       phoneNumber: (data.phoneNumber || '').toString().trim(),
       address1: (data.address1 || '').toString().trim(),
@@ -446,29 +504,52 @@ export class StaffComponent implements OnInit, ViewWillEnter {
     }
   }
 
-  async deleteStaff(member: User): Promise<void> {
+  async toggleStaffStatus(member: User): Promise<void> {
     if (!member || !member.id) return;
+    const isCurrentlyActive = member.isActive !== false; // Default to active if undefined
+    const action = isCurrentlyActive ? 'deactivate' : 'activate';
+    const actionCapitalized = isCurrentlyActive ? 'Deactivate' : 'Activate';
+    
     const alert = await this.alertController.create({
-      header: 'Confirm delete',
-      message: `Are you sure you want to delete staff "${member.firstName} ${member.lastName}"?`,
+      header: `Confirm ${action}`,
+      message: `Are you sure you want to ${action} staff "${member.firstName} ${member.lastName}"?`,
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         {
-          text: 'Delete',
+          text: actionCapitalized,
           role: 'destructive',
           handler: async () => {
-            const loading = await this.loadingController.create({ message: 'Deleting staff...', spinner: 'crescent' });
+            const loading = await this.loadingController.create({ 
+              message: `${actionCapitalized}ing staff...`, 
+              spinner: 'crescent' 
+            });
             await loading.present();
-            this.userService.deleteUser(member.id!).subscribe({
-              next: async () => {
+            
+            const payload: Partial<CreateUserRequest> = {
+              isActive: !isCurrentlyActive
+            } as Partial<CreateUserRequest>;
+            
+            this.userService.updateUser(member.id!, payload).subscribe({
+              next: async (res) => {
                 await loading.dismiss();
-                this.showToast('Staff deleted', 'success');
-                this.loadStaff();
+                const successMsg = isCurrentlyActive ? 'Staff deactivated' : 'Staff activated';
+                this.showToast(successMsg, 'success');
+                // Update the local data
+                const idx = this.rowData.findIndex(r => r.id === member.id);
+                if (idx >= 0) {
+                  this.rowData[idx] = { ...this.rowData[idx], ...payload };
+                  this.staff = [...this.rowData];
+                  this.displayedStaff = [...this.rowData];
+                  if (this.gridApi) {
+                    const rowNode = this.gridApi.getRowNode(member.id!.toString());
+                    if (rowNode) rowNode.setData(this.rowData[idx]);
+                  }
+                }
               },
               error: async (err) => {
                 await loading.dismiss();
-                console.error('Delete staff error', err);
-                this.showToast('Failed to delete staff', 'danger');
+                console.error('Toggle staff status error', err);
+                this.showToast(`Failed to ${action} staff`, 'danger');
               }
             });
           }
