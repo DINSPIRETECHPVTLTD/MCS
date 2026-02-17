@@ -107,7 +107,7 @@ export class BranchService {
     );
   }
 
-  deleteBranch(id: number): Observable<unknown> {
+  inactivateBranch(id: number): Observable<unknown> {
     const token = this.authService.getToken();
     let headers = new HttpHeaders({
       'Content-Type': 'application/json'
