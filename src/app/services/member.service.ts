@@ -334,6 +334,15 @@ export class MemberService {
   }
 
   /**
+   * Mark member as inactive
+   */
+  inactivateMember(memberId: number): Observable<unknown> {
+    return this.http.patch(`${this.apiUrl}/${memberId}/inactive`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
    * Get all POCs from API
    */
   getAllPOCs(): Observable<POCOption[]> {

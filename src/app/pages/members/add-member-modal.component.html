@@ -43,15 +43,15 @@
           <ion-input formControlName="firstName" placeholder="Enter first name" type="text" maxlength="50"></ion-input>
           <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
         </ion-item>
-        <ion-item [class.ion-invalid]="isFieldInvalid('middleName')">
-          <ion-label position="stacked">Middle Name</ion-label>
-          <ion-input formControlName="middleName" placeholder="Enter middle name" type="text" maxlength="50"></ion-input>
-          <ion-note slot="error">{{ getFieldError('middleName') }}</ion-note>
-        </ion-item>
         <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
-          <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
-          <ion-input formControlName="lastName" placeholder="Enter last name" type="text" maxlength="50"></ion-input>
+          <ion-label position="stacked">Surname <span class="required">*</span></ion-label>
+          <ion-input formControlName="lastName" placeholder="Enter surname" type="text" maxlength="50"></ion-input>
           <ion-note slot="error">{{ getFieldError('lastName') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('occupation')">
+          <ion-label position="stacked">Occupation <span class="required">*</span></ion-label>
+          <ion-input formControlName="occupation" placeholder="Enter occupation" type="text" maxlength="100"></ion-input>
+          <ion-note slot="error">{{ getFieldError('occupation') }}</ion-note>
         </ion-item>
       </div>
       <div class="form-row">
@@ -65,30 +65,30 @@
           <ion-input formControlName="age" type="text" readonly placeholder="Auto-calculated"></ion-input>
           <ion-note slot="error">{{ getFieldError('age') }}</ion-note>
         </ion-item>
-      </div>
-    </div>
-
-    <!-- Section 3: Contact & Address Details -->
-    <div class="section-card">
-      <div class="section-title">Contact & Address Details</div>
-      <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('phoneNumber')">
           <ion-label position="stacked">Phone Number <span class="required">*</span></ion-label>
           <ion-input formControlName="phoneNumber" placeholder="Enter phone number" type="tel" maxlength="10" inputmode="numeric"></ion-input>
           <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
         </ion-item>
-        <ion-item [class.ion-invalid]="isFieldInvalid('altPhone')">
-          <ion-label position="stacked">Alternate Phone</ion-label>
-          <ion-input formControlName="altPhone" placeholder="Enter alternate phone" type="tel" maxlength="10" inputmode="numeric"></ion-input>
-          <ion-note slot="error">{{ getFieldError('altPhone') }}</ion-note>
+      </div>
+      <div class="form-row">
+        <ion-item [class.ion-invalid]="isFieldInvalid('aadhaar')">
+          <ion-label position="stacked">Aadhaar <span class="required">*</span></ion-label>
+          <ion-input formControlName="aadhaar" placeholder="Enter Aadhaar" type="tel" maxlength="12" inputmode="numeric"></ion-input>
+          <ion-note slot="error">{{ getFieldError('aadhaar') }}</ion-note>
         </ion-item>
+      </div>
+    </div>
+
+    <!-- Section 3: Address Details -->
+    <div class="section-card">
+      <div class="section-title">Address Details</div>
+      <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('address1')">
           <ion-label position="stacked">Address Line 1 <span class="required">*</span></ion-label>
           <ion-input formControlName="address1" placeholder="Enter address line 1" type="text" maxlength="200"></ion-input>
           <ion-note slot="error">{{ getFieldError('address1') }}</ion-note>
         </ion-item>
-      </div>
-      <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('address2')">
           <ion-label position="stacked">Address Line 2</ion-label>
           <ion-input formControlName="address2" placeholder="Enter address line 2" type="text" maxlength="200"></ion-input>
@@ -99,27 +99,17 @@
           <ion-input formControlName="city" placeholder="Enter city" type="text" maxlength="100"></ion-input>
           <ion-note slot="error">{{ getFieldError('city') }}</ion-note>
         </ion-item>
+      </div>
+      <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('state')">
           <ion-label position="stacked">State <span class="required">*</span></ion-label>
           <ion-input formControlName="state" placeholder="Enter state" type="text" maxlength="100"></ion-input>
           <ion-note slot="error">{{ getFieldError('state') }}</ion-note>
         </ion-item>
-      </div>
-      <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
-          <ion-label position="stacked">Zip Code <span class="required">*</span></ion-label>
-          <ion-input formControlName="zipCode" placeholder="Enter 6-digit zip code" type="tel" maxlength="6" inputmode="numeric"></ion-input>
+          <ion-label position="stacked">Pincode <span class="required">*</span></ion-label>
+          <ion-input formControlName="zipCode" placeholder="Enter 6-digit pincode" type="tel" maxlength="6" inputmode="numeric"></ion-input>
           <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
-        </ion-item>
-        <ion-item [class.ion-invalid]="isFieldInvalid('aadhaar')">
-          <ion-label position="stacked">Aadhaar</ion-label>
-          <ion-input formControlName="aadhaar" placeholder="Enter Aadhaar" type="tel" maxlength="12" inputmode="numeric"></ion-input>
-          <ion-note slot="error">{{ getFieldError('aadhaar') }}</ion-note>
-        </ion-item>
-        <ion-item [class.ion-invalid]="isFieldInvalid('occupation')">
-          <ion-label position="stacked">Occupation <span class="required">*</span></ion-label>
-          <ion-input formControlName="occupation" placeholder="Enter occupation" type="text" maxlength="100"></ion-input>
-          <ion-note slot="error">{{ getFieldError('occupation') }}</ion-note>
         </ion-item>
       </div>
     </div>
@@ -133,15 +123,15 @@
           <ion-input formControlName="guardianFirstName" placeholder="Enter first name" type="text" maxlength="100"></ion-input>
           <ion-note slot="error">{{ getFieldError('guardianFirstName') }}</ion-note>
         </ion-item>
-        <ion-item [class.ion-invalid]="isFieldInvalid('guardianMiddleName')">
-          <ion-label position="stacked">Middle Name</ion-label>
-          <ion-input formControlName="guardianMiddleName" placeholder="Enter middle name" type="text" maxlength="100"></ion-input>
-          <ion-note slot="error">{{ getFieldError('guardianMiddleName') }}</ion-note>
-        </ion-item>
         <ion-item [class.ion-invalid]="isFieldInvalid('guardianLastName')">
-          <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
-          <ion-input formControlName="guardianLastName" placeholder="Enter last name" type="text" maxlength="100"></ion-input>
+          <ion-label position="stacked">Surname <span class="required">*</span></ion-label>
+          <ion-input formControlName="guardianLastName" placeholder="Enter surname" type="text" maxlength="100"></ion-input>
           <ion-note slot="error">{{ getFieldError('guardianLastName') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('guardianPhone')">
+          <ion-label position="stacked">Phone Number</ion-label>
+          <ion-input formControlName="guardianPhone" placeholder="Enter phone number" type="tel" maxlength="10" inputmode="numeric"></ion-input>
+          <ion-note slot="error">{{ getFieldError('guardianPhone') }}</ion-note>
         </ion-item>
       </div>
       <div class="form-row">
@@ -158,20 +148,15 @@
           <ion-input formControlName="guardianRelationshipOther" placeholder="Enter relationship" type="text" maxlength="100"></ion-input>
           <ion-note slot="error">{{ getFieldError('guardianRelationshipOther') }}</ion-note>
         </ion-item>
-        <ion-item [class.ion-invalid]="isFieldInvalid('guardianPhone')">
-          <ion-label position="stacked">Phone <span class="required">*</span></ion-label>
-          <ion-input formControlName="guardianPhone" placeholder="Enter phone number" type="tel" maxlength="10" inputmode="numeric"></ion-input>
-          <ion-note slot="error">{{ getFieldError('guardianPhone') }}</ion-note>
-        </ion-item>
-      </div>
-      <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('guardianDOB')">
-          <ion-label position="stacked">DOB</ion-label>
+          <ion-label position="stacked">DOB <span class="required">*</span></ion-label>
           <ion-input formControlName="guardianDOB" type="date" [max]="todayString"></ion-input>
           <ion-note slot="error">{{ getFieldError('guardianDOB') }}</ion-note>
         </ion-item>
+      </div>
+      <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('guardianAge')">
-          <ion-label position="stacked">Age <span class="required">*</span></ion-label>
+          <ion-label position="stacked">Age</ion-label>
           <ion-input
             formControlName="guardianAge"
             type="number"
@@ -191,7 +176,6 @@
     <div class="footer-actions">
       <div class="left-action">
         <ion-button class="save-btn" color="primary" fill="solid" (click)="onSave()" [disabled]="isSubmitting || memberForm.invalid">
-          <ion-icon slot="start" name="checkmark-outline"></ion-icon>
           <span class="btn-text">Save Member</span>
         </ion-button>
       </div>
