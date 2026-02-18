@@ -1,7 +1,6 @@
 export interface User {
   id?: number;
   firstName: string;
-  middleName?: string;
   lastName: string;
   phoneNumber?: string;
   address1?: string;
@@ -14,12 +13,12 @@ export interface User {
   role?: string;
   organizationId?: number;
   branchId?: number | null;
+  isActive?: boolean;
   [key: string]: unknown;
 }
 
 export interface CreateUserRequest {
   firstName: string;
-  middleName?: string;
   lastName: string;
   phoneNumber?: string;
   address1?: string;
@@ -33,4 +32,5 @@ export interface CreateUserRequest {
   role: string;
   organizationId: number;
   branchId?: number | null;
+  isActive?: boolean;
 }

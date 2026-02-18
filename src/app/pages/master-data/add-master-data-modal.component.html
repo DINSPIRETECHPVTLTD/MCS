@@ -13,7 +13,7 @@
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <ion-item [class.ion-invalid]="isFieldInvalid('lookupKey')">
       <ion-label position="stacked">Lookup Key (Category) <span class="required">*</span></ion-label>
-      <ion-select formControlName="lookupKey" placeholder="Select or enter category" interface="popover">
+      <ion-select formControlName="lookupKey" [placeholder]="isLoadingKeys ? 'Loading...' : 'Select or enter category'" [disabled]="isLoadingKeys" interface="popover">
         <ion-select-option *ngFor="let opt of lookupKeyOptions" [value]="opt.value">{{ opt.label }}</ion-select-option>
       </ion-select>
       <ion-note slot="error">{{ getFieldError('lookupKey') }}</ion-note>

@@ -4,6 +4,8 @@ import { ModalController, LoadingController, ToastController } from '@ionic/angu
 import { BranchService } from '../../services/branch.service';
 import { CreateBranchRequest } from '../../models/branch.models';
 import { UserContextService } from '../../services/user-context.service';
+import { MasterDataService } from '../../services/master-data.service';
+import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 
 
 @Component({
@@ -18,6 +20,9 @@ export class AddBranchModalComponent implements OnInit {
 
   branchForm: FormGroup;
   submitted: boolean = false;
+  states: MasterLookup[] = [];
+  isLoadingStates: boolean = false;
+  private organizationStateName: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -25,19 +30,20 @@ export class AddBranchModalComponent implements OnInit {
     private branchService: BranchService,
     private userContext: UserContextService,
     private loadingController: LoadingController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private masterDataService: MasterDataService
   )
   
   {
     this.branchForm = this.formBuilder.group({
   name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
   address1: ['', [Validators.required, Validators.maxLength(100)]],
-  address2: ['', [Validators.required, Validators.maxLength(100)]],
+  address2: ['', [Validators.maxLength(100)]],
   city: ['', [Validators.required, Validators.maxLength(100)]],
   state: ['', [Validators.required, Validators.maxLength(100)]],
   country: ['India', [Validators.required]],
   zipCode: ['', [Validators.required, Validators.maxLength(10)]],
-  phoneNumber: ['', [Validators.required]],
+  phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
   organizationId: [0]
     });
   }
@@ -47,6 +53,12 @@ ngOnInit(): void {
   if (organizationId) {
     this.branchForm.patchValue({ organizationId });
   }
+
+  // Load organization state (if available) from stored organization info
+  this.loadOrganizationStateFromStorage();
+
+  // Load states from master data (LookupKey = STATE)
+  this.loadStates();
 
   // Load branches for dropdown
   this.branchService.getBranches().subscribe({
@@ -61,6 +73,56 @@ ngOnInit(): void {
     this.loadBranchDetails(this.editingBranchId);
   }
 }
+
+  private loadOrganizationStateFromStorage(): void {
+    const stored = localStorage.getItem('organization_info');
+    if (!stored) {
+      return;
+    }
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const org: any = JSON.parse(stored);
+      const state: unknown = org?.state;
+      if (state && typeof state === 'string' && state.trim().length > 0) {
+        this.organizationStateName = state.trim();
+      }
+    } catch {
+      // Ignore parsing errors and proceed without default state
+      this.organizationStateName = null;
+    }
+  }
+
+  private applyOrgStateDefaultIfNeeded(): void {
+    if (this.isEditing) return;
+    if (!this.organizationStateName) return;
+
+    const control = this.branchForm.get('state');
+    const currentValue = (control?.value || '').toString().trim();
+    if (currentValue) return; // Do not override if already set
+
+    const target = this.organizationStateName.toLowerCase();
+    const match = this.states.find(
+      s => (s.lookupValue || '').toLowerCase() === target || (s.lookupCode || '').toLowerCase() === target
+    );
+    if (match) control?.setValue(match.lookupValue);
+  }
+
+  private loadStates(): void {
+    this.isLoadingStates = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        this.states = (allLookups || [])
+          .filter(l => l.lookupKey === LookupKeys.State)
+          .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
+        this.applyOrgStateDefaultIfNeeded();
+        this.isLoadingStates = false;
+      },
+      error: () => {
+        this.states = [];
+        this.isLoadingStates = false;
+      }
+    });
+  }
 
   async loadBranchDetails(branchId: number): Promise<void> {
     const loading = await this.loadingController.create({
@@ -121,7 +183,15 @@ ngOnInit(): void {
     });
 
     if (this.branchForm.invalid) {
+      this.focusFirstInvalidField();
       this.showToast('Please fill in all required fields correctly', 'danger');
+      return;
+    }
+
+    // Check for duplicate branch name before submission
+    if (this.isDuplicateBranchName()) {
+      this.showToast('Branch name already exists. Please choose a different name.', 'danger');
+      this.focusField('name');
       return;
     }
 
@@ -163,12 +233,60 @@ ngOnInit(): void {
       },
       error: async (error) => {
         await loading.dismiss();
-        const errorMessage = error.error?.message || error.message || 
-          (this.isEditing ? 'Failed to update branch. Please try again.' : 'Failed to create branch. Please try again.');
-        this.showToast(errorMessage, 'danger');
-        console.error(this.isEditing ? 'Error updating branch:' : 'Error creating branch:', error);
+        console.error('Error saving branch:', error);
+        
+        // Handle backend validation errors (like duplicate names)
+        if (error.status === 409 || error.error?.message?.includes('already exists')) {
+          this.showToast('Branch name already exists. Please choose a different name.', 'danger');
+          this.focusField('name');
+        } else {
+          this.showToast('Failed to save branch. Please try again.', 'danger');
+        }
       }
     });
+  }
+
+  private isDuplicateBranchName(): boolean {
+    const nameToCheck = this.branchForm.value.name?.trim().toLowerCase();
+    if (!nameToCheck) return false;
+
+    return this.branches.some(branch => 
+      branch.name.toLowerCase() === nameToCheck &&
+      branch.id !== this.editingBranchId
+    );
+  }
+
+  private focusFirstInvalidField(): void {
+    const fieldOrder = ['name', 'address1', 'address2', 'city', 'state', 'country', 'zipCode', 'phoneNumber'];
+    
+    for (const fieldName of fieldOrder) {
+      const field = this.branchForm.get(fieldName);
+      if (field && field.invalid) {
+        setTimeout(() => {
+          this.focusField(fieldName);
+        }, 100);
+        break;
+      }
+    }
+  }
+
+  private focusField(fieldName: string): void {
+    const selectors = [
+      `ion-input[name="${fieldName}"] input`,
+      `ion-select[name="${fieldName}"]`,
+      `input[name="${fieldName}"]`,
+      `[formControlName="${fieldName}"] input`,
+      `[formControlName="${fieldName}"]`
+    ];
+
+    for (const selector of selectors) {
+      const element = document.querySelector(selector) as HTMLElement;
+      if (element) {
+        element.focus();
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        break;
+      }
+    }
   }
 
   async closeModal(): Promise<void> {
@@ -201,7 +319,7 @@ ngOnInit(): void {
       }
       if (field.errors?.['pattern']) {
         if (fieldName === 'phoneNumber') {
-          return 'Please enter a valid 10-digit phone number';
+          return 'Please enter exactly 10 digits';
         }
         if (fieldName === 'name') {
           return 'Branch name must be alphanumeric';
@@ -232,6 +350,19 @@ ngOnInit(): void {
     return !!(field && field.invalid && (field.touched || this.submitted));
   }
 
+  get isSavedDisabled(): boolean {
+    if (this.branchForm.invalid) {
+      return true;
+    }
 
+    const requiredFields = ['name', 'address1', 'city', 'state', 'country', 'zipCode', 'phoneNumber'];
+    for (const fieldName of requiredFields) {
+      const value = this.branchForm.get(fieldName)?.value;
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        return true;
+      }
+    }   
+    return false; 
+  }
 }
 

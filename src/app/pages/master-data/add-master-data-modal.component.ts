@@ -16,10 +16,9 @@ export class AddMasterDataModalComponent implements OnInit {
   form: FormGroup;
   submitted = false;
   isSubmitting = false;
-  lookupKeyOptions: { value: string; label: string }[] = [
-    { value: LookupKeys.LoanTerm, label: 'Loan Term (LOAN_TERM)' },
-    { value: LookupKeys.PaymentType, label: 'Payment Type (PAYMENT_TYPE)' }
-  ];
+  isLoadingKeys = false;
+  /** Distinct lookupKey values from GET api/MasterLookups; fallback to LookupKeys if empty */
+  lookupKeyOptions: { value: string; label: string }[] = [];
 
   constructor(
     private formBuilder: FormBuilder,
@@ -40,9 +39,48 @@ export class AddMasterDataModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadLookupKeys();
     if (this.isEditing && this.editingId) {
       this.loadData();
     }
+  }
+
+  private loadLookupKeys(): void {
+    this.isLoadingKeys = true;
+    this.masterDataService.getMasterData(true).subscribe({
+      next: (items) => {
+        const keys = items && items.length > 0
+          ? [...new Set(items.map(x => x.lookupKey).filter(Boolean))].sort()
+          : [];
+        this.lookupKeyOptions = keys.length > 0
+          ? keys.map(key => ({ value: key, label: this.formatLookupKeyLabel(key) }))
+          : this.getFallbackLookupKeyOptions();
+        this.isLoadingKeys = false;
+      },
+      error: () => {
+        this.lookupKeyOptions = this.getFallbackLookupKeyOptions();
+        this.isLoadingKeys = false;
+      }
+    });
+  }
+
+  private formatLookupKeyLabel(key: string): string {
+    const known: Record<string, string> = {
+      [LookupKeys.LoanTerm]: 'Loan Term (LOAN_TERM)',
+      [LookupKeys.PaymentType]: 'Payment Type (PAYMENT_TYPE)',
+      [LookupKeys.Relationship]: 'Relationship (RELATIONSHIP)',
+      [LookupKeys.State]: 'State (STATE)'
+    };
+    return known[key] ?? key;
+  }
+
+  private getFallbackLookupKeyOptions(): { value: string; label: string }[] {
+    return [
+      { value: LookupKeys.LoanTerm, label: 'Loan Term (LOAN_TERM)' },
+      { value: LookupKeys.PaymentType, label: 'Payment Type (PAYMENT_TYPE)' },
+      { value: LookupKeys.Relationship, label: 'Relationship (RELATIONSHIP)' },
+      { value: LookupKeys.State, label: 'State (STATE)' }
+    ];
   }
 
   async loadData(): Promise<void> {

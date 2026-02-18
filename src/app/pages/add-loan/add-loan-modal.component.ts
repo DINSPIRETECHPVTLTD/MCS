@@ -1,11 +1,12 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ModalController, LoadingController, ToastController, AlertController } from '@ionic/angular';
-import { Member } from '../../models/member.models';
+import { Member, CenterOption } from '../../models/member.models';
 import { CreateLoanRequest, Loan } from '../../models/loan.models';
 import { LoanService } from '../../services/loan.service';
 import { Poc, PocService } from '../../services/poc.service';
 import { Payment } from '../../models/payment.models';
 import { PaymentsService } from '../../services/payments.service';
+import { MemberService } from '../../services/member.service';
 
 @Component({
   selector: 'app-add-loan-modal',
@@ -35,15 +36,16 @@ export class AddLoanModalComponent implements OnInit {
   paymentTerms: Payment[] = [];
   selectedPaymentTerm: Payment | null = null;
   selectedPaymentType: string = '';
+  memberCenter: CenterOption | null = null;
 
   constructor(
     private modalController: ModalController,
     private loanService: LoanService,
     private loadingController: LoadingController,
-    private toastController: ToastController,
     private alertController: AlertController,
     private pocService: PocService,
-    private paymentsService: PaymentsService
+    private paymentsService: PaymentsService,
+    private memberService: MemberService
   ) {}
 
   ngOnInit(): void {
@@ -52,10 +54,11 @@ export class AddLoanModalComponent implements OnInit {
       this.loanForm.memberId = id != null ? Number(id) : 0;
       // Load POC data for the selected member
       this.loadMemberPoc();
+      // Load center data for the selected member
+      this.loadMemberCenter();
     }
-    // Set default disbursement date to today
-    const today = new Date();
-    this.loanForm.disbursementDate = this.formatDate(today);
+    // Set default disbursement date to today (local date)
+    this.loanForm.disbursementDate = this.formatDate(new Date());
     // Set default collection start date to disbursement date + 7 days
     this.updateCollectionStartDate();
     // Load payment terms
@@ -92,6 +95,20 @@ export class AddLoanModalComponent implements OnInit {
     });
   }
 
+  loadMemberCenter(): void {
+    if (!this.selectedMember?.centerId) return;
+    
+    this.memberService.getAllCenters().subscribe({
+      next: (centers: CenterOption[]) => {
+        this.memberCenter = centers.find(c => c.id === this.selectedMember.centerId) || null;
+      },
+      error: (err) => {
+        console.error('Error loading center:', err);
+        this.memberCenter = null;
+      }
+    });
+  }
+
   get showCollectionDay(): boolean {
     return !!(this.memberPoc && 
              this.memberPoc.collectionFrequency && 
@@ -99,11 +116,37 @@ export class AddLoanModalComponent implements OnInit {
              this.memberPoc.collectionDay);
   }
 
+  get centerName(): string {
+    return this.memberCenter?.name || 'N/A';
+  }
+
   get pocName(): string {
     if (!this.memberPoc) return 'N/A';
     const firstName = this.memberPoc.firstName || '';
     const lastName = this.memberPoc.lastName || '';
     return [firstName, lastName].filter(Boolean).join(' ') || 'N/A';
+  }
+
+  get collectionDay(): string {
+    return this.memberPoc?.collectionDay || 'N/A';
+  }
+
+  get collectionDayMismatchError(): string | null {
+    if (!this.memberPoc?.collectionDay || !this.loanForm.collectionStartDate) {
+      return null;
+    }
+
+    // Parse date as local date to avoid timezone issues
+    const collectionDate = this.parseLocalDate(this.loanForm.collectionStartDate);
+    
+    const dayOfWeek = collectionDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const pocDay = this.memberPoc.collectionDay.trim();
+
+    if (dayOfWeek.toLowerCase() !== pocDay.toLowerCase()) {
+      return `Selected collection day(${dayOfWeek}) does not match the configured collection day for this POC(${pocDay}).`;
+    }
+
+    return null;
   }
 
   get uniquePaymentTypes(): string[] {
@@ -128,7 +171,8 @@ export class AddLoanModalComponent implements OnInit {
       (f.loanAmount ?? 0) > 0 &&
       (f.totalAmount ?? 0) > 0 &&
       (f.collectionTerm ?? '').trim() &&
-      (f.noOfTerms ?? 0) > 0
+      (f.noOfTerms ?? 0) > 0 &&
+      !this.collectionDayMismatchError
     );
   }
 
@@ -283,10 +327,24 @@ export class AddLoanModalComponent implements OnInit {
 
   private updateCollectionStartDate(): void {
     if (this.loanForm.disbursementDate) {
-      const disbursementDate = new Date(this.loanForm.disbursementDate);
+      // Parse date as local date to avoid timezone issues
+      const disbursementDate = this.parseLocalDate(this.loanForm.disbursementDate);
+      
+      // Add 7 days
       const collectionDate = new Date(disbursementDate);
       collectionDate.setDate(collectionDate.getDate() + 7);
+      
+      // Format the collection date
       this.loanForm.collectionStartDate = this.formatDate(collectionDate);
     }
+  }
+
+  private parseLocalDate(dateString: string): Date {
+    // Parse date as local date to avoid timezone issues
+    const dateParts = dateString.split('-');
+    const year = parseInt(dateParts[0], 10);
+    const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
+    const day = parseInt(dateParts[2], 10);
+    return new Date(year, month, day);
   }
 }

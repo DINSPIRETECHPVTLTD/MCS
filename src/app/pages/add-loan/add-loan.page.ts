@@ -25,6 +25,10 @@ export class AddLoanComponent implements OnInit {
   isSearching: boolean = false;
   showMemberGrid: boolean = false;
   
+  // Lookup maps for center and POC names
+  centerMap: Map<number, string> = new Map();
+  pocMap: Map<number, string> = new Map();
+  
   // AG Grid configuration
   rowData: Member[] = [];
   columnDefs: ColDef[] = [
@@ -32,30 +36,45 @@ export class AddLoanComponent implements OnInit {
       headerName: 'Member ID',
       valueGetter: (params) => {
         const data = params.data as Member;
-        return (data as Member)?.memberId ?? (data as Member)?.id ?? '';
+        return data?.memberId ?? data?.id ?? '';
       },
       width: 120,
       sortable: true,
       filter: true
     },
     {
-      headerName: 'First Name',
-      valueGetter: (params) => (params.data as Member)?.firstName ?? '',
-      width: 130,
+      headerName: 'Full Name',
+      valueGetter: (params) => {
+        const data = params.data as Member;
+        const firstName = data?.firstName ?? '';
+        const lastName = data?.lastName ?? '';
+        return `${firstName} ${lastName}`.trim() || 'N/A';
+      },
+      width: 200,
       sortable: true,
       filter: true
     },
     {
-      headerName: 'Last Name',
-      valueGetter: (params) => (params.data as Member)?.lastName ?? '',
-      width: 130,
+      headerName: 'Center Name',
+      valueGetter: (params) => {
+        const data = params.data as Member;
+        const comp = (params.context as { component?: AddLoanComponent })?.component;
+        const centerId = data?.centerId;
+        return centerId && comp ? (comp.centerMap.get(centerId) ?? `Center ${centerId}`) : 'N/A';
+      },
+      width: 180,
       sortable: true,
       filter: true
     },
     {
-      field: 'age',
-      headerName: 'Age',
-      width: 80,
+      headerName: 'POC Name',
+      valueGetter: (params) => {
+        const data = params.data as Member;
+        const comp = (params.context as { component?: AddLoanComponent })?.component;
+        const pocId = data?.pocId;
+        return pocId && comp ? (comp.pocMap.get(pocId) ?? `POC ${pocId}`) : 'N/A';
+      },
+      width: 180,
       sortable: true,
       filter: true
     },
@@ -80,7 +99,7 @@ export class AddLoanComponent implements OnInit {
     filter: true
   };
   pagination: boolean = true;
-  paginationPageSize: number = 10;
+  paginationPageSize: number = 20;
 
   private gridApi?: GridApi;
   gridOptions = { theme: agGridTheme };
@@ -104,6 +123,8 @@ export class AddLoanComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    // Load lookup data and then recent members
+    this.loadLookupsAndMembers();
   }
 
   onMenuChange(menu: string): void {
@@ -112,6 +133,95 @@ export class AddLoanComponent implements OnInit {
 
   onBranchChange(_branch: Branch): void {
     // Handle branch change if needed
+    // Reload recent members for the new branch
+
+  }
+
+  async loadLookupsAndMembers(): Promise<void> {
+    await this.loadLookups();
+    await this.loadRecentMembers();
+  }
+
+  async loadLookups(): Promise<void> {
+    const branchId = this.authService.getBranchId();
+    if (!branchId) {
+      return;
+    }
+
+    try {
+      // Load centers
+      const centers = await this.memberService.getAllCenters().toPromise();
+      if (centers) {
+        this.centerMap.clear();
+        centers.forEach(center => {
+          this.centerMap.set(center.id, center.name);
+        });
+      }
+
+      // Load POCs
+      const pocs = await this.memberService.getAllPOCs().toPromise();
+      if (pocs) {
+        this.pocMap.clear();
+        pocs.forEach(poc => {
+          const pocName = poc.name || `${poc.firstName || ''} ${poc.lastName || ''}`.trim();
+          this.pocMap.set(poc.id, pocName);
+        });
+      }
+    } catch (error) {
+      console.error('Error loading lookups:', error);
+    }
+  }
+
+  async loadRecentMembers(): Promise<void> {
+    const branchId = this.authService.getBranchId();
+    if (!branchId) {
+      return;
+    }
+
+    const loading = await this.loadingController.create({
+      message: 'Loading recent members...',
+      spinner: 'crescent'
+    });
+    await loading.present();
+
+    this.memberService.getMembersByBranch(branchId).subscribe({
+      next: (members: Member[]) => {
+        // Filter members created in the last 10 days
+        const tenDaysAgo = new Date();
+        tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+        
+        const recentMembers = members.filter(member => {
+          if (member.createdAt) {
+            const createdDate = new Date(member.createdAt);
+            return createdDate >= tenDaysAgo;
+          }
+          return false;
+        });
+
+        this.rowData = recentMembers;
+        this.searchResults = recentMembers;
+        this.showMemberGrid = recentMembers.length > 0;
+        
+        loading.dismiss();
+
+        if (recentMembers.length > 0) {
+          setTimeout(() => {
+            this.gridApi?.sizeColumnsToFit();
+            this.gridApi?.refreshCells({ force: true });
+          }, 100);
+        }
+      },
+      error: (error: unknown) => {
+        console.error('Error loading recent members:', error);
+        loading.dismiss();
+        this.toastController.create({
+          message: 'Error loading recent members. Use search to find members.',
+          duration: 3000,
+          color: 'warning',
+          position: 'top'
+        }).then(toast => toast.present());
+      }
+    });
   }
 
   async searchMembers(): Promise<void> {
@@ -136,6 +246,11 @@ export class AddLoanComponent implements OnInit {
     });
     await loading.present();
 
+    // Ensure lookups are loaded
+    if (this.centerMap.size === 0 || this.pocMap.size === 0) {
+      await this.loadLookups();
+    }
+
     this.memberService.searchMembersByCriteria({
       firstName: first || undefined,
       lastName: last || undefined,
@@ -156,7 +271,10 @@ export class AddLoanComponent implements OnInit {
             position: 'top'
           }).then(toast => toast.present());
         } else {
-          setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
+          setTimeout(() => {
+            this.gridApi?.sizeColumnsToFit();
+            this.gridApi?.refreshCells({ force: true });
+          }, 100);
         }
       },
       error: (error: unknown) => {
@@ -188,13 +306,12 @@ export class AddLoanComponent implements OnInit {
     const { data, role } = await modal.onWillDismiss();
     
     if (role === 'success' && data && data.reset) {
-      // Reset to initial search state
-      this.showMemberGrid = false;
-      this.rowData = [];
+      // Reset search fields and reload recent members
       this.searchFirstName = '';
       this.searchLastName = '';
       this.searchMemberId = '';
-      this.cdr.detectChanges();
+      // Reload recent members to refresh the list
+      await this.loadRecentMembers();
     }
   }
 

@@ -42,27 +42,39 @@
               Search
             </ion-button>
           </div>
-          
-          <!-- Member grid -->
-          <div *ngIf="showMemberGrid && rowData.length > 0" class="grid-container">
-            <ag-grid-angular
-              class="ag-theme-alpine"
-              style="width: 100%; height: 30vh;"
-              [gridOptions]="gridOptions"
-              [rowData]="rowData"
-              [columnDefs]="columnDefs"
-              [defaultColDef]="defaultColDef"
-              [pagination]="pagination"
-              [paginationPageSize]="paginationPageSize"
-              [context]="gridContext"
-              (gridReady)="onGridReady($event)">
-            </ag-grid-angular>
-          </div>
-          
-          <div *ngIf="rowData.length === 0 && !isSearching" class="empty-state">
-            <ion-icon name="search-outline" size="large"></ion-icon>
-            <p>Search by First Name, Last Name, or Member ID and click Search</p>
-          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Member Grid -->
+    <ion-card class="step-card" *ngIf="showMemberGrid && rowData.length > 0">
+      <ion-card-header class="step-header">
+        <ion-card-title>Recent Members ({{ rowData.length }})</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="grid-container">
+          <ag-grid-angular
+            class="ag-theme-alpine"
+            style="width: 100%; height: 40vh;"
+            [gridOptions]="gridOptions"
+            [rowData]="rowData"
+            [columnDefs]="columnDefs"
+            [defaultColDef]="defaultColDef"
+            [pagination]="pagination"
+            [paginationPageSize]="paginationPageSize"
+            [context]="gridContext"
+            (gridReady)="onGridReady($event)">
+          </ag-grid-angular>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Empty State -->
+    <ion-card class="step-card" *ngIf="!showMemberGrid && !isSearching">
+      <ion-card-content>
+        <div class="empty-state">
+          <ion-icon name="search-outline" size="large"></ion-icon>
+          <p>Recent members will be displayed automatically, or search by First Name, Last Name, or Member ID</p>
         </div>
       </ion-card-content>
     </ion-card>

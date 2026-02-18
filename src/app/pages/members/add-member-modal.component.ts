@@ -5,6 +5,8 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil, distinctUntilChanged } from 'rxjs/operators';
 import { MemberService } from '../../services/member.service';
 import { UserService } from '../../services/user.service';
+import { MasterDataService } from '../../services/master-data.service';
+import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 import { CenterOption, POCOption } from '../../models/member.models';
 
 @Component({
@@ -17,7 +19,8 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
 
 
   memberForm: FormGroup;
-  guardianRelationships: string[] = ['Father', 'Mother', 'Wife', 'Sister', 'Brother', 'Other'];
+  /** Relationship options from master data (RELATIONSHIP), with "Other" added if not present */
+  relationships: MasterLookup[] = [];
   isSubmitting = false;
   isLoading = false;
   submitted = false;
@@ -26,6 +29,10 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
   centers: CenterOption[] = [];
   pocs: POCOption[] = [];
   collectors: any[] = [];
+  states: MasterLookup[] = [];
+  isLoadingStates = false;
+  isLoadingRelationships = false;
+  private organizationStateName: string | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -33,6 +40,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     private formBuilder: FormBuilder,
     private memberService: MemberService,
     private userService: UserService,
+    private masterDataService: MasterDataService,
     private modalController: ModalController,
     private loadingController: LoadingController,
     private toastController: ToastController,
@@ -42,8 +50,80 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.loadOrganizationStateFromStorage();
     this.loadAllCenters();
+    this.loadStates();
+    this.loadRelationships();
     this.setupFormListeners();
+  }
+
+  private loadOrganizationStateFromStorage(): void {
+    const stored = localStorage.getItem('organization_info');
+    if (!stored) return;
+    try {
+      const org: { state?: string } = JSON.parse(stored);
+      const state = org?.state;
+      if (state && typeof state === 'string' && state.trim().length > 0) {
+        this.organizationStateName = state.trim();
+      }
+    } catch {
+      this.organizationStateName = null;
+    }
+  }
+
+  private applyOrgStateDefaultIfNeeded(): void {
+    if (!this.organizationStateName) return;
+    const stateControl = this.memberForm.get('state');
+    if (!stateControl || (stateControl.value || '').toString().trim()) return;
+    const target = this.organizationStateName.toLowerCase();
+    const match = this.states.find(
+      s => (s.lookupValue || '').toLowerCase() === target || (s.lookupCode || '').toLowerCase() === target
+    );
+    if (match) {
+      stateControl.setValue(match.lookupCode);
+      this.cdr.detectChanges();
+    }
+  }
+
+  loadRelationships(): void {
+    this.isLoadingRelationships = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        const list = allLookups
+          .filter(lookup => lookup.lookupKey === LookupKeys.Relationship)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        const hasOther = list.some(l => (l.lookupValue || '').toLowerCase() === 'other');
+        this.relationships = hasOther ? list : [...list, { lookupKey: 'RELATIONSHIP', lookupCode: 'Other', lookupValue: 'Other', sortOrder: 9999, isActive: true } as MasterLookup];
+        this.isLoadingRelationships = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading relationships:', error);
+        this.relationships = [{ lookupKey: 'RELATIONSHIP', lookupCode: 'Other', lookupValue: 'Other', sortOrder: 0, isActive: true } as MasterLookup];
+        this.isLoadingRelationships = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  loadStates(): void {
+    this.isLoadingStates = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        this.states = allLookups
+          .filter(lookup => lookup.lookupKey === LookupKeys.State)
+          .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
+        this.isLoadingStates = false;
+        this.applyOrgStateDefaultIfNeeded();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading states:', error);
+        this.states = [];
+        this.isLoadingStates = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   ionViewWillEnter(): void {
@@ -70,7 +150,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         address1: ['', [Validators.required, Validators.maxLength(200)]],
         address2: ['', [Validators.maxLength(200)]],
         city: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
-        state: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
+        state: ['', [Validators.required, Validators.maxLength(100)]],
         zipCode: ['', [Validators.required, Validators.maxLength(6), Validators.minLength(6), Validators.pattern(/^[0-9]{6}$/)]],
         aadhaar: ['', [Validators.required, Validators.pattern(/^\d{12}$/)]],
         occupation: ['', [Validators.required, Validators.maxLength(100)]],
