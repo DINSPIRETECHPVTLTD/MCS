@@ -57,14 +57,14 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
         container.className = 'actions-cell';
         container.innerHTML = `
           <button class="ag-btn ag-edit">Edit</button>
-          <button class="ag-btn ag-delete">Delete</button>
+          <button class="ag-btn ag-delete">Inactive</button>
           <button class="ag-btn ag-navigate">Navigate</button>
         `;
         const editBtn = container.querySelector('.ag-edit');
         const delBtn = container.querySelector('.ag-delete');
         const navBtn = container.querySelector('.ag-navigate');
         if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editBranch(params.data));
-        if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.deleteBranch(params.data));
+        if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.inactivateBranch(params.data));
         if (navBtn) navBtn.addEventListener('click', () => params.context.componentParent.navigateToBranch(params.data));
         return container;
       }
@@ -252,27 +252,27 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
     this.openAddBranchModal();
   }
 
-  async deleteBranch(branch: Branch): Promise<void> {
+  async inactivateBranch(branch: Branch): Promise<void> {
     const alert = await this.alertController.create({
-      header: 'Confirm delete',
-      message: `Are you sure you want to delete branch "${branch.name}"?`,
+      header: 'Mark as Inactive',
+      message: `Are you sure you want to mark branch "${branch.name}" as inactive?`,
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Mark Inactive',
           handler: async () => {
-            const loading = await this.loadingController.create({ message: 'Deleting...', spinner: 'crescent' });
+            const loading = await this.loadingController.create({ message: 'Marking as inactive...', spinner: 'crescent' });
             await loading.present();
-            this.branchService.deleteBranch(branch.id).subscribe({
+            this.branchService.inactivateBranch(branch.id).subscribe({
               next: async () => {
                 await loading.dismiss();
-                this.showToast('Branch deleted', 'success');
+                this.showToast('Branch marked as inactive', 'success');
                 this.loadBranches(true);
               },
               error: async (err) => {
                 await loading.dismiss();
-                console.error('Delete error', err);
-                this.showToast('Failed to delete branch', 'danger');
+                console.error('Inactive error', err);
+                this.showToast('Failed to mark branch as inactive', 'danger');
               }
             });
           }

@@ -22,7 +22,30 @@
       </div>
     </div>
 
-    <!-- Section 2: Member Personal Details -->
+     <!-- Section 2: Assignment Details -->
+    <div class="section-card">
+      <div class="section-title">Assignment Details</div>
+      <div class="form-row form-row--two-col">
+        <ion-item [class.ion-invalid]="isFieldInvalid('centerId')">
+          <ion-label position="stacked">Center <span class="required">*</span></ion-label>
+          <ion-select formControlName="centerId" interface="popover" placeholder="Select Center">
+            <ion-select-option [value]="''">Select Center</ion-select-option>
+            <ion-select-option *ngFor="let center of centers" [value]="center.id">{{ center.name }}</ion-select-option>
+          </ion-select>
+          <ion-note slot="error">{{ getFieldError('centerId') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('pocId')">
+          <ion-label position="stacked">POC (Point of Contact) <span class="required">*</span></ion-label>
+          <ion-select formControlName="pocId" interface="popover" placeholder="Select POC" [disabled]="pocs.length === 0">
+            <ion-select-option [value]="''">Select POC</ion-select-option>
+            <ion-select-option *ngFor="let poc of pocs" [value]="poc.id">{{ poc.name }}</ion-select-option>
+          </ion-select>
+          <ion-note slot="error">{{ getFieldError('pocId') }}</ion-note>
+        </ion-item>
+      </div>
+    </div>
+    
+    <!-- Section 3: Member Personal Details -->
     <div class="section-card section-card--alt">
       <div class="section-title">Member Personal Details</div>
       <div class="form-row">
@@ -31,20 +54,20 @@
           <ion-input formControlName="firstName" type="text" maxlength="50" placeholder="Enter first name"></ion-input>
           <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
         </ion-item>
-        <ion-item [class.ion-invalid]="isFieldInvalid('middleName')">
-          <ion-label position="stacked">Middle Name</ion-label>
-          <ion-input formControlName="middleName" type="text" maxlength="50" placeholder="Enter middle name"></ion-input>
-          <ion-note slot="error">{{ getFieldError('middleName') }}</ion-note>
-        </ion-item>
         <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
-          <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
-          <ion-input formControlName="lastName" type="text" maxlength="50" placeholder="Enter last name"></ion-input>
+          <ion-label position="stacked">Surname <span class="required">*</span></ion-label>
+          <ion-input formControlName="lastName" type="text" maxlength="50" placeholder="Enter surname"></ion-input>
           <ion-note slot="error">{{ getFieldError('lastName') }}</ion-note>
+        </ion-item>
+        <ion-item [class.ion-invalid]="isFieldInvalid('occupation')">
+          <ion-label position="stacked">Occupation <span class="required">*</span></ion-label>
+          <ion-input formControlName="occupation" type="text" maxlength="100" placeholder="Enter occupation"></ion-input>
+          <ion-note slot="error">{{ getFieldError('occupation') }}</ion-note>
         </ion-item>
       </div>
       <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('dateOfBirth')">
-          <ion-label position="stacked">Date of Birth</ion-label>
+          <ion-label position="stacked">Date of Birth <span class="required">*</span></ion-label>
           <ion-input formControlName="dateOfBirth" type="date" [max]="todayString"></ion-input>
           <ion-note slot="error">{{ getFieldError('dateOfBirth') }}</ion-note>
         </ion-item>
@@ -53,27 +76,23 @@
           <ion-input formControlName="age" type="text" readonly placeholder="Auto-calculated"></ion-input>
           <ion-note slot="error">{{ getFieldError('age') }}</ion-note>
         </ion-item>
-      </div>
-    </div>
-
-    <!-- Section 3: Contact Details -->
-    <div class="section-card">
-      <div class="section-title">Member Contact Details</div>
-      <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('phoneNumber')">
           <ion-label position="stacked">Phone Number <span class="required">*</span></ion-label>
           <ion-input formControlName="phoneNumber" type="tel" maxlength="10" inputmode="numeric" placeholder="Enter phone number"></ion-input>
           <ion-note slot="error">{{ getFieldError('phoneNumber') }}</ion-note>
         </ion-item>
-        <ion-item [class.ion-invalid]="isFieldInvalid('altPhone')">
-          <ion-label position="stacked">Alternate Phone</ion-label>
-          <ion-input formControlName="altPhone" type="tel" maxlength="10" inputmode="numeric" placeholder="Enter alternate phone"></ion-input>
-          <ion-note slot="error">{{ getFieldError('altPhone') }}</ion-note>
+      </div>
+      <div class="form-row">
+        <ion-item [class.ion-invalid]="isFieldInvalid('aadhaar')">
+          <ion-label position="stacked">Aadhaar <span class="required">*</span></ion-label>
+          <ion-input formControlName="aadhaar" type="tel" maxlength="12" inputmode="numeric" placeholder="Enter Aadhaar"></ion-input>
+          <ion-note slot="error">{{ getFieldError('aadhaar') }}</ion-note>
         </ion-item>
       </div>
     </div>
 
-    <!-- Section 4: Address Details -->
+
+    <!-- Section 4: Member Address Details -->
     <div class="section-card section-card--alt">
       <div class="section-title">Member Address Details</div>
       <div class="form-row">
@@ -103,31 +122,14 @@
           <ion-note slot="error">{{ getFieldError('state') }}</ion-note>
         </ion-item>
         <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
-          <ion-label position="stacked">Zip Code <span class="required">*</span></ion-label>
-          <ion-input formControlName="zipCode" type="text" maxlength="6" placeholder="Enter zip code"></ion-input>
+          <ion-label position="stacked">Pincode <span class="required">*</span></ion-label>
+          <ion-input formControlName="zipCode" type="text" maxlength="6" placeholder="Enter pincode"></ion-input>
           <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
         </ion-item>
       </div>
     </div>
 
-    <!-- Section 5: Additional Details -->
-    <div class="section-card">
-      <div class="section-title">Member Additional Details</div>
-      <div class="form-row">
-        <ion-item [class.ion-invalid]="isFieldInvalid('aadhaar')">
-          <ion-label position="stacked">Aadhaar</ion-label>
-          <ion-input formControlName="aadhaar" type="tel" maxlength="12" inputmode="numeric" placeholder="Enter Aadhaar"></ion-input>
-          <ion-note slot="error">{{ getFieldError('aadhaar') }}</ion-note>
-        </ion-item>
-        <ion-item [class.ion-invalid]="isFieldInvalid('occupation')">
-          <ion-label position="stacked">Occupation</ion-label>
-          <ion-input formControlName="occupation" type="text" maxlength="100" placeholder="Enter occupation"></ion-input>
-          <ion-note slot="error">{{ getFieldError('occupation') }}</ion-note>
-        </ion-item>
-      </div>
-    </div>
-
-    <!-- Section 6: Guardian/Husband Details -->
+    <!-- Section 5: Guardian/Husband Details -->
     <div class="section-card section-card--alt">
       <div class="section-title">Guardian/Husband Details</div>
       <div class="form-row">
@@ -136,14 +138,9 @@
           <ion-input formControlName="guardianFirstName" type="text" maxlength="100" placeholder="Enter first name"></ion-input>
           <ion-note slot="error">{{ getFieldError('guardianFirstName') }}</ion-note>
         </ion-item>
-        <ion-item [class.ion-invalid]="isFieldInvalid('guardianMiddleName')">
-          <ion-label position="stacked">Guardian Middle Name</ion-label>
-          <ion-input formControlName="guardianMiddleName" type="text" maxlength="100" placeholder="Enter middle name"></ion-input>
-          <ion-note slot="error">{{ getFieldError('guardianMiddleName') }}</ion-note>
-        </ion-item>
         <ion-item [class.ion-invalid]="isFieldInvalid('guardianLastName')">
-          <ion-label position="stacked">Guardian Last Name <span class="required">*</span></ion-label>
-          <ion-input formControlName="guardianLastName" type="text" maxlength="100" placeholder="Enter last name"></ion-input>
+          <ion-label position="stacked">Guardian Surname <span class="required">*</span></ion-label>
+          <ion-input formControlName="guardianLastName" type="text" maxlength="100" placeholder="Enter surname"></ion-input>
           <ion-note slot="error">{{ getFieldError('guardianLastName') }}</ion-note>
         </ion-item>
       </div>
@@ -162,12 +159,14 @@
           <ion-note slot="error">{{ getFieldError('guardianRelationshipOther') }}</ion-note>
         </ion-item>
         <ion-item [class.ion-invalid]="isFieldInvalid('guardianPhone')">
-          <ion-label position="stacked">Guardian Phone <span class="required">*</span></ion-label>
+          <ion-label position="stacked">Phone Number</ion-label>
           <ion-input formControlName="guardianPhone" type="tel" maxlength="10" inputmode="numeric" placeholder="Enter phone number"></ion-input>
           <ion-note slot="error">{{ getFieldError('guardianPhone') }}</ion-note>
         </ion-item>
+      </div>
+      <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('guardianDOB')">
-          <ion-label position="stacked">Guardian DOB</ion-label>
+          <ion-label position="stacked">Guardian DOB <span class="required">*</span></ion-label>
           <ion-input formControlName="guardianDOB" type="date" [max]="todayString"></ion-input>
           <ion-note slot="error">{{ getFieldError('guardianDOB') }}</ion-note>
         </ion-item>
@@ -185,24 +184,7 @@
       </div>
     </div>
 
-    <!-- Section 7: Assignment Details -->
-    <div class="section-card">
-      <div class="section-title">Assignment Details</div>
-      <div class="form-row">
-        <ion-item>
-          <ion-label position="stacked">Center Name</ion-label>
-          <ion-input formControlName="centerName" type="text" readonly></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="stacked">POC Name</ion-label>
-          <ion-input formControlName="pocName" type="text" readonly></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="stacked">POC Contact Number</ion-label>
-          <ion-input formControlName="pocContactNumber" type="text" readonly></ion-input>
-        </ion-item>
-      </div>
-    </div>
+   
   </form>
 </ion-content>
 
@@ -211,7 +193,6 @@
     <div class="footer-actions">
       <div class="left-action">
         <ion-button class="save-btn" color="primary" fill="solid" (click)="onSave()" [disabled]="isSubmitting || memberForm.invalid">
-          <ion-icon slot="start" name="checkmark-outline"></ion-icon>
           <span class="btn-text">Update Member</span>
         </ion-button>
       </div>
