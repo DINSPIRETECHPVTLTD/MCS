@@ -4,6 +4,8 @@ import { ModalController, LoadingController, ToastController } from '@ionic/angu
 import { BranchService } from '../../services/branch.service';
 import { CreateBranchRequest } from '../../models/branch.models';
 import { UserContextService } from '../../services/user-context.service';
+import { MasterDataService } from '../../services/master-data.service';
+import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 
 
 @Component({
@@ -18,6 +20,9 @@ export class AddBranchModalComponent implements OnInit {
 
   branchForm: FormGroup;
   submitted: boolean = false;
+  states: MasterLookup[] = [];
+  isLoadingStates: boolean = false;
+  private organizationStateName: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -25,7 +30,8 @@ export class AddBranchModalComponent implements OnInit {
     private branchService: BranchService,
     private userContext: UserContextService,
     private loadingController: LoadingController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private masterDataService: MasterDataService
   )
   
   {
@@ -48,6 +54,12 @@ ngOnInit(): void {
     this.branchForm.patchValue({ organizationId });
   }
 
+  // Load organization state (if available) from stored organization info
+  this.loadOrganizationStateFromStorage();
+
+  // Load states from master data (LookupKey = STATE)
+  this.loadStates();
+
   // Load branches for dropdown
   this.branchService.getBranches().subscribe({
     next: (data) => {
@@ -61,6 +73,56 @@ ngOnInit(): void {
     this.loadBranchDetails(this.editingBranchId);
   }
 }
+
+  private loadOrganizationStateFromStorage(): void {
+    const stored = localStorage.getItem('organization_info');
+    if (!stored) {
+      return;
+    }
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const org: any = JSON.parse(stored);
+      const state: unknown = org?.state;
+      if (state && typeof state === 'string' && state.trim().length > 0) {
+        this.organizationStateName = state.trim();
+      }
+    } catch {
+      // Ignore parsing errors and proceed without default state
+      this.organizationStateName = null;
+    }
+  }
+
+  private applyOrgStateDefaultIfNeeded(): void {
+    if (this.isEditing) return;
+    if (!this.organizationStateName) return;
+
+    const control = this.branchForm.get('state');
+    const currentValue = (control?.value || '').toString().trim();
+    if (currentValue) return; // Do not override if already set
+
+    const target = this.organizationStateName.toLowerCase();
+    const match = this.states.find(
+      s => (s.lookupValue || '').toLowerCase() === target || (s.lookupCode || '').toLowerCase() === target
+    );
+    if (match) control?.setValue(match.lookupValue);
+  }
+
+  private loadStates(): void {
+    this.isLoadingStates = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        this.states = (allLookups || [])
+          .filter(l => l.lookupKey === LookupKeys.State)
+          .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
+        this.applyOrgStateDefaultIfNeeded();
+        this.isLoadingStates = false;
+      },
+      error: () => {
+        this.states = [];
+        this.isLoadingStates = false;
+      }
+    });
+  }
 
   async loadBranchDetails(branchId: number): Promise<void> {
     const loading = await this.loadingController.create({

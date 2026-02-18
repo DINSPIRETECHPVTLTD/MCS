@@ -2,6 +2,8 @@ import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, ToastController, LoadingController } from '@ionic/angular';
 import { MemberService } from '../../services/member.service';
+import { MasterDataService } from '../../services/master-data.service';
+import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 import { Member, CenterOption, POCOption } from '../../models/member.models';
 
 @Component({
@@ -16,6 +18,8 @@ export class EditMemberModalComponent implements OnInit {
   memberForm: FormGroup;
   isSubmitting = false;
   isLoading = false;
+  states: MasterLookup[] = [];
+  isLoadingStates = false;
   todayString: string = new Date().toISOString().split('T')[0];
 
   centers: CenterOption[] = [];
@@ -26,6 +30,7 @@ export class EditMemberModalComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private memberService: MemberService,
+    private masterDataService: MasterDataService,
     private modalController: ModalController,
     private toastController: ToastController,
     private loadingController: LoadingController
@@ -34,6 +39,7 @@ export class EditMemberModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadStates();
     // Load centers and POCs
     this.memberService.getAllCenters().subscribe({
       next: (centers: CenterOption[]) => {
@@ -72,6 +78,23 @@ export class EditMemberModalComponent implements OnInit {
         }
       });
     }
+  }
+
+  loadStates(): void {
+    this.isLoadingStates = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        this.states = allLookups
+          .filter(lookup => lookup.lookupKey === LookupKeys.State)
+          .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
+        this.isLoadingStates = false;
+      },
+      error: (error) => {
+        console.error('Error loading states:', error);
+        this.states = [];
+        this.isLoadingStates = false;
+      }
+    });
   }
 
   private createForm(): FormGroup {

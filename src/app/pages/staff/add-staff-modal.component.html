@@ -119,15 +119,17 @@
       <ion-note slot="error">{{ getFieldError('city') }}</ion-note>
     </ion-item>
 
-    <ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('state')">
       <ion-label position="stacked">State <span class="required">*</span></ion-label>
-      <ion-input
+      <ion-select
         formControlName="state"
-        placeholder="Enter state"
-        type="text"
-        maxlength="100"
-        (ionInput)="onAddressInput($event, 'state')">
-      </ion-input>
+        placeholder="Select a state"
+        interface="popover">
+        <ion-select-option value="">Select a state</ion-select-option>
+        <ion-select-option *ngFor="let state of states" [value]="state.lookupCode">
+          {{ state.lookupValue }}
+        </ion-select-option>
+      </ion-select>
       <ion-note slot="error">{{ getFieldError('state') }}</ion-note>
     </ion-item>
 

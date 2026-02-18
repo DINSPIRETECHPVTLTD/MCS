@@ -105,13 +105,17 @@
       </ion-input>
     </ion-item>
 
-    <ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('state')">
       <ion-label position="stacked">State</ion-label>
-      <ion-input
+      <ion-select
         formControlName="state"
-        placeholder="Enter state"
-        type="text">
-      </ion-input>
+        placeholder="Select state"
+        interface="popover">
+        <ion-select-option *ngFor="let state of states" [value]="state.lookupValue">
+          {{ state.lookupValue }}
+        </ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('state') }}</ion-note>
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">

@@ -36,6 +36,7 @@ export class AddPocModalComponent implements OnInit {
   isLoadingCenters: boolean = false;
   isLoadingStates: boolean = false;
   isLoadingUsers: boolean = false;
+  private organizationStateName: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -97,7 +98,7 @@ export class AddPocModalComponent implements OnInit {
       this.pocForm.get('collectionDay')?.updateValueAndValidity();
     }
 
-    // Load states from master data
+    this.loadOrganizationStateFromStorage();
     this.loadStates();
 
     // Load active users
@@ -151,13 +152,41 @@ export class AddPocModalComponent implements OnInit {
     });
   }
 
+  private loadOrganizationStateFromStorage(): void {
+    const stored = localStorage.getItem('organization_info');
+    if (!stored) return;
+    try {
+      const org: { state?: string } = JSON.parse(stored);
+      const state = org?.state;
+      if (state && typeof state === 'string' && state.trim().length > 0) {
+        this.organizationStateName = state.trim();
+      }
+    } catch {
+      this.organizationStateName = null;
+    }
+  }
+
+  private applyOrgStateDefaultIfNeeded(): void {
+    if (this.isEditing) return;
+    if (!this.organizationStateName) return;
+    const stateControl = this.pocForm.get('state');
+    if (!stateControl || (stateControl.value || '').toString().trim()) return;
+    const target = this.organizationStateName.toLowerCase();
+    const match = this.states.find(
+      s => (s.lookupValue || '').toLowerCase() === target || (s.lookupCode || '').toLowerCase() === target
+    );
+    if (match) stateControl.setValue(match.lookupCode);
+  }
+
   loadStates(): void {
     this.isLoadingStates = true;
     this.masterDataService.getMasterData().subscribe({
       next: (allLookups) => {
-        // Filter for STATE lookup key
-        this.states = allLookups.filter(lookup => lookup.lookupKey === 'STATE').sort((a, b) => a.sortOrder - b.sortOrder);
+        this.states = allLookups
+          .filter(lookup => lookup.lookupKey === 'STATE')
+          .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
         this.isLoadingStates = false;
+        this.applyOrgStateDefaultIfNeeded();
       },
       error: (error) => {
         console.error('Error loading states:', error);

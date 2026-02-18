@@ -103,7 +103,10 @@
       <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('state')">
           <ion-label position="stacked">State <span class="required">*</span></ion-label>
-          <ion-input formControlName="state" placeholder="Enter state" type="text" maxlength="100"></ion-input>
+          <ion-select formControlName="state" placeholder="Select a state" interface="popover">
+            <ion-select-option value="">Select a state</ion-select-option>
+            <ion-select-option *ngFor="let state of states" [value]="state.lookupCode">{{ state.lookupValue }}</ion-select-option>
+          </ion-select>
           <ion-note slot="error">{{ getFieldError('state') }}</ion-note>
         </ion-item>
         <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
@@ -139,7 +142,7 @@
           <ion-label position="stacked">Relationship <span class="required">*</span></ion-label>
           <ion-select formControlName="guardianRelationship" interface="popover" placeholder="Select relationship">
             <ion-select-option value="">Select relationship</ion-select-option>
-            <ion-select-option *ngFor="let rel of guardianRelationships" [value]="rel">{{ rel }}</ion-select-option>
+            <ion-select-option *ngFor="let rel of relationships" [value]="rel.lookupValue">{{ rel.lookupValue }}</ion-select-option>
           </ion-select>
           <ion-note slot="error">{{ getFieldError('guardianRelationship') }}</ion-note>
         </ion-item>
