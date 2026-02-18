@@ -29,7 +29,6 @@ export class AddStaffModalComponent implements OnInit {
       email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
       password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(12)]],
       firstName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
-      middleName: ['', [Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       lastName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       address1: ['', [Validators.required, Validators.maxLength(100)]],
@@ -67,16 +66,6 @@ export class AddStaffModalComponent implements OnInit {
     const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
     const truncated = sanitized.slice(0, 100);
     const control = this.staffForm.get('firstName');
-    if (control && control.value !== truncated) {
-      control.setValue(truncated);
-    }
-  }
-
-  onMiddleNameInput(event: any): void {
-    const raw = event?.detail?.value ?? '';
-    const sanitized = (raw || '').replace(/[^a-zA-Z0-9 ]/g, '');
-    const truncated = sanitized.slice(0, 100);
-    const control = this.staffForm.get('middleName');
     if (control && control.value !== truncated) {
       control.setValue(truncated);
     }
@@ -149,7 +138,7 @@ export class AddStaffModalComponent implements OnInit {
       }
 
       // Relax validators for non-essential fields during edit so partial updates work
-      const relaxFields = ['middleName', 'phoneNumber', 'address1', 'address2', 'city', 'state', 'pinCode'];
+      const relaxFields = ['phoneNumber', 'address1', 'address2', 'city', 'state', 'pinCode'];
       relaxFields.forEach(fn => {
         const c = this.staffForm.get(fn);
         if (c) {
@@ -160,17 +149,19 @@ export class AddStaffModalComponent implements OnInit {
 
       this.userService.getUser(this.editingStaffId).subscribe({
         next: (user) => {
+          // Handle multiple possible field names for zipCode
+          const zipCodeValue = (user as any)?.zipCode || (user as any)?.ZipCode || (user as any)?.pinCode || '';
+          console.log('User loaded for edit:', user, 'zipCode value:', zipCodeValue);
           this.staffForm.patchValue({
             email: user.email || '',
             firstName: user.firstName || '',
-            middleName: user.middleName || '',
             lastName: user.lastName || '',
             phoneNumber: user.phoneNumber || '',
             address1: user.address1 || '',
             address2: user.address2 || '',
             city: user.city || '',
             state: user.state || '',
-            pinCode: user.zipCode || user['ZipCode'] || '',
+            pinCode: zipCodeValue,
             role: user.role ? (user.role.toLowerCase().includes('branch') ? 'BranchAdmin' : 'Staff') : 'Staff',
             organizationId: user.organizationId || this.staffForm.value.organizationId,
             branchId: user.branchId || this.staffForm.value.branchId
@@ -193,6 +184,7 @@ export class AddStaffModalComponent implements OnInit {
 
     if (this.staffForm.invalid) {
       this.showToast('Please fill in all required fields correctly', 'danger');
+      this.focusFirstInvalidField();
       return;
     }
 
@@ -204,7 +196,6 @@ export class AddStaffModalComponent implements OnInit {
 
     const staffData: any = {
       firstName: this.staffForm.value.firstName.trim(),
-      middleName: this.staffForm.value.middleName?.trim() || '',
       lastName: this.staffForm.value.lastName.trim(),
       phoneNumber: this.staffForm.value.phoneNumber?.trim() || '',
       address1: this.staffForm.value.address1?.trim() || '',
@@ -228,7 +219,6 @@ export class AddStaffModalComponent implements OnInit {
       // Map to backend column names requested by user for PUT (preserve other required metadata)
       const putPayload: any = {
         FirstName: staffData.firstName,
-        MiddleName: staffData.middleName,
         LastName: staffData.lastName,
         Email: staffData.email,
         PhoneNumber: staffData.phoneNumber,
@@ -259,7 +249,24 @@ export class AddStaffModalComponent implements OnInit {
         }
       });
     } else {
-      this.userService.createUser(staffData).subscribe({
+      // Map to backend column names for POST (match PascalCase used in PUT)
+      const postPayload: any = {
+        FirstName: staffData.firstName,
+        LastName: staffData.lastName,
+        Email: staffData.email,
+        PhoneNumber: staffData.phoneNumber,
+        Address1: staffData.address1,
+        Address2: staffData.address2,
+        City: staffData.city,
+        State: staffData.state,
+        ZipCode: staffData.pinCode,
+        Password: staffData.password,
+        Role: staffData.role,
+        Level: staffData.level,
+        OrganizationId: staffData.organizationId,
+        BranchId: staffData.branchId
+      };
+      this.userService.createUser(postPayload).subscribe({
         next: async (staff) => {
           await loading.dismiss();
           this.showToast('Staff created successfully!', 'success');
@@ -272,6 +279,37 @@ export class AddStaffModalComponent implements OnInit {
           console.error('Error creating staff:', error);
         }
       });
+    }
+  }
+
+  private focusFirstInvalidField(): void {
+    const order = ['email','password','firstName','lastName','phoneNumber','address1','address2','city','state','pinCode'];
+    for (const name of order) {
+      const control = this.staffForm.get(name);
+      if (control && control.invalid) {
+        // Delay to allow validation messages to render
+        setTimeout(() => {
+          // Prefer Ionic components
+          const ionEl = document.querySelector(`ion-input[formControlName="${name}"], ion-textarea[formControlName="${name}"], ion-select[formControlName="${name}"]`);
+          if (ionEl) {
+            const anyEl: any = ionEl;
+            if (typeof anyEl.setFocus === 'function') {
+              anyEl.setFocus();
+              return;
+            }
+            const inner = ionEl.querySelector('input, textarea') as HTMLElement | null;
+            if (inner && typeof inner.focus === 'function') inner.focus();
+            return;
+          }
+
+          // Fallback to native element
+          const nativeEl = document.querySelector(`[formControlName="${name}"]`) as HTMLElement | null;
+          if (nativeEl && typeof (nativeEl as any).focus === 'function') {
+            (nativeEl as any).focus();
+          }
+        }, 50);
+        break;
+      }
     }
   }
 
@@ -326,7 +364,7 @@ export class AddStaffModalComponent implements OnInit {
   getFieldLabel(fieldName: string): string {
     const labels: { [key: string]: string } = {
       firstName: 'First name',
-      lastName: 'Last name',
+      lastName: 'Surname',
       phoneNumber: 'Phone number',
       email: 'Email',
       password: 'Password',

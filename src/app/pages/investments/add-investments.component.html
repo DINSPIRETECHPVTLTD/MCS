@@ -1,0 +1,79 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Add Investment</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <form [formGroup]="investmentForm" (ngSubmit)="onSubmit()">
+    <ion-item [class.ion-invalid]="isFieldInvalid('invvestorName')">
+      <ion-label position="stacked">Investor Name <span class="required">*</span></ion-label>
+      <ion-select
+        formControlName="investorName"
+        placeholder="Select Investor"
+        interface="popover">
+        <ion-select-option *ngFor="let user of users" [value]="user.id">
+          {{ user.firstName }} {{ user.lastName }}
+        </ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('investorName') }}</ion-note>
+    </ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('amount')">
+      <ion-label position="stacked">Amount <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="amount"
+        placeholder="Enter Amount"
+        type="number"
+        inputmode="numeric">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('amount') }}</ion-note>
+    </ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('investmentDate')">
+      <ion-label position="stacked">Select date <span class="required">*</span></ion-label>
+      <ion-input
+        value="{{ date | date: 'dd.MM.yyyy' }}"
+        formControlName="investmentDate"
+        id="date"
+        class="ion-text-end"
+      ></ion-input>
+      <ion-note slot="error">{{ getFieldError('investmentDate') }}</ion-note>
+      <ion-popover #datePopover trigger="date" size="cover">
+        <ng-template>
+          <ion-datetime
+            presentation="date"
+            [value]="date"
+            max = "{{ maxDate }}"
+            (ionChange)="onDateChange($event, datePopover)"
+          ></ion-datetime>
+        </ng-template>
+      </ion-popover>
+    </ion-item>
+
+  </form>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <div class="action-row footer-row">
+      <ion-button
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="investmentForm.invalid && submitted"
+        class="save-button">
+        Save
+      </ion-button>
+
+      <ion-button
+        fill="outline"
+        type="button"
+        (click)="closeModal()"
+        class="cancel-button">
+        Cancel
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>

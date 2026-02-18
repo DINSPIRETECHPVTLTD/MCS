@@ -61,6 +61,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
           }
       },
       { headerName: 'Email', field: 'email', width: 200, sortable: true, filter: true },
+      { headerName: 'Role', field: 'role', width: 150, sortable: true, filter: true },
       { 
         headerName: 'Address', 
         width: 300,
@@ -132,7 +133,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
       next: (users) => {
         loading.dismiss();
         this.isLoading = false;
-        this.users = users || [];
+        this.users = (users || []).filter(u => u.role === 'Owner' || u.role === 'Investor');
         this.rowData = [...this.users]; // Create new array reference for change detection
 
         // Update grid if it's already initialized
@@ -208,6 +209,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
     const modal = await this.modalController.create({
       component: AddUserModalComponent,
       componentProps: {
+        isEditing: true,
         editingUserId: user.id
       },
       cssClass: 'add-user-modal'

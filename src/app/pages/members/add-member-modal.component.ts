@@ -87,30 +87,27 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         centerId: ['', Validators.required],
         pocId: ['', Validators.required],
         firstName: ['', [Validators.required, Validators.maxLength(50), this.alphanumericValidator()]],
-        middleName: ['', [Validators.maxLength(50), this.alphanumericValidator()]],
         lastName: ['', [Validators.required, Validators.maxLength(50), this.alphanumericValidator()]],
         dateOfBirth: ['', [Validators.required, this.noFutureDateValidator(), this.minimumAgeValidator(18)]],
         age: [{ value: '', disabled: true }],
         phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
-        altPhone: ['', [Validators.pattern(/^\d{10}$/), this.altPhoneDifferentFromPrimaryValidator()]],
         address1: ['', [Validators.required, Validators.maxLength(200)]],
         address2: ['', [Validators.maxLength(200)]],
         city: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
         state: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
         zipCode: ['', [Validators.required, Validators.maxLength(6), Validators.minLength(6), Validators.pattern(/^[0-9]{6}$/)]],
-        aadhaar: ['', [Validators.pattern(/^\d{12}$/)]],
+        aadhaar: ['', [Validators.required, Validators.pattern(/^\d{12}$/)]],
         occupation: ['', [Validators.required, Validators.maxLength(100)]],
         guardianFirstName: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
-        guardianMiddleName: ['', [Validators.maxLength(100), this.alphanumericValidator()]],
         guardianLastName: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
         guardianRelationship: ['', [Validators.required]],
         guardianRelationshipOther: ['', [Validators.maxLength(100), this.alphanumericValidator()]],
-        guardianPhone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
-        guardianDOB: ['', [this.noFutureDateValidator()]],
-        guardianAge: ['', [Validators.required, Validators.min(18), Validators.max(150)]]
+        guardianPhone: ['', [Validators.pattern(/^\d{10}$/)]],
+        guardianDOB: ['', [Validators.required, this.noFutureDateValidator()]],
+        guardianAge: ['', [Validators.min(18), Validators.max(150)]]
       },
       {
-        validators: [this.uniquePhoneNumbersValidator(['phoneNumber', 'altPhone', 'guardianPhone'])]
+        validators: [this.uniquePhoneNumbersValidator(['phoneNumber', 'guardianPhone'])]
       }
     );
   }
@@ -144,18 +141,6 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         const sanitized = this.sanitizeDigits(value, 10);
         if (value !== sanitized) {
           this.memberForm.patchValue({ phoneNumber: sanitized }, { emitEvent: false });
-        }
-
-        // Ensure altPhone re-validates when the primary phone changes
-        this.memberForm.get('altPhone')?.updateValueAndValidity({ emitEvent: false });
-      });
-
-    this.memberForm.get('altPhone')?.valueChanges
-      .pipe(distinctUntilChanged(), takeUntil(this.destroy$))
-      .subscribe(value => {
-        const sanitized = this.sanitizeDigits(value, 10);
-        if (value !== sanitized) {
-          this.memberForm.patchValue({ altPhone: sanitized }, { emitEvent: false });
         }
       });
 
