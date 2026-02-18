@@ -141,7 +141,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   }
 
   getUserDisplayName(user: User): string {
-    const parts = [user.firstName, user.middleName, user.lastName].filter(Boolean);
+    const parts = [user.firstName, user['middleName'], user.lastName].filter(Boolean);
     return parts.join(' ').trim() || 'User';
   }
 
