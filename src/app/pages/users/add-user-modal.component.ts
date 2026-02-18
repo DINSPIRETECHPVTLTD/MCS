@@ -4,6 +4,8 @@ import { ModalController, LoadingController, ToastController } from '@ionic/angu
 import { UserService } from '../../services/user.service';
 import { UserContextService } from '../../services/user-context.service';
 import { CreateUserRequest } from 'src/app/models/user.models';
+import { MasterDataService } from '../../services/master-data.service';
+import { MasterLookup, LookupKeys } from 'src/app/models/master-data.models';
 
 @Component({
   selector: 'app-add-user-modal',
@@ -16,6 +18,9 @@ export class AddUserModalComponent implements OnInit {
   
   userForm: FormGroup;
   submitted: boolean = false;
+  states: MasterLookup[] = [];
+  isLoadingStates: boolean = false;
+  private organizationStateName: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -23,7 +28,8 @@ export class AddUserModalComponent implements OnInit {
     private userService: UserService,
     private userContext: UserContextService,
     private loadingController: LoadingController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private masterDataService: MasterDataService
   ) {
     this.userForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
@@ -49,6 +55,12 @@ export class AddUserModalComponent implements OnInit {
       });
     }
 
+    // Load organization state (if available) from stored organization info
+    this.loadOrganizationStateFromStorage();
+
+    // Load state lookups from master data
+    this.loadStates();
+
     // Subscribe to role changes to update validators
     this.userForm.get('role')?.valueChanges.subscribe((role) => {
       this.updateValidatorsForRole(role);
@@ -59,6 +71,56 @@ export class AddUserModalComponent implements OnInit {
       this.loadUserData();
       this.userForm.get('role')?.disable(); // Disable role selection when editing
     }
+  }
+
+  private loadOrganizationStateFromStorage(): void {
+    const stored = localStorage.getItem('organization_info');
+    if (!stored) {
+      return;
+    }
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const org: any = JSON.parse(stored);
+      const state: unknown = org?.state;
+      if (state && typeof state === 'string' && state.trim().length > 0) {
+        this.organizationStateName = state.trim();
+      }
+    } catch {
+      // Ignore parsing errors and proceed without default state
+      this.organizationStateName = null;
+    }
+  }
+
+  private applyOrgStateDefaultIfNeeded(): void {
+    if (this.isEditing) return;
+    if (!this.organizationStateName) return;
+
+    const currentStateControl = this.userForm.get('state');
+    const currentStateValue = (currentStateControl?.value || '').toString().trim();
+    if (currentStateValue) return; // Do not override if user/state already set
+
+    const target = this.organizationStateName.toLowerCase();
+    const match = this.states.find(s => (s.lookupValue || '').toLowerCase() === target);
+    if (match) {
+      currentStateControl?.setValue(match.lookupValue);
+    }
+  }
+
+  private loadStates(): void {
+    this.isLoadingStates = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        this.states = (allLookups || [])
+          .filter(l => l.lookupKey === LookupKeys.State)
+          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        this.isLoadingStates = false;
+        this.applyOrgStateDefaultIfNeeded();
+      },
+      error: () => {
+        this.states = [];
+        this.isLoadingStates = false;
+      }
+    });
   }
 
   updateValidatorsForRole(role: string): void {

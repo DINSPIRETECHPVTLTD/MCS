@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { BranchService } from '../../services/branch.service';
+import { MasterDataService } from '../../services/master-data.service';
+import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 import { Branch } from '../../models/branch.models';
 
 @Component({
@@ -15,11 +17,15 @@ export class AddBranchComponent implements OnInit, ViewWillEnter {
   branchForm: FormGroup;
   activeMenu: string = 'Add new branch';
   submitted: boolean = false;
+  states: MasterLookup[] = [];
+  isLoadingStates = false;
+  private organizationStateName: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
     private branchService: BranchService,
+    private masterDataService: MasterDataService,
     private router: Router,
     private loadingController: LoadingController,
     private toastController: ToastController
@@ -41,6 +47,51 @@ export class AddBranchComponent implements OnInit, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
+    this.loadOrganizationStateFromStorage();
+    this.loadStates();
+  }
+
+  private loadOrganizationStateFromStorage(): void {
+    const stored = localStorage.getItem('organization_info');
+    if (!stored) return;
+    try {
+      const org: { state?: string } = JSON.parse(stored);
+      const state = org?.state;
+      if (state && typeof state === 'string' && state.trim().length > 0) {
+        this.organizationStateName = state.trim();
+      }
+    } catch {
+      this.organizationStateName = null;
+    }
+  }
+
+  private applyOrgStateDefaultIfNeeded(): void {
+    if (!this.organizationStateName) return;
+    const stateControl = this.branchForm.get('state');
+    if (!stateControl || (stateControl.value || '').toString().trim()) return;
+    const target = this.organizationStateName.toLowerCase();
+    const match = this.states.find(
+      s => (s.lookupValue || '').toLowerCase() === target || (s.lookupCode || '').toLowerCase() === target
+    );
+    if (match) stateControl.setValue(match.lookupCode);
+  }
+
+  loadStates(): void {
+    this.isLoadingStates = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        this.states = allLookups
+          .filter(lookup => lookup.lookupKey === LookupKeys.State)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        this.isLoadingStates = false;
+        this.applyOrgStateDefaultIfNeeded();
+      },
+      error: (error) => {
+        console.error('Error loading states:', error);
+        this.states = [];
+        this.isLoadingStates = false;
+      }
+    });
   }
 
   onNameInput(event: Event): void {

@@ -23,11 +23,6 @@ form {
       --padding-start: 12px;
     }
 
-    ion-select::part(icon), ion-select::part(text), ion-select::part(placeholder) {
-      margin: 12px;
-    }
-
-
     &.ion-invalid {
       --border-color: var(--ion-color-danger);
     }

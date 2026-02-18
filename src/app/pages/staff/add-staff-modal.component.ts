@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { UserContextService } from '../../services/user-context.service';
+import { MasterDataService } from '../../services/master-data.service';
+import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 
 @Component({
   selector: 'app-add-staff-modal',
@@ -16,12 +18,16 @@ export class AddStaffModalComponent implements OnInit {
   
   staffForm: FormGroup;
   submitted: boolean = false;
+  states: MasterLookup[] = [];
+  isLoadingStates: boolean = false;
+  private organizationStateName: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
     private modalController: ModalController,
     private userService: UserService,
     private userContext: UserContextService,
+    private masterDataService: MasterDataService,
     private loadingController: LoadingController,
     private toastController: ToastController
   ) {
@@ -121,6 +127,51 @@ export class AddStaffModalComponent implements OnInit {
     }
   }
 
+  private loadOrganizationStateFromStorage(): void {
+    const stored = localStorage.getItem('organization_info');
+    if (!stored) return;
+    try {
+      const org: { state?: string } = JSON.parse(stored);
+      const state = org?.state;
+      if (state && typeof state === 'string' && state.trim().length > 0) {
+        this.organizationStateName = state.trim();
+      }
+    } catch {
+      this.organizationStateName = null;
+    }
+  }
+
+  private applyOrgStateDefaultIfNeeded(): void {
+    if (this.isEditing) return;
+    if (!this.organizationStateName) return;
+    const stateControl = this.staffForm.get('state');
+    if (!stateControl || (stateControl.value || '').toString().trim()) return;
+    const target = this.organizationStateName.toLowerCase();
+    const match = this.states.find(
+      s => (s.lookupValue || '').toLowerCase() === target || (s.lookupCode || '').toLowerCase() === target
+    );
+    if (match) stateControl.setValue(match.lookupCode);
+  }
+
+  loadStates(): void {
+    this.isLoadingStates = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        this.states = allLookups
+          .filter(lookup => lookup.lookupKey === LookupKeys.State)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        this.isLoadingStates = false;
+        this.applyOrgStateDefaultIfNeeded();
+      },
+      error: (error) => {
+        console.error('Error loading states:', error);
+        this.states = [];
+        this.isLoadingStates = false;
+        this.showToast('Failed to load states. Please try again.', 'danger');
+      }
+    });
+  }
+
   ngOnInit(): void {
     // Set organization ID
     const organizationId = this.userContext.organizationId;
@@ -139,6 +190,9 @@ export class AddStaffModalComponent implements OnInit {
     } else {
       console.warn('No branch ID available for staff creation');
     }
+
+    this.loadOrganizationStateFromStorage();
+    this.loadStates();
 
     // If editing, make password optional and load existing user data
     if (this.isEditing && this.editingStaffId) {

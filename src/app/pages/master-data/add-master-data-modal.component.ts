@@ -18,7 +18,9 @@ export class AddMasterDataModalComponent implements OnInit {
   isSubmitting = false;
   lookupKeyOptions: { value: string; label: string }[] = [
     { value: LookupKeys.LoanTerm, label: 'Loan Term (LOAN_TERM)' },
-    { value: LookupKeys.PaymentType, label: 'Payment Type (PAYMENT_TYPE)' }
+    { value: LookupKeys.PaymentType, label: 'Payment Type (PAYMENT_TYPE)' },
+    { value: LookupKeys.Relationship, label: 'Relationship (RELATIONSHIP)' },
+    { value: LookupKeys.State, label: 'State (STATE)' }
   ];
 
   constructor(

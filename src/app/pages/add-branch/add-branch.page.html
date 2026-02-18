@@ -77,14 +77,10 @@
 
           <ion-item [class.ion-invalid]="branchForm.get('state')?.invalid && branchForm.get('state')?.touched">
             <ion-label position="stacked">State <span class="required">*</span></ion-label>
-            <ion-input
-              label="State"
-              labelPlacement="stacked"
-              formControlName="state"
-              placeholder="Enter state"
-              maxlength="100"
-              required>
-            </ion-input>
+            <ion-select formControlName="state" placeholder="Select a state" interface="popover">
+              <ion-select-option value="">Select a state</ion-select-option>
+              <ion-select-option *ngFor="let state of states" [value]="state.lookupCode">{{ state.lookupValue }}</ion-select-option>
+            </ion-select>
             <ion-note slot="error">
               <div *ngIf="branchForm.get('state')?.errors?.['required']">State is required</div>
               <div *ngIf="branchForm.get('state')?.errors?.['maxlength']">State must be at most 100 characters</div>

@@ -55,8 +55,20 @@ export class OrganizationInfoComponent implements OnInit, ViewWillEnter {
     // Use the organization service to get organization details
     this.organizationService.getOrganization(organizationId).subscribe({
       next: (org: Organization) => {
-        this.organization = org;
-        localStorage.setItem('organization_info', JSON.stringify(org));
+        // Build address as: "123 Main, Hyderabad, Telangana, 500001" (address1, address2?, city, state, zipCode)
+        const parts = [
+          org.address1?.trim(),
+          org.address2?.trim(),
+          org.city?.trim(),
+          org.state?.trim(),
+          org.zipCode?.trim()
+        ].filter((s): s is string => typeof s === 'string' && s.length > 0);
+        this.organization = {
+          ...org,
+          address: parts.length > 0 ? parts.join(', ') : undefined,
+          phone: org.phoneNumber ?? org.phone
+        };
+        localStorage.setItem('organization_info', JSON.stringify(this.organization));
       },
       error: (error: any) => {
         console.error('Error loading organization:', error);

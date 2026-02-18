@@ -2,6 +2,8 @@ import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController } from '@ionic/angular';
 import { MemberService } from '../../services/member.service';
+import { MasterDataService } from '../../services/master-data.service';
+import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 
 @Component({
   selector: 'app-edit-member-modal',
@@ -16,17 +18,24 @@ export class EditMemberModalComponent implements OnInit {
   memberForm: FormGroup;
   isSubmitting = false;
   isLoading = false;
+  states: MasterLookup[] = [];
+  isLoadingStates = false;
+  relationships: MasterLookup[] = [];
+  isLoadingRelationships = false;
   todayString: string = new Date().toISOString().split('T')[0];
 
   constructor(
     private formBuilder: FormBuilder,
     private memberService: MemberService,
+    private masterDataService: MasterDataService,
     private modalController: ModalController
   ) {
     this.memberForm = this.createForm();
   }
 
   ngOnInit(): void {
+    this.loadStates();
+    this.loadRelationships();
     // memberData is passed via componentProps from members page (grid row data)
     if (this.memberData) {
         console.log('EditMemberModal - Received member data in oninit:', this.memberData);
@@ -52,6 +61,42 @@ export class EditMemberModalComponent implements OnInit {
     }
   }
 
+  loadStates(): void {
+    this.isLoadingStates = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        this.states = allLookups
+          .filter(lookup => lookup.lookupKey === LookupKeys.State)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        this.isLoadingStates = false;
+      },
+      error: (error) => {
+        console.error('Error loading states:', error);
+        this.states = [];
+        this.isLoadingStates = false;
+      }
+    });
+  }
+
+  loadRelationships(): void {
+    this.isLoadingRelationships = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        const list = allLookups
+          .filter(lookup => lookup.lookupKey === LookupKeys.Relationship)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        const hasOther = list.some(l => (l.lookupValue || '').toLowerCase() === 'other');
+        this.relationships = hasOther ? list : [...list, { lookupKey: 'RELATIONSHIP', lookupCode: 'Other', lookupValue: 'Other', sortOrder: 9999, isActive: true } as MasterLookup];
+        this.isLoadingRelationships = false;
+      },
+      error: (error) => {
+        console.error('Error loading relationships:', error);
+        this.relationships = [{ lookupKey: 'RELATIONSHIP', lookupCode: 'Other', lookupValue: 'Other', sortOrder: 0, isActive: true } as MasterLookup];
+        this.isLoadingRelationships = false;
+      }
+    });
+  }
+
   private createForm(): FormGroup {
     return this.formBuilder.group({
       memberId: [{ value: '', disabled: true }],
@@ -72,6 +117,8 @@ export class EditMemberModalComponent implements OnInit {
       guardianFirstName: ['', [Validators.required, Validators.maxLength(100)]],
       guardianMiddleName: ['', [Validators.maxLength(100)]],
       guardianLastName: ['', [Validators.required, Validators.maxLength(100)]],
+      guardianRelationship: ['', [Validators.required]],
+      guardianRelationshipOther: ['', [Validators.maxLength(100)]],
       guardianPhone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
       guardianDOB: [''],
       guardianAge: ['', [Validators.required, Validators.min(18), Validators.max(150)]],
@@ -109,6 +156,8 @@ export class EditMemberModalComponent implements OnInit {
       guardianFirstName: m['guardianFirstName'] || '',
       guardianMiddleName: m['guardianMiddleName'] || '',
       guardianLastName: m['guardianLastName'] || '',
+      guardianRelationship: m['guardianRelationship'] || '',
+      guardianRelationshipOther: m['guardianRelationshipOther'] || '',
       guardianPhone: m['guardianPhone'] || '',
       guardianDOB: m['guardianDOB'] || '',
       guardianAge: m['guardianAge'] || '',
