@@ -112,7 +112,7 @@ export class AddUserModalComponent implements OnInit {
       next: (allLookups) => {
         this.states = (allLookups || [])
           .filter(l => l.lookupKey === LookupKeys.State)
-          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+          .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
         this.isLoadingStates = false;
         this.applyOrgStateDefaultIfNeeded();
       },

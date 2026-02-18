@@ -82,7 +82,7 @@ export class AddBranchComponent implements OnInit, ViewWillEnter {
       next: (allLookups) => {
         this.states = allLookups
           .filter(lookup => lookup.lookupKey === LookupKeys.State)
-          .sort((a, b) => a.sortOrder - b.sortOrder);
+          .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
         this.isLoadingStates = false;
         this.applyOrgStateDefaultIfNeeded();
       },

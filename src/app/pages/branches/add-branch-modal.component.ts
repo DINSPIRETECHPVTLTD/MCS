@@ -113,7 +113,7 @@ ngOnInit(): void {
       next: (allLookups) => {
         this.states = (allLookups || [])
           .filter(l => l.lookupKey === LookupKeys.State)
-          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+          .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
         this.applyOrgStateDefaultIfNeeded();
         this.isLoadingStates = false;
       },

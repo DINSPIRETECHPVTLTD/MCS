@@ -182,7 +182,9 @@ export class AddPocModalComponent implements OnInit {
     this.isLoadingStates = true;
     this.masterDataService.getMasterData().subscribe({
       next: (allLookups) => {
-        this.states = allLookups.filter(lookup => lookup.lookupKey === 'STATE').sort((a, b) => a.sortOrder - b.sortOrder);
+        this.states = allLookups
+          .filter(lookup => lookup.lookupKey === 'STATE')
+          .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
         this.isLoadingStates = false;
         this.applyOrgStateDefaultIfNeeded();
       },
