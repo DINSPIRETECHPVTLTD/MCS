@@ -8,60 +8,61 @@
       <h1>Recovery Posting</h1>
       <div class="date-display">
         <ion-icon name="calendar-outline"></ion-icon>
-        <span>{{ todayDate }}</span>
+        <span>{{ selectedDateDisplay }}</span>
       </div>
     </div>
     
-    <!-- Filter Section -->
+    <!-- Filter Section (same control design as Add Member) -->
     <ion-card class="filter-card">
       <ion-card-content>
         <div class="filter-section">
-          <!-- Date Selection -->
-          <div class="filter-group">
-            <div class="filter-label">Select Date:</div>
-            <ion-datetime
-              [(ngModel)]="selectedDate"
-              (ionChange)="onDateChange()"
-              display-format="DD MMM YYYY"
-              placeholder="Select Date"
-              presentation="date"
-              [value]="selectedDate">
-            </ion-datetime>
-          </div>
-
-          <!-- Payment Type -->
-          <div class="filter-group">
-            <div class="filter-label">Payment Type:</div>
-            <div class="radio-group">
-              <ion-radio-group [(ngModel)]="paymentType" (ionChange)="onPaymentTypeChange()">
-                <ion-item>
-                  <ion-radio value="daily" slot="start"></ion-radio>
-                  <ion-label>Daily</ion-label>
-                </ion-item>
-                <ion-item>
-                  <ion-radio value="weekly" slot="start"></ion-radio>
-                  <ion-label>Weekly</ion-label>
-                </ion-item>
-                <ion-item>
-                  <ion-radio value="monthly" slot="start"></ion-radio>
-                  <ion-label>Monthly</ion-label>
-                </ion-item>
-              </ion-radio-group>
-            </div>
-          </div>
-
-          <!-- Select Center -->
-          <div class="filter-group">
-            <div class="filter-label">Select Center:</div>
-            <ion-select 
-              [(ngModel)]="selectedCenter" 
-              (ionChange)="onCenterChange()"
-              placeholder="Select Center"
-              interface="popover">
-              <ion-select-option *ngFor="let center of centers" [value]="center.id">
-                {{ center.code }} - {{ center.name }}
-              </ion-select-option>
-            </ion-select>
+          <div class="form-row form-row--filters">
+            <ion-item>
+              <ion-label position="stacked">Select Date</ion-label>
+              <ion-input
+                [(ngModel)]="selectedDate"
+                name="selectedDate"
+                type="date"
+                (ionChange)="onDateChange()">
+              </ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Center</ion-label>
+              <ion-select
+                [(ngModel)]="selectedCenter"
+                (ionChange)="onCenterChange()"
+                placeholder="Select Center"
+                interface="popover">
+                <ion-select-option *ngFor="let center of centers" [value]="center.id">
+                  {{ center.code ? center.code + ' - ' + center.name : center.name }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">POC</ion-label>
+              <ion-select
+                [(ngModel)]="selectedPoc"
+                (ionChange)="onPocChange()"
+                placeholder="Select POC"
+                interface="popover"
+                [disabled]="!selectedCenter || pocs.length === 0">
+                <ion-select-option *ngFor="let poc of pocs" [value]="poc.id">
+                  {{ getPocDisplayName(poc) }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Collected By</ion-label>
+              <ion-select
+                [(ngModel)]="selectedCollectBy"
+                (ionChange)="onCollectByChange()"
+                placeholder="Select Collect By"
+                interface="popover">
+                <ion-select-option *ngFor="let user of users" [value]="user.id">
+                  {{ getUserDisplayName(user) }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
           </div>
 
           <!-- Action Buttons -->
@@ -91,6 +92,7 @@
         <ion-button fill="outline" size="small" (click)="deselectAll()">
           Deselect All
         </ion-button>
+        <span class="action-hint">Select one or more members with the checkboxes, then click POST.</span>
       </div>
     </div>
 
