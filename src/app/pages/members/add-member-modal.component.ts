@@ -1,42 +1,16 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, Injectable } from '@angular/core';
-import { OverlayContainer } from '@angular/cdk/overlay';
-import { Platform } from '@angular/cdk/platform';
-import { DOCUMENT } from '@angular/common';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidatorFn, ValidationErrors } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil, distinctUntilChanged } from 'rxjs/operators';
 import { MemberService } from '../../services/member.service';
+import { UserService } from '../../services/user.service';
 import { CenterOption, POCOption } from '../../models/member.models';
-
-@Injectable()
-class ModalOverlayContainer extends OverlayContainer {
-  constructor(@Inject(DOCUMENT) private doc: Document, private platform: Platform) {
-    super(doc, platform);
-  }
-
-  protected override _createContainer(): void {
-    const container = this.doc.createElement('div');
-    container.classList.add('cdk-overlay-container');
-
-    const modal = this.doc.querySelector('ion-modal.add-member-modal');
-    if (modal) {
-      modal.appendChild(container);
-    } else {
-      this.doc.body.appendChild(container);
-    }
-
-    this._containerElement = container;
-  }
-}
 
 @Component({
   selector: 'app-add-member-modal',
   templateUrl: './add-member-modal.component.html',
-  styleUrls: ['./add-member-modal.component.scss'],
-  providers: [
-    { provide: OverlayContainer, useClass: ModalOverlayContainer }
-  ]
+  styleUrls: ['./add-member-modal.component.scss']
 })
 export class AddMemberModalComponent implements OnInit, OnDestroy {
   // ...existing properties...
@@ -51,12 +25,14 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
 
   centers: CenterOption[] = [];
   pocs: POCOption[] = [];
+  collectors: any[] = [];
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private formBuilder: FormBuilder,
     private memberService: MemberService,
+    private userService: UserService,
     private modalController: ModalController,
     private loadingController: LoadingController,
     private toastController: ToastController,
@@ -104,7 +80,11 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         guardianRelationshipOther: ['', [Validators.maxLength(100), this.alphanumericValidator()]],
         guardianPhone: ['', [Validators.pattern(/^\d{10}$/)]],
         guardianDOB: ['', [Validators.required, this.noFutureDateValidator()]],
-        guardianAge: ['', [Validators.min(18), Validators.max(150)]]
+        guardianAge: ['', [Validators.min(18), Validators.max(150)]],
+        paymentMode: ['', [Validators.required]],
+        paymentAmount: ['', [Validators.required, Validators.min(0)]],
+        paymentDate: ['', [Validators.required, this.noFutureDateValidator()]],
+        collectedBy: ['', [Validators.required]]
       },
       {
         validators: [this.uniquePhoneNumbersValidator(['phoneNumber', 'guardianPhone'])]
@@ -132,9 +112,41 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Load collectors (users) for the selected center
+  private loadCollectorsForCenter(centerId: number): void {
+    const selectedCenter = this.centers.find(c => Number(c.id) === centerId);
+    if (!selectedCenter) return;
+
+    const branchId = selectedCenter.branchId;
+    if (!branchId) {
+      this.collectors = [];
+      return;
+    }
+
+    // Fetch all users and filter by branch
+    this.userService.getUsers().subscribe({
+      next: (users: any[]) => {
+        this.collectors = (users ?? [])
+          .filter(user => user && Number(user.branchId) === branchId)
+          .map(user => ({
+            id: user.id,
+            name: (user.name || [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ')).trim(),
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collectors = [];
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   // Setup form listeners for value changes
   setupFormListeners(): void {
-
     this.memberForm.get('phoneNumber')?.valueChanges
       .pipe(distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(value => {
@@ -195,7 +207,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
       .subscribe(centerId => {
         const selectedCenterId = Number(centerId);
         if (selectedCenterId) {
-          this.memberForm.patchValue({ pocId: '' });
+          this.memberForm.patchValue({ pocId: '', collectedBy: '' });
           // Fetch POCs for the selected center
           this.memberService.getAllPOCs().subscribe(pocs => {
             // Filter POCs by centerId if needed, or use API that supports centerId
@@ -206,9 +218,13 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
                 name: (poc.name || [poc.firstName, poc.middleName, poc.lastName].filter(Boolean).join(' ')).trim()
               }));
           });
+          
+          // Fetch collectors (users) for the selected center's branch
+          this.loadCollectorsForCenter(selectedCenterId);
         } else {
           this.pocs = [];
-          this.memberForm.patchValue({ pocId: '' });
+          this.collectors = [];
+          this.memberForm.patchValue({ pocId: '', collectedBy: '' });
         }
       });
 
@@ -416,8 +432,12 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
           guardianAge: Number(raw.guardianAge),
           guardianRelationship: guardianRelationship || null,
           centerId: selectedCenterId,
-          pocId: Number(raw.pocId)
-          ,occupation: (raw.occupation ?? '').toString().trim()
+          pocId: Number(raw.pocId),
+          occupation: (raw.occupation ?? '').toString().trim(),
+          paymentMode: (raw.paymentMode ?? '').toString() || null,
+          paymentAmount: raw.paymentAmount ? Number(raw.paymentAmount) : null,
+          paymentDate: raw.paymentDate ? this.formatDateForApi(raw.paymentDate) : null,
+          collectedBy: raw.collectedBy ? Number(raw.collectedBy) : null
         };
 
         const created = await firstValueFrom(this.memberService.createMember(payload as any));
