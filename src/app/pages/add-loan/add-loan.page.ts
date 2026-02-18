@@ -306,13 +306,12 @@ export class AddLoanComponent implements OnInit {
     const { data, role } = await modal.onWillDismiss();
     
     if (role === 'success' && data && data.reset) {
-      // Reset to initial search state
-      this.showMemberGrid = false;
-      this.rowData = [];
+      // Reset search fields and reload recent members
       this.searchFirstName = '';
       this.searchLastName = '';
       this.searchMemberId = '';
-      this.cdr.detectChanges();
+      // Reload recent members to refresh the list
+      await this.loadRecentMembers();
     }
   }
 

@@ -42,7 +42,6 @@ export class AddLoanModalComponent implements OnInit {
     private modalController: ModalController,
     private loanService: LoanService,
     private loadingController: LoadingController,
-    private toastController: ToastController,
     private alertController: AlertController,
     private pocService: PocService,
     private paymentsService: PaymentsService,
@@ -58,9 +57,8 @@ export class AddLoanModalComponent implements OnInit {
       // Load center data for the selected member
       this.loadMemberCenter();
     }
-    // Set default disbursement date to today
-    const today = new Date();
-    this.loanForm.disbursementDate = this.formatDate(today);
+    // Set default disbursement date to today (local date)
+    this.loanForm.disbursementDate = this.formatDate(new Date());
     // Set default collection start date to disbursement date + 7 days
     this.updateCollectionStartDate();
     // Load payment terms
@@ -129,23 +127,23 @@ export class AddLoanModalComponent implements OnInit {
     return [firstName, lastName].filter(Boolean).join(' ') || 'N/A';
   }
 
+  get collectionDay(): string {
+    return this.memberPoc?.collectionDay || 'N/A';
+  }
+
   get collectionDayMismatchError(): string | null {
     if (!this.memberPoc?.collectionDay || !this.loanForm.collectionStartDate) {
       return null;
     }
 
     // Parse date as local date to avoid timezone issues
-    const dateParts = this.loanForm.collectionStartDate.split('-');
-    const year = parseInt(dateParts[0], 10);
-    const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
-    const day = parseInt(dateParts[2], 10);
-    const collectionDate = new Date(year, month, day);
+    const collectionDate = this.parseLocalDate(this.loanForm.collectionStartDate);
     
     const dayOfWeek = collectionDate.toLocaleDateString('en-US', { weekday: 'long' });
     const pocDay = this.memberPoc.collectionDay.trim();
 
     if (dayOfWeek.toLowerCase() !== pocDay.toLowerCase()) {
-      return `Collection start date must be a ${pocDay}. Selected date is ${dayOfWeek}.`;
+      return `Selected collection day(${dayOfWeek}) does not match the configured collection day for this POC(${pocDay}).`;
     }
 
     return null;
@@ -329,10 +327,24 @@ export class AddLoanModalComponent implements OnInit {
 
   private updateCollectionStartDate(): void {
     if (this.loanForm.disbursementDate) {
-      const disbursementDate = new Date(this.loanForm.disbursementDate);
+      // Parse date as local date to avoid timezone issues
+      const disbursementDate = this.parseLocalDate(this.loanForm.disbursementDate);
+      
+      // Add 7 days
       const collectionDate = new Date(disbursementDate);
       collectionDate.setDate(collectionDate.getDate() + 7);
+      
+      // Format the collection date
       this.loanForm.collectionStartDate = this.formatDate(collectionDate);
     }
+  }
+
+  private parseLocalDate(dateString: string): Date {
+    // Parse date as local date to avoid timezone issues
+    const dateParts = dateString.split('-');
+    const year = parseInt(dateParts[0], 10);
+    const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
+    const day = parseInt(dateParts[2], 10);
+    return new Date(year, month, day);
   }
 }
