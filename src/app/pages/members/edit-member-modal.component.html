@@ -143,21 +143,6 @@
           <ion-input formControlName="guardianLastName" type="text" maxlength="100" placeholder="Enter surname"></ion-input>
           <ion-note slot="error">{{ getFieldError('guardianLastName') }}</ion-note>
         </ion-item>
-      </div>
-      <div class="form-row">
-        <ion-item [class.ion-invalid]="isFieldInvalid('guardianRelationship')">
-          <ion-label position="stacked">Relationship <span class="required">*</span></ion-label>
-          <ion-select formControlName="guardianRelationship" interface="popover" placeholder="Select relationship">
-            <ion-select-option value="">Select relationship</ion-select-option>
-            <ion-select-option *ngFor="let rel of relationships" [value]="rel.lookupValue">{{ rel.lookupValue }}</ion-select-option>
-          </ion-select>
-          <ion-note slot="error">{{ getFieldError('guardianRelationship') }}</ion-note>
-        </ion-item>
-        <ion-item *ngIf="memberForm.get('guardianRelationship')?.value === 'Other'" [class.ion-invalid]="isFieldInvalid('guardianRelationshipOther')">
-          <ion-label position="stacked">Other Relationship</ion-label>
-          <ion-input formControlName="guardianRelationshipOther" type="text" maxlength="100" placeholder="Enter relationship"></ion-input>
-          <ion-note slot="error">{{ getFieldError('guardianRelationshipOther') }}</ion-note>
-        </ion-item>
         <ion-item [class.ion-invalid]="isFieldInvalid('guardianPhone')">
           <ion-label position="stacked">Phone Number</ion-label>
           <ion-input formControlName="guardianPhone" type="tel" maxlength="10" inputmode="numeric" placeholder="Enter phone number"></ion-input>

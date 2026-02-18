@@ -20,8 +20,6 @@ export class EditMemberModalComponent implements OnInit {
   isLoading = false;
   states: MasterLookup[] = [];
   isLoadingStates = false;
-  relationships: MasterLookup[] = [];
-  isLoadingRelationships = false;
   todayString: string = new Date().toISOString().split('T')[0];
 
   centers: CenterOption[] = [];
@@ -42,7 +40,6 @@ export class EditMemberModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadStates();
-    this.loadRelationships();
     // Load centers and POCs
     this.memberService.getAllCenters().subscribe({
       next: (centers: CenterOption[]) => {
@@ -100,25 +97,6 @@ export class EditMemberModalComponent implements OnInit {
     });
   }
 
-  loadRelationships(): void {
-    this.isLoadingRelationships = true;
-    this.masterDataService.getMasterData().subscribe({
-      next: (allLookups) => {
-        const list = allLookups
-          .filter(lookup => lookup.lookupKey === LookupKeys.Relationship)
-          .sort((a, b) => a.sortOrder - b.sortOrder);
-        const hasOther = list.some(l => (l.lookupValue || '').toLowerCase() === 'other');
-        this.relationships = hasOther ? list : [...list, { lookupKey: 'RELATIONSHIP', lookupCode: 'Other', lookupValue: 'Other', sortOrder: 9999, isActive: true } as MasterLookup];
-        this.isLoadingRelationships = false;
-      },
-      error: (error) => {
-        console.error('Error loading relationships:', error);
-        this.relationships = [{ lookupKey: 'RELATIONSHIP', lookupCode: 'Other', lookupValue: 'Other', sortOrder: 0, isActive: true } as MasterLookup];
-        this.isLoadingRelationships = false;
-      }
-    });
-  }
-
   private createForm(): FormGroup {
     return this.formBuilder.group({
       memberId: [{ value: '', disabled: true }],
@@ -138,11 +116,9 @@ export class EditMemberModalComponent implements OnInit {
       occupation: ['', [Validators.required, Validators.maxLength(100)]],
       guardianFirstName: ['', [Validators.required, Validators.maxLength(100)]],
       guardianLastName: ['', [Validators.required, Validators.maxLength(100)]],
-      guardianRelationship: ['', [Validators.required]],
-      guardianRelationshipOther: ['', [Validators.maxLength(100)]],
-      guardianPhone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
+      guardianPhone: ['', [Validators.pattern(/^\d{10}$/)]],
       guardianDOB: ['', [Validators.required]],
-      guardianAge: ['', [Validators.required, Validators.min(18), Validators.max(150)]]
+      guardianAge: ['', [Validators.min(18), Validators.max(150)]]
     });
   }
 
@@ -172,8 +148,6 @@ export class EditMemberModalComponent implements OnInit {
       occupation: m['occupation'] || '',
       guardianFirstName: m['guardianFirstName'] || '',
       guardianLastName: m['guardianLastName'] || '',
-      guardianRelationship: m['guardianRelationship'] || '',
-      guardianRelationshipOther: m['guardianRelationshipOther'] || '',
       guardianPhone: m['guardianPhone'] || '',
       guardianDOB: m['guardianDOB'] || '',
       guardianAge: m['guardianAge'] || ''
@@ -226,9 +200,6 @@ export class EditMemberModalComponent implements OnInit {
         occupation: formValue.occupation || '',
         guardianFirstName: formValue.guardianFirstName || '',
         guardianLastName: formValue.guardianLastName || '',
-        guardianRelationship: formValue.guardianRelationship === 'Other'
-          ? (formValue.guardianRelationshipOther || '').trim()
-          : (formValue.guardianRelationship || ''),
         guardianPhone: formValue.guardianPhone || '',
         guardianDOB: formValue.guardianDOB || '',
         guardianAge: formValue.guardianAge || 0,
