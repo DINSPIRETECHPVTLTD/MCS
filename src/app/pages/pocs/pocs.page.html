@@ -40,7 +40,8 @@
         [defaultColDef]="defaultColDef"
         [pagination]="pagination"
         [paginationPageSize]="paginationPageSize"
-        [paginationPageSizeSelector]="paginationPageSizeSelector">
+        [paginationPageSizeSelector]="paginationPageSizeSelector"
+        (gridReady)="onGridReady($event)">
       </ag-grid-angular>
     </div>
   </div>

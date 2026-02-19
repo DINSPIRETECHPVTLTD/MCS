@@ -2,7 +2,6 @@ import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { UserContextService } from '../../services/user-context.service';
-import { BranchService } from '../../services/branch.service';
 import { PocService, CreatePocRequest } from '../../services/poc.service';
 import { MemberService } from '../../services/member.service';
 
@@ -33,7 +32,6 @@ export class AddPocModalComponent implements OnInit {
     private formBuilder: FormBuilder,
     private modalController: ModalController,
     private userContext: UserContextService,
-    private branchService: BranchService,
     private pocService: PocService,
     private memberService: MemberService,
     private loadingController: LoadingController,
@@ -82,8 +80,16 @@ export class AddPocModalComponent implements OnInit {
     });
     await loading.present();
 
-    // Using getPocs() and filtering, since there's no getPocById in the service
-    this.pocService.getPocs().subscribe({
+    const branchId = this.branchId || this.userContext.branchId;
+    if (!branchId) {
+      loading.dismiss();
+      this.showToast('No branch selected', 'danger');
+      this.closeModal();
+      return;
+    }
+
+    // Using getPocsByBranch() instead of getPocs() to reduce data transfer
+    this.pocService.getPocsByBranch(branchId).subscribe({
       next: (pocs) => {
         loading.dismiss();
         const poc = pocs.find(p => p.id === pocId);

@@ -104,12 +104,6 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     private loadingController: LoadingController,
     private alertController: AlertController
   ) {
-    // Fetch all branches for mapping
-    this.branchService.getBranches().subscribe(branches => {
-      this.branches = branches ?? [];
-      this.branchMap = new Map(this.branches.map(b => [Number(b.id), b.name]));
-    });
-
     this.gridOptions = {
       theme: agGridTheme,
       context: { componentParent: this },
@@ -137,6 +131,15 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
+    }
+
+    // Load branches from auth service if not already loaded
+    if (this.branches.length === 0) {
+      const branchesFromLogin = this.authService.getBranchesFromLogin();
+      if (branchesFromLogin && branchesFromLogin.length > 0) {
+        this.branches = branchesFromLogin;
+        this.branchMap = new Map(this.branches.map(b => [Number(b.id), b.name]));
+      }
     }
 
     const branchId = this.resolveSelectedBranchId();

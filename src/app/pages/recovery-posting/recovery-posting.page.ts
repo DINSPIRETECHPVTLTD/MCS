@@ -92,7 +92,6 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       return;
     }
     this.initializeGrid();
-    this.loadData();
   }
 
   ionViewWillEnter(): void {

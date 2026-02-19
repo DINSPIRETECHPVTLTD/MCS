@@ -80,9 +80,6 @@ export class StaffComponent implements OnInit, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
-    
-    // Load selected branch from localStorage or user context
-    this.loadSelectedBranch();
 
     // grid options with row id resolver and context
     this.gridOptions = {

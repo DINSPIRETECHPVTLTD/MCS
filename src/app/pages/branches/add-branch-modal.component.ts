@@ -14,7 +14,6 @@ import { UserContextService } from '../../services/user-context.service';
 export class AddBranchModalComponent implements OnInit {
   @Input() isEditing: boolean = false;
   @Input() editingBranchId: number | null = null;
-  branches: { id: number, name: string }[] = [];
 
   branchForm: FormGroup;
   submitted: boolean = false;
@@ -47,14 +46,6 @@ ngOnInit(): void {
   if (organizationId) {
     this.branchForm.patchValue({ organizationId });
   }
-
-  // Load branches for dropdown
-  this.branchService.getBranches().subscribe({
-    next: (data) => {
-      this.branches = data; // <-- branch array with only id & name
-    },
-    error: (err) => console.error('Failed to load branches', err)
-  });
 
   // If editing, load the branch details
   if (this.isEditing && this.editingBranchId) {
