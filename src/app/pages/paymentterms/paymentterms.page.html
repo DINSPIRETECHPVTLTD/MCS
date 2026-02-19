@@ -1,0 +1,43 @@
+<app-header-menu
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
+  <ion-content [fullscreen]="true" class="ion-padding">
+    <div class="paymentterms-list-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2>All Payment Terms</h2>
+        <ion-button (click)="openAddPaymentTermModal()">
+          <ion-icon name="add-outline" slot="start"></ion-icon>
+          Add Payment Term
+        </ion-button>
+      </div>
+
+      <div *ngIf="isLoading" style="text-align: center; padding: 20px;">
+        <ion-spinner></ion-spinner>
+        <p>Loading payment terms...</p>
+      </div>
+
+      <div *ngIf="!isLoading && payments.length === 0" class="empty-state">
+        <ion-icon name="card-outline" size="large"></ion-icon>
+        <p>No payment terms found</p>
+        <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
+          Click "Add Payment Term" to create a new payment term
+        </p>
+      </div>
+
+      <div *ngIf="!isLoading && payments.length > 0" class="paymentterms-grid">
+        <ag-grid-angular
+          class="ag-theme-alpine"
+          style="width: 100%; height: 60vh;"
+          [rowData]="rowData"
+          [columnDefs]="columnDefs"
+          [gridOptions]="gridOptions"
+          [defaultColDef]="defaultColDef"
+          [pagination]="pagination"
+          [paginationPageSize]="paginationPageSize"
+          [paginationPageSizeSelector]="paginationPageSizeSelector">
+        </ag-grid-angular>
+      </div>
+    </div>
+  </ion-content>
+</app-header-menu>

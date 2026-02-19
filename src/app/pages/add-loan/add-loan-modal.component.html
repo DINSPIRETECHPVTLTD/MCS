@@ -18,28 +18,20 @@
     <ion-card-content>
       <div class="member-details-grid">
         <div class="detail-item">
-          <div class="detail-label">Member ID:</div>
-          <span>{{ selectedMember.memberId || selectedMember.id || 'N/A' }}</span>
+          <div class="detail-label">Name:</div>
+          <span>{{ (selectedMember.firstName || '') + ' ' + (selectedMember.lastName || '') || 'N/A' }}</span>
+        </div>
+        <div class="detail-item" *ngIf="memberPoc">
+          <div class="detail-label">POC Name:</div>
+          <span>{{ pocName }}</span>
         </div>
         <div class="detail-item">
-          <div class="detail-label">First Name:</div>
-          <span>{{ selectedMember.firstName || 'N/A' }}</span>
+          <div class="detail-label">Center Name:</div>
+          <span>{{ centerName }}</span>
         </div>
-        <div class="detail-item" *ngIf="selectedMember.middleName">
-          <div class="detail-label">Middle Name:</div>
-          <span>{{ selectedMember.middleName }}</span>
-        </div>
-        <div class="detail-item">
-          <div class="detail-label">Last Name:</div>
-          <span>{{ selectedMember.lastName || 'N/A' }}</span>
-        </div>
-        <div class="detail-item">
-          <div class="detail-label">Age:</div>
-          <span>{{ selectedMember.age || 'N/A' }}</span>
-        </div>
-        <div class="detail-item" *ngIf="selectedMember.phone || selectedMember.phoneNumber">
-          <div class="detail-label">Phone:</div>
-          <span>{{ selectedMember.phone || selectedMember.phoneNumber }}</span>
+        <div class="detail-item" *ngIf="memberPoc">
+          <div class="detail-label">Collection Day:</div>
+          <span>{{ collectionDay }}</span>
         </div>
       </div>
     </ion-card-content>
@@ -50,25 +42,6 @@
     <h3 class="detail-section-title">Loan Details</h3>
     <div class="loan-form-grid">
       <ion-item class="loan-form-field">
-        <ion-label position="stacked">Loan Code *</ion-label>
-        <ion-input
-          [(ngModel)]="loanForm.loanCode"
-          name="loanCode"
-          placeholder="Enter loan code"
-          type="text">
-        </ion-input>
-      </ion-item>
-
-      <ion-item class="loan-form-field">
-        <ion-label position="stacked">Member ID</ion-label>
-        <ion-input
-          [value]="loanForm.memberId"
-          readonly
-          type="text">
-        </ion-input>
-      </ion-item>
-
-      <ion-item class="loan-form-field">
         <ion-label position="stacked">Loan Amount *</ion-label>
         <ion-input
           [(ngModel)]="loanForm.loanAmount"
@@ -76,9 +49,23 @@
           placeholder="0"
           type="number"
           min="0"
-          step="0.01"
+          step="0"
           (ionInput)="onNumericInput($event, 'loanAmount')">
         </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Payment Type</ion-label>
+        <ion-select
+          [(ngModel)]="selectedPaymentType"
+          name="paymentType"
+          placeholder="Select payment type"
+          interface="popover"
+          (ionChange)="onPaymentTypeChange()">
+          <ion-select-option *ngFor="let type of uniquePaymentTypes" [value]="type">
+            {{ type }}
+          </ion-select-option>
+        </ion-select>
       </ion-item>
 
       <ion-item class="loan-form-field">
@@ -86,11 +73,20 @@
         <ion-input
           [(ngModel)]="loanForm.interestAmount"
           name="interestAmount"
-          placeholder="0"
+          placeholder="Auto-calculated"
           type="number"
-          min="0"
-          step="0.01"
-          (ionInput)="onNumericInput($event, 'interestAmount')">
+          readonly>
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Total Amount *</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.totalAmount"
+          name="totalAmount"
+          placeholder="Auto-calculated"
+          type="number"
+          readonly>
         </ion-input>
       </ion-item>
 
@@ -99,11 +95,9 @@
         <ion-input
           [(ngModel)]="loanForm.processingFee"
           name="processingFee"
-          placeholder="0"
+          placeholder="Auto-calculated"
           type="number"
-          min="0"
-          step="0.01"
-          (ionInput)="onNumericInput($event, 'processingFee')">
+          readonly>
         </ion-input>
       </ion-item>
 
@@ -112,32 +106,58 @@
         <ion-input
           [(ngModel)]="loanForm.insuranceFee"
           name="insuranceFee"
-          placeholder="0"
+          placeholder="Auto-calculated"
           type="number"
-          min="0"
-          step="0.01"
-          (ionInput)="onNumericInput($event, 'insuranceFee')">
+          readonly>
         </ion-input>
       </ion-item>
 
-      <ion-item class="loan-form-field checkbox-field">
-        <ion-checkbox
-          [(ngModel)]="loanForm.isSavingEnabled"
-          name="isSavingEnabled">
-        </ion-checkbox>
-        <ion-label>Enable Saving</ion-label>
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Number of Terms *</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.noOfTerms"
+          name="noOfTerms"
+          placeholder="Auto-filled from payment term"
+          type="number"
+          readonly>
+        </ion-input>
       </ion-item>
 
-      <ion-item class="loan-form-field" *ngIf="loanForm.isSavingEnabled">
-        <ion-label position="stacked">Saving Amount</ion-label>
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Disbursement Date</ion-label>
         <ion-input
-          [(ngModel)]="loanForm.savingAmount"
-          name="savingAmount"
-          placeholder="0"
-          type="number"
-          min="0"
-          step="0.01"
-          (ionInput)="onNumericInput($event, 'savingAmount')">
+          [(ngModel)]="loanForm.disbursementDate"
+          name="disbursementDate"
+          type="date"
+          (ionChange)="onDisbursementDateChange()">
+        </ion-input>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Collection Start Date</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.collectionStartDate"
+          name="collectionStartDate"
+          type="date">
+        </ion-input>
+      </ion-item>
+
+      <!-- Collection Day Mismatch Error -->
+      <ion-item lines="none" *ngIf="collectionDayMismatchError" class="error-message-item">
+        <ion-label class="ion-text-wrap error-text">
+          <ion-icon name="warning-outline" class="error-icon"></ion-icon>
+          {{ collectionDayMismatchError }}
+        </ion-label>
+      </ion-item>
+
+      <ion-item class="loan-form-field">
+        <ion-label position="stacked">Collection Term *</ion-label>
+        <ion-input
+          [(ngModel)]="loanForm.collectionTerm"
+          name="collectionTerm"
+          placeholder="Auto-filled from POC"
+          type="text"
+          readonly>
         </ion-input>
       </ion-item>
     </div>
@@ -152,7 +172,6 @@
         (click)="createLoan()"
         [disabled]="!isLoanFormValid() || isCreatingLoan"
         class="save-button">
-        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
         Save Loan
       </ion-button>
 

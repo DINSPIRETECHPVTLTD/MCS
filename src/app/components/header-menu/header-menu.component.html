@@ -65,12 +65,38 @@
         (click)="setActiveMenu('Branches')">
         Branches
       </button>
-      <button 
+      <div class="nav-item-container">
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'Master' || activeMenu === 'Master Data' || activeMenu === 'Payment Terms'"
+          (click)="setActiveMenu('Master')">
+          <span>Master</span>
+          <ion-icon [name]="showMasterSubmenu ? 'chevron-forward-outline' : 'chevron-down-outline'" class="submenu-icon"></ion-icon>
+        </button>
+        <div class="submenu-vertical" *ngIf="showMasterSubmenu">
+          <button class="submenu-item" [class.active]="activeMenu === 'Master Data'" (click)="selectSubmenu('Master Data')">Master Data</button>
+          <button class="submenu-item" [class.active]="activeMenu === 'Payment Terms'" (click)="selectSubmenu('Payment Terms')">Payment Terms</button>
+        </div>
+      </div>
+      <div class="nav-item-container">
+        <button 
+          class="nav-item" 
+          [class.active]="activeMenu === 'Funds' || activeMenu === 'Investments' || activeMenu === 'Funds Transfer'"
+          (click)="setActiveMenu('Funds')">
+          <span>Funds</span>
+          <ion-icon [name]="showFundsSubmenu ? 'chevron-forward-outline' : 'chevron-down-outline'" class="submenu-icon"></ion-icon>
+        </button>
+        <div class="submenu-vertical" *ngIf="showFundsSubmenu">
+          <button class="submenu-item" [class.active]="activeMenu === 'Investments'" (click)="selectSubmenu('Investments')">Investments</button>
+          <button class="submenu-item" [class.active]="activeMenu === 'Ledger Balances'" (click)="selectSubmenu('Ledger Balances')">Ledger Balances</button>
+        </div>
+      </div>
+      <!-- <button 
         class="nav-item" 
-        [class.active]="activeMenu === 'Master Data'"
-        (click)="setActiveMenu('Master Data')">
-        Master Data
-      </button>
+        [class.active]="activeMenu === 'Investments'"
+        (click)="setActiveMenu('Investments')">
+        Investments
+      </button> -->
     </nav>
 
     <!-- Navigation Menu for Branch Mode (branch admin/staff, or owner viewing a branch) -->

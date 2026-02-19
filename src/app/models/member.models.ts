@@ -63,6 +63,10 @@ export interface CreateMemberRequest {
   guardianRelationship?: string | null;
   centerId: number;
   pocId: number;
+  paymentMode?: string | null;
+  paymentAmount?: number | null;
+  paymentDate?: string | null;
+  collectedBy?: number | null; // User ID
 }
 
 export interface BranchOption {

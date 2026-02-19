@@ -35,11 +35,71 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   originalRowData: Array<Record<string, any>> = [];
   columnDefs: ColDef[] = [
     { field: 'memberId', headerName: 'ID/Code' },
-    { field: 'memberFirstName', headerName: 'First Name' },
-    { field: 'memberLastName', headerName: 'Last Name' },
+    {
+      headerName: 'Full Name',
+      flex: 1.3,
+      cellRenderer: (params: any) => {
+        const m = params.data;
+        const memberName = `${(m.memberFirstName || '').trim()} ${(m.memberLastName || '').trim()}`.trim();
+        const guardianName = `${(m.guardianFirstName || '').trim()} ${(m.guardianLastName || '').trim()}`.trim();
+        const container = document.createElement('div');
+        container.style.lineHeight = '1.5';
+        const nameDiv = document.createElement('div');
+        nameDiv.textContent = memberName;
+        nameDiv.style.fontWeight = '500';
+        container.appendChild(nameDiv);
+        if (guardianName) {
+          const guardDiv = document.createElement('div');
+          guardDiv.textContent = guardianName;
+          guardDiv.style.fontSize = '12px';
+          guardDiv.style.color = '#666';
+          container.appendChild(guardDiv);
+        }
+        return container;
+      }
+    },
+    {
+      headerName: 'Phone',
+      flex: 1.2,
+      cellRenderer: (params: any) => {
+        const m = params.data;
+        const memberPhone = (m.memberPhone || '').trim();
+        const guardianPhone = (m.guardianPhone || '').trim();
+        const container = document.createElement('div');
+        container.style.lineHeight = '1.5';
+        const phoneDiv = document.createElement('div');
+        phoneDiv.textContent = memberPhone;
+        phoneDiv.style.fontWeight = '500';
+        container.appendChild(phoneDiv);
+        if (guardianPhone) {
+          const guardPhoneDiv = document.createElement('div');
+          guardPhoneDiv.textContent = guardianPhone;
+          guardPhoneDiv.style.fontSize = '12px';
+          guardPhoneDiv.style.color = '#666';
+          container.appendChild(guardPhoneDiv);
+        }
+        return container;
+      }
+    },
+    
     { field: 'dobAge', headerName: 'DOB/Age' },
-    { field: 'memberPhone', headerName: 'Phone' },
     { field: 'center', headerName: 'Center'},
+    {
+      headerName: 'Address',
+      flex: 2,
+      cellRenderer: (params: any) => {
+        const m = params.data;
+        const parts = [
+          m.addressLine1,
+          m.addressLine2,
+          m.city,
+          m.state,
+          m.pincode
+        ].filter(x => x && x.toString().trim() !== '');
+      return `<div class="address-cell">${parts.join(', ')}</div>`;
+    }
+  },
+
     { field: 'poc', headerName: 'POC'},
     {
       headerName: 'Actions',
@@ -57,7 +117,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
         editBtn.addEventListener('click', () => this.openEditMemberModal(params.data));
 
         const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
+        deleteBtn.textContent = 'Inactive';
         deleteBtn.className = 'ag-btn ag-delete';
         deleteBtn.addEventListener('click', () => this.deleteRow(params.data));
 
@@ -190,6 +250,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       'memberFirstName',
       'memberLastName',
       'dobAge',
+      'address',
       'memberPhone',
       'center',
       'poc'
@@ -323,6 +384,9 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     const lastName = (m.lastName ?? m.LastName ?? '').toString();
     const dob = (m.dob ?? m.Dob ?? m.DOB ?? m.dateOfBirth ?? m.DateOfBirth ?? '').toString();
     const phoneNumber = (m.phoneNumber ?? m.PhoneNumber ?? '').toString();
+    const guardianFirstName = (m.guardianFirstName ?? m.GuardianFirstName ?? '').toString();
+    const guardianLastName = (m.guardianLastName ?? m.GuardianLastName ?? '').toString(); 
+    const guardianPhone = (m.guardianPhone ?? m.GuardianPhone ?? '').toString();
     const centerId = Number(m.centerId ?? m.CenterId ?? m.CenterID ?? 0);
     
 
@@ -336,6 +400,19 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     const dobDisplay = this.formatDate(dob);
     const ageValue = (m.age ?? m.Age ?? '').toString();
     const dobAge = dobDisplay && ageValue ? `${dobDisplay} / ${ageValue}` : (dobDisplay || ageValue || '');
+    const addressLine1 = (m.addressLine1 ?? m.AddressLine1 ?? '').toString();
+    const addressLine2 = (m.addressLine2 ?? m.AddressLine2 ?? '').toString();
+    const city         = (m.city ?? m.City ?? '').toString();
+    const state        = (m.state ?? m.State ?? '').toString();
+    const pincode      = (m.pincode ?? m.Pincode ?? m.ZipCode ?? '').toString();
+
+    const combinedAddress = (this.formatAddress(m) || [
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      pincode
+    ].filter(x => x && x.toString().trim() !== '').join(', ')).toString();
 
     return {
       memberId,
@@ -343,6 +420,15 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       memberLastName: lastName,
       dobAge,
       memberPhone: phoneNumber,
+      guardianFirstName,
+      guardianLastName,
+      guardianPhone,
+      address: combinedAddress,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      pincode,
       branch: this.selectedBranch?.name ?? (branchId ? this.branchMap.get(Number(branchId)) : ''),
       center: centerMap.get(centerId) ?? '',
       poc: pocDisplay,
@@ -358,8 +444,8 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   private async deleteRow(row: any): Promise<void> {
     console.log('Delete clicked:', row);
     const alert = await this.alertController.create({
-      header: 'Delete Member',
-      message: `Are you sure you want to delete ${row.memberFirstName} ${row.memberLastName}?`,
+      header: 'Mark as Inactive',
+      message: `Are you sure you want to mark ${row.memberFirstName} ${row.memberLastName} as inactive?`,
       buttons: [
         {
           text: 'Cancel',
@@ -370,7 +456,7 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
           }
         },
         {
-          text: 'Delete',
+          text: 'Inactive',
           role: 'destructive',
           handler: async () => {
             console.log('Delete confirmed for:', row);
@@ -384,15 +470,15 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
 
   private async confirmDeleteMember(row: any): Promise<void> {
     const loading = await this.loadingController.create({
-      message: 'Deleting member...'
+      message: 'Marking member as inactive...'
     });
     await loading.present();
 
-    this.memberService.deleteMember(row.memberId).subscribe({
+    this.memberService.inactivateMember(row.memberId).subscribe({
       next: async () => {
         await loading.dismiss();
         const toast = await this.toastController.create({
-          message: 'Member deleted successfully.',
+          message: 'Member marked as inactive.',
           duration: 2000,
           color: 'success',
           position: 'top'
@@ -402,9 +488,9 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       },
       error: async (error) => {
         await loading.dismiss();
-        console.error('Error deleting member:', error);
+        console.error('Error marking member as inactive:', error);
         const toast = await this.toastController.create({
-          message: 'Failed to delete member.',
+          message: 'Unable to mark member as inactive.',
           duration: 2000,
           color: 'danger',
           position: 'top'
@@ -451,9 +537,8 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       }
 
       const first = (value.firstName ?? value.FirstName ?? '').toString().trim();
-      const middle = (value.middleName ?? value.MiddleName ?? '').toString().trim();
       const last = (value.lastName ?? value.LastName ?? '').toString().trim();
-      const full = [first, middle, last].filter(Boolean).join(' ').trim();
+      const full = [first, last].filter(Boolean).join(' ').trim();
       return full || '';
     }
     return String(value).trim();

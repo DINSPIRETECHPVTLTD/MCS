@@ -2,10 +2,12 @@
  * Master Lookup – matches backend MasterLookup / MasterLookups table
  */
 
-/** Category keys for lookups (match backend LookupKeys) */
+/** Category keys for lookups (match backend LookupKeys in API) */
 export const LookupKeys = {
   LoanTerm: 'LOAN_TERM',
-  PaymentType: 'PAYMENT_TYPE'
+  PaymentType: 'PAYMENT_TYPE',
+  Relationship: 'RELATIONSHIP',
+  State: 'STATE'
 } as const;
 
 export type LookupKeyType = typeof LookupKeys[keyof typeof LookupKeys] | string;

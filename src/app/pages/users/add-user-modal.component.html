@@ -11,6 +11,15 @@
 
 <ion-content class="ion-padding">
   <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+    <!-- Role Dropdown -->
+    <ion-item [class.ion-invalid]="isFieldInvalid('role')">
+      <ion-label position="stacked">Role <span class="required">*</span></ion-label>
+      <ion-select class="role-select" formControlName="role" interface="popover" placeholder="Select role" [disabled]="true">
+        <ion-select-option value="Owner">Owner</ion-select-option>
+        <ion-select-option value="Investor">Investor</ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('role') }}</ion-note>
+    </ion-item>
     <!-- Name Fields -->
     <ion-item [class.ion-invalid]="isFieldInvalid('firstName')">
       <ion-label position="stacked">First Name <span class="required">*</span></ion-label>
@@ -22,23 +31,14 @@
       <ion-note slot="error">{{ getFieldError('firstName') }}</ion-note>
     </ion-item>
 
-    <ion-item>
-      <ion-label position="stacked">Middle Name</ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('SurName')">
+      <ion-label position="stacked">Surname <span class="required">*</span></ion-label>
       <ion-input
-        formControlName="middleName"
-        placeholder="Enter middle name"
+        formControlName="SurName"
+        placeholder="Enter Surname"
         type="text">
       </ion-input>
-    </ion-item>
-
-    <ion-item [class.ion-invalid]="isFieldInvalid('lastName')">
-      <ion-label position="stacked">Last Name <span class="required">*</span></ion-label>
-      <ion-input
-        formControlName="lastName"
-        placeholder="Enter last name"
-        type="text">
-      </ion-input>
-      <ion-note slot="error">{{ getFieldError('lastName') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('SurName') }}</ion-note>
     </ion-item>
 
     <!-- Contact Fields -->
@@ -57,7 +57,7 @@
     </ion-item>
 
     <!-- Email and Password Fields -->
-    <ion-item [class.ion-invalid]="isFieldInvalid('email')">
+    <ion-item *ngIf="userForm.get('role')?.value !== 'Investor'" [class.ion-invalid]="isFieldInvalid('email')">
       <ion-label position="stacked">Email <span class="required">*</span></ion-label>
       <ion-input
         formControlName="email"
@@ -67,7 +67,7 @@
       <ion-note slot="error">{{ getFieldError('email') }}</ion-note>
     </ion-item>
 
-    <ion-item *ngIf="!isEditing" [class.ion-invalid]="isFieldInvalid('password')">
+    <ion-item *ngIf="!isEditing && userForm.get('role')?.value !== 'Investor'" [class.ion-invalid]="isFieldInvalid('password')">
       <ion-label position="stacked">Password <span class="required">*</span></ion-label>
       <ion-input
         formControlName="password"
@@ -105,20 +105,24 @@
       </ion-input>
     </ion-item>
 
-    <ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('state')">
       <ion-label position="stacked">State</ion-label>
-      <ion-input
+      <ion-select
         formControlName="state"
-        placeholder="Enter state"
-        type="text">
-      </ion-input>
+        placeholder="Select state"
+        interface="popover">
+        <ion-select-option *ngFor="let state of states" [value]="state.lookupValue">
+          {{ state.lookupValue }}
+        </ion-select-option>
+      </ion-select>
+      <ion-note slot="error">{{ getFieldError('state') }}</ion-note>
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
-      <ion-label position="stacked">Zip Code</ion-label>
+      <ion-label position="stacked">Pin Code</ion-label>
       <ion-input
         formControlName="zipCode"
-        placeholder="Enter 6-digit zip code"
+        placeholder="Enter 6-digit Pin code"
         type="tel"
         inputmode="numeric"
         pattern="[0-9]*"
@@ -140,7 +144,6 @@
         (click)="onSubmit()"
         [disabled]="userForm.invalid && submitted"
         class="save-button">
-        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
         {{ isEditing ? 'Update User' : 'Save User' }}
       </ion-button>
 

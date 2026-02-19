@@ -9,6 +9,7 @@ import { AddUserModalComponent } from './add-user-modal.component';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
 import { Branch } from 'src/app/models/branch.models';
+import { __param } from 'tslib';
 
 @Component({
   selector: 'app-users',
@@ -22,9 +23,6 @@ export class UsersComponent implements OnInit, ViewWillEnter {
   pagination: boolean = true;
   paginationPageSize: number = 20;
   paginationPageSizeSelector: number[] = [10, 20, 50, 100];
-  showAddForm: boolean = false;
-  isEditing: boolean = false;
-  editingUserId: number | null = null;
   activeMenu: string = 'All Users';
   isLoading: boolean = false;
 
@@ -52,10 +50,18 @@ export class UsersComponent implements OnInit, ViewWillEnter {
     // set up grid columns
     this.columnDefs = [
       { headerName: 'User ID', field: 'id', width: 100, sortable: true, filter: true },
-      { headerName: 'First Name', field: 'firstName', width: 150, sortable: true, filter: true },
-      { headerName: 'Middle Name', field: 'middleName', width: 150, sortable: true, filter: true },
-      { headerName: 'Last Name', field: 'lastName', width: 150, sortable: true, filter: true },
+      { headerName: 'Full Name', field: 'fullName', width: 150, sortable: true, filter: true, 
+        valueGetter:(params: any) => {
+          const data = params.data;
+          if(!data) return '';
+          const parts = [];
+          if(data.firstName) parts.push(data.firstName);
+          if(data.lastName) parts.push(data.lastName);
+            return parts.join(' ')        
+          }
+      },
       { headerName: 'Email', field: 'email', width: 200, sortable: true, filter: true },
+      { headerName: 'Role', field: 'role', width: 150, sortable: true, filter: true },
       { 
         headerName: 'Address', 
         width: 300,
@@ -81,20 +87,26 @@ export class UsersComponent implements OnInit, ViewWillEnter {
           return parts.join(', ');
         }
       },
-      { headerName: 'Actions',field: 'actions', width: 160,
+      { headerName: 'Actions',field: 'actions', width: 380,
         sortable: false,
         filter: false,
         resizable: false,
         cellRenderer: (params: any) => {
           const container = document.createElement('div');
           container.className = 'actions-cell';
+          container.style.display = 'flex';
+          container.style.gap = '6px';
+          container.style.alignItems = 'center';
           container.innerHTML = `
-            <button class="ag-btn ag-edit" title="Edit" style="background: var(--ion-color-primary); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 500;">Edit</button>
-            <button class="ag-btn ag-delete" title="Delete" style="background: var(--ion-color-danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 500; margin-left: 8px;">Delete</button>
+            <button class="ag-btn ag-edit" title="Edit" style="background: var(--ion-color-primary); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 500; white-space: nowrap;">Edit</button>
+            <button class="ag-btn ag-reset-password" title="Reset Password" style="background: #4a90e2; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 500; white-space: nowrap;">Reset Password</button>
+            <button class="ag-btn ag-Inactive" title="Inactive" style="background: var(--ion-color-danger); color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 500; white-space: nowrap;">Inactive</button>
           `;
           const editBtn = container.querySelector('.ag-edit');
-          const deleteBtn = container.querySelector('.ag-delete');
+          const resetBtn = container.querySelector('.ag-reset-password');
+          const deleteBtn = container.querySelector('.ag-Inactive');
           if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editUser(params.data));
+          if (resetBtn) resetBtn.addEventListener('click', () => params.context.componentParent.resetPassword(params.data));
           if (deleteBtn) deleteBtn.addEventListener('click', () => params.context.componentParent.deleteUser(params.data));
           return container;
         }
@@ -121,7 +133,7 @@ export class UsersComponent implements OnInit, ViewWillEnter {
       next: (users) => {
         loading.dismiss();
         this.isLoading = false;
-        this.users = users || [];
+        this.users = (users || []).filter(u => u.role === 'Owner' || u.role === 'Investor');
         this.rowData = [...this.users]; // Create new array reference for change detection
 
         // Update grid if it's already initialized
@@ -145,29 +157,9 @@ export class UsersComponent implements OnInit, ViewWillEnter {
     });
   }
 
-  async toggleAddForm(): Promise<void> {
-    if (this.showAddForm) {
-      // Close modal if already open
-      const modal = await this.modalController.getTop();
-      if (modal) {
-        await this.modalController.dismiss();
-      }
-      this.showAddForm = false;
-      this.resetForm();
-    } else {
-      // Open modal
-      this.showAddForm = true;
-      await this.openAddUserModal();
-    }
-  }
-
   async openAddUserModal(): Promise<void> {
     const modal = await this.modalController.create({
       component: AddUserModalComponent,
-      componentProps: {
-        isEditing: this.isEditing,
-        editingUserId: this.editingUserId
-      },
       cssClass: 'add-user-modal'
     });
 
@@ -178,13 +170,6 @@ export class UsersComponent implements OnInit, ViewWillEnter {
       // Refresh users list after successful save
       this.loadUsers();
     }
-    this.showAddForm = false;
-    this.resetForm();
-  }
-
-  resetForm(): void {
-    this.isEditing = false;
-    this.editingUserId = null;
   }
 
 
@@ -219,43 +204,165 @@ export class UsersComponent implements OnInit, ViewWillEnter {
     }, 100);
   }
 
-  editUser(user: User): void {
+  async editUser(user: User): Promise<void> {
     if (!user || !user.id) return;
-    this.isEditing = true;
-    this.editingUserId = user.id;
-    this.showAddForm = true;
-    this.openAddUserModal();
+    const modal = await this.modalController.create({
+      component: AddUserModalComponent,
+      componentProps: {
+        isEditing: true,
+        editingUserId: user.id
+      },
+      cssClass: 'add-user-modal'
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onWillDismiss();
+    if (data && data.success) {
+      // Refresh users list after successful save
+      this.loadUsers();
+    }
   }
 
   async deleteUser(user: User): Promise<void> {
     if (!user || !user.id) return;
     const alert = await this.alertController.create({
-      header: 'Confirm delete',
-      message: `Are you sure you want to delete user "${user.firstName} ${user.lastName}"?`,
+      header: 'Confirm Inactivation',
+      message: `Are you sure you want to inactivate user "${user.firstName} ${user.lastName}"?`,
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Inactivate',
           role: 'destructive',
           handler: async () => {
-            const loading = await this.loadingController.create({ message: 'Deleting user...', spinner: 'crescent' });
+            const loading = await this.loadingController.create({ message: 'Inactivating user...', spinner: 'crescent' });
             await loading.present();
             this.userService.deleteUser(user.id!).subscribe({
               next: async () => {
                 await loading.dismiss();
-                this.showToast('User deleted successfully', 'success');
+                this.showToast('User inactivated successfully', 'success');
                 this.loadUsers();
               },
               error: async (err) => {
                 await loading.dismiss();
-                console.error('Delete user error', err);
-                this.showToast('Failed to delete user', 'danger');
+                console.error('Inactivate user error', err);
+                this.showToast('Failed to inactivate user', 'danger');
               }
             });
           }
         }
       ]
     });
+    await alert.present();
+  }
+
+  validatePassword(password: string): { valid: boolean; message: string } {
+    if (!password) {
+      return { valid: false, message: 'Password is required' };
+    }
+
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasAlphanumeric = /[a-zA-Z0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    const hasMinLength = password.length >= 6;
+
+    const errors: string[] = [];
+
+    if (!hasMinLength) {
+      errors.push('at least 6 characters');
+    }
+
+    if (!hasAlphanumeric) {
+      errors.push('alphanumeric characters');
+    }
+
+    if (!hasUpperCase) {
+      errors.push('capital letters');
+    }
+
+    if (!hasSpecialChar) {
+      errors.push('special characters');
+    }
+
+    if (errors.length > 0) {
+      return {
+        valid: false,
+        message: `Password must include: ${errors.join(', ')}`
+      };
+    }
+
+    return { valid: true, message: '' };
+  }
+
+  async resetPassword(user: User): Promise<void> {
+    if (!user || !user.id) return;
+
+    const alert = await this.alertController.create({
+      header: 'Reset Password',
+      message: `Reset password for ${user.firstName} ${user.lastName}`,
+      inputs: [
+        {
+          name: 'newPassword',
+          type: 'password',
+          placeholder: 'New Password',
+          attributes: { required: true }
+        },
+        {
+          name: 'confirmPassword',
+          type: 'password',
+          placeholder: 'Confirm Password',
+          attributes: { required: true }
+        }
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Submit',
+          handler: async (data) => {
+            const newPassword = data.newPassword?.trim();
+            const confirmPassword = data.confirmPassword?.trim();
+
+            if (!newPassword || !confirmPassword) {
+              this.showToast('Please enter both password fields', 'danger');
+              return false;
+            }
+
+            if (newPassword !== confirmPassword) {
+              this.showToast('Passwords do not match', 'danger');
+              return false;
+            }
+
+            const validation = this.validatePassword(newPassword);
+            if (!validation.valid) {
+              this.showToast(validation.message, 'danger');
+              return false;
+            }
+
+            const loading = await this.loadingController.create({
+              message: 'Resetting password',
+              spinner: 'crescent'
+            });
+            await loading.present();
+
+            this.userService.resetUserPassword(user.id!, newPassword).subscribe({
+              next: async () => {
+                await loading.dismiss();
+                this.showToast('Password Reset Successfully.', 'success');
+              },
+              error: async (err) => {
+                await loading.dismiss();
+                console.error('Reset password error', err);
+                const errorMessage = err.error?.message || 'Failed to reset password';
+                this.showToast(errorMessage, 'danger');
+              }
+            });
+
+            return true;
+          }
+        }
+      ]
+    });
+
     await alert.present();
   }
 }

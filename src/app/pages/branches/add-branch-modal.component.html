@@ -41,13 +41,12 @@
     </ion-item>
 
     <ion-item [class.ion-invalid]="isFieldInvalid('address2')">
-      <ion-label position="stacked">Address 2 <span class="required">*</span></ion-label>
+      <ion-label position="stacked">Address 2</ion-label>
       <ion-input
         formControlName="address2"
-        placeholder="Enter address line 2"
+        placeholder="Enter address line 2 (optional)"
         type="text"
-        maxlength="100"
-        required>
+        maxlength="100">
       </ion-input>
       <ion-note slot="error">{{ getFieldError('address2') }}</ion-note>
     </ion-item>
@@ -68,42 +67,31 @@
     <!-- State -->
     <ion-item [class.ion-invalid]="isFieldInvalid('state')">
       <ion-label position="stacked">State <span class="required">*</span></ion-label>
-      <ion-input
+      <ion-select
         formControlName="state"
-        placeholder="Enter state"
-        type="text"
-         maxlength="100"
-         required>
-      </ion-input>
+        placeholder="Select state"
+        interface="popover">
+        <ion-select-option *ngFor="let state of states" [value]="state.lookupValue">
+          {{ state.lookupValue }}
+        </ion-select-option>
+      </ion-select>
       <ion-note slot="error">{{ getFieldError('state') }}</ion-note>
     </ion-item>
 
      <!-- Zip Code -->
     <ion-item [class.ion-invalid]="isFieldInvalid('zipCode')">
-      <ion-label position="stacked">Zip Code <span class="required">*</span></ion-label>
+      <ion-label position="stacked"> PinCode <span class="required">*</span></ion-label>
       <ion-input
         formControlName="zipCode"
-        placeholder="Enter zip/postal code"
+        placeholder="Enter Pin/postal code"
         type="tel"
         inputmode="numeric"
         pattern="[0-9]*"
-        maxlength="10"
+        maxlength="6"
         (ionInput)="onNumericInput($event, 'zipCode')"
         required>
       </ion-input>
       <ion-note slot="error">{{ getFieldError('zipCode') }}</ion-note>
-    </ion-item>
-
-    <ion-item [class.ion-invalid]="isFieldInvalid('country')">
-      <ion-label position="stacked">Country <span class="required">*</span></ion-label>
-      <ion-input
-        formControlName="country"
-        placeholder="Country"
-        type="text"
-        readonly
-        required>
-      </ion-input>
-      <ion-note slot="error">{{ getFieldError('country') }}</ion-note>
     </ion-item>
 
     <!-- Phone -->
@@ -133,11 +121,12 @@
   <ion-toolbar>
     <div class="action-row footer-row">
       <ion-button
+        expand="block"
         type="button"
         (click)="onSubmit()"
-        [disabled]="branchForm.invalid && submitted"
+        [disabled]="isSavedDisabled"
         class="save-button">
-        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+        
         {{ isEditing ? 'Update Branch' : 'Save Branch' }}
       </ion-button>
 
@@ -148,7 +137,11 @@
         class="cancel-button">
         Cancel
       </ion-button>
+
+      
     </div>
   </ion-toolbar>
 </ion-footer>
+
+
 

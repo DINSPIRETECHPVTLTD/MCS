@@ -1,49 +1,26 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, Injectable } from '@angular/core';
-import { OverlayContainer } from '@angular/cdk/overlay';
-import { Platform } from '@angular/cdk/platform';
-import { DOCUMENT } from '@angular/common';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidatorFn, ValidationErrors } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil, distinctUntilChanged } from 'rxjs/operators';
 import { MemberService } from '../../services/member.service';
+import { UserService } from '../../services/user.service';
+import { MasterDataService } from '../../services/master-data.service';
+import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 import { CenterOption, POCOption } from '../../models/member.models';
-
-@Injectable()
-class ModalOverlayContainer extends OverlayContainer {
-  constructor(@Inject(DOCUMENT) private doc: Document, private platform: Platform) {
-    super(doc, platform);
-  }
-
-  protected override _createContainer(): void {
-    const container = this.doc.createElement('div');
-    container.classList.add('cdk-overlay-container');
-
-    const modal = this.doc.querySelector('ion-modal.add-member-modal');
-    if (modal) {
-      modal.appendChild(container);
-    } else {
-      this.doc.body.appendChild(container);
-    }
-
-    this._containerElement = container;
-  }
-}
 
 @Component({
   selector: 'app-add-member-modal',
   templateUrl: './add-member-modal.component.html',
-  styleUrls: ['./add-member-modal.component.scss'],
-  providers: [
-    { provide: OverlayContainer, useClass: ModalOverlayContainer }
-  ]
+  styleUrls: ['./add-member-modal.component.scss']
 })
 export class AddMemberModalComponent implements OnInit, OnDestroy {
   // ...existing properties...
 
 
   memberForm: FormGroup;
-  guardianRelationships: string[] = ['Father', 'Mother', 'Wife', 'Sister', 'Brother', 'Other'];
+  /** Relationship options from master data (RELATIONSHIP), with "Other" added if not present */
+  relationships: MasterLookup[] = [];
   isSubmitting = false;
   isLoading = false;
   submitted = false;
@@ -51,12 +28,19 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
 
   centers: CenterOption[] = [];
   pocs: POCOption[] = [];
+  collectors: any[] = [];
+  states: MasterLookup[] = [];
+  isLoadingStates = false;
+  isLoadingRelationships = false;
+  private organizationStateName: string | null = null;
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private formBuilder: FormBuilder,
     private memberService: MemberService,
+    private userService: UserService,
+    private masterDataService: MasterDataService,
     private modalController: ModalController,
     private loadingController: LoadingController,
     private toastController: ToastController,
@@ -66,8 +50,80 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.loadOrganizationStateFromStorage();
     this.loadAllCenters();
+    this.loadStates();
+    this.loadRelationships();
     this.setupFormListeners();
+  }
+
+  private loadOrganizationStateFromStorage(): void {
+    const stored = localStorage.getItem('organization_info');
+    if (!stored) return;
+    try {
+      const org: { state?: string } = JSON.parse(stored);
+      const state = org?.state;
+      if (state && typeof state === 'string' && state.trim().length > 0) {
+        this.organizationStateName = state.trim();
+      }
+    } catch {
+      this.organizationStateName = null;
+    }
+  }
+
+  private applyOrgStateDefaultIfNeeded(): void {
+    if (!this.organizationStateName) return;
+    const stateControl = this.memberForm.get('state');
+    if (!stateControl || (stateControl.value || '').toString().trim()) return;
+    const target = this.organizationStateName.toLowerCase();
+    const match = this.states.find(
+      s => (s.lookupValue || '').toLowerCase() === target || (s.lookupCode || '').toLowerCase() === target
+    );
+    if (match) {
+      stateControl.setValue(match.lookupCode);
+      this.cdr.detectChanges();
+    }
+  }
+
+  loadRelationships(): void {
+    this.isLoadingRelationships = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        const list = allLookups
+          .filter(lookup => lookup.lookupKey === LookupKeys.Relationship)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        const hasOther = list.some(l => (l.lookupValue || '').toLowerCase() === 'other');
+        this.relationships = hasOther ? list : [...list, { lookupKey: 'RELATIONSHIP', lookupCode: 'Other', lookupValue: 'Other', sortOrder: 9999, isActive: true } as MasterLookup];
+        this.isLoadingRelationships = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading relationships:', error);
+        this.relationships = [{ lookupKey: 'RELATIONSHIP', lookupCode: 'Other', lookupValue: 'Other', sortOrder: 0, isActive: true } as MasterLookup];
+        this.isLoadingRelationships = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  loadStates(): void {
+    this.isLoadingStates = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        this.states = allLookups
+          .filter(lookup => lookup.lookupKey === LookupKeys.State)
+          .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
+        this.isLoadingStates = false;
+        this.applyOrgStateDefaultIfNeeded();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading states:', error);
+        this.states = [];
+        this.isLoadingStates = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   ionViewWillEnter(): void {
@@ -87,30 +143,31 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         centerId: ['', Validators.required],
         pocId: ['', Validators.required],
         firstName: ['', [Validators.required, Validators.maxLength(50), this.alphanumericValidator()]],
-        middleName: ['', [Validators.maxLength(50), this.alphanumericValidator()]],
         lastName: ['', [Validators.required, Validators.maxLength(50), this.alphanumericValidator()]],
         dateOfBirth: ['', [Validators.required, this.noFutureDateValidator(), this.minimumAgeValidator(18)]],
         age: [{ value: '', disabled: true }],
         phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
-        altPhone: ['', [Validators.pattern(/^\d{10}$/), this.altPhoneDifferentFromPrimaryValidator()]],
         address1: ['', [Validators.required, Validators.maxLength(200)]],
         address2: ['', [Validators.maxLength(200)]],
         city: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
-        state: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
+        state: ['', [Validators.required, Validators.maxLength(100)]],
         zipCode: ['', [Validators.required, Validators.maxLength(6), Validators.minLength(6), Validators.pattern(/^[0-9]{6}$/)]],
-        aadhaar: ['', [Validators.pattern(/^\d{12}$/)]],
+        aadhaar: ['', [Validators.required, Validators.pattern(/^\d{12}$/)]],
         occupation: ['', [Validators.required, Validators.maxLength(100)]],
         guardianFirstName: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
-        guardianMiddleName: ['', [Validators.maxLength(100), this.alphanumericValidator()]],
         guardianLastName: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
         guardianRelationship: ['', [Validators.required]],
         guardianRelationshipOther: ['', [Validators.maxLength(100), this.alphanumericValidator()]],
-        guardianPhone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
-        guardianDOB: ['', [this.noFutureDateValidator()]],
-        guardianAge: ['', [Validators.required, Validators.min(18), Validators.max(150)]]
+        guardianPhone: ['', [Validators.pattern(/^\d{10}$/)]],
+        guardianDOB: ['', [Validators.required, this.noFutureDateValidator()]],
+        guardianAge: ['', [Validators.min(18), Validators.max(150)]],
+        paymentMode: ['', [Validators.required]],
+        paymentAmount: ['', [Validators.required, Validators.min(0)]],
+        paymentDate: ['', [Validators.required, this.noFutureDateValidator()]],
+        collectedBy: ['', [Validators.required]]
       },
       {
-        validators: [this.uniquePhoneNumbersValidator(['phoneNumber', 'altPhone', 'guardianPhone'])]
+        validators: [this.uniquePhoneNumbersValidator(['phoneNumber', 'guardianPhone'])]
       }
     );
   }
@@ -135,27 +192,47 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Load collectors (users) for the selected center
+  private loadCollectorsForCenter(centerId: number): void {
+    const selectedCenter = this.centers.find(c => Number(c.id) === centerId);
+    if (!selectedCenter) return;
+
+    const branchId = selectedCenter.branchId;
+    if (!branchId) {
+      this.collectors = [];
+      return;
+    }
+
+    // Fetch all users and filter by branch
+    this.userService.getUsers().subscribe({
+      next: (users: any[]) => {
+        this.collectors = (users ?? [])
+          .filter(user => user && Number(user.branchId) === branchId)
+          .map(user => ({
+            id: user.id,
+            name: (user.name || [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ')).trim(),
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.collectors = [];
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   // Setup form listeners for value changes
   setupFormListeners(): void {
-
     this.memberForm.get('phoneNumber')?.valueChanges
       .pipe(distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(value => {
         const sanitized = this.sanitizeDigits(value, 10);
         if (value !== sanitized) {
           this.memberForm.patchValue({ phoneNumber: sanitized }, { emitEvent: false });
-        }
-
-        // Ensure altPhone re-validates when the primary phone changes
-        this.memberForm.get('altPhone')?.updateValueAndValidity({ emitEvent: false });
-      });
-
-    this.memberForm.get('altPhone')?.valueChanges
-      .pipe(distinctUntilChanged(), takeUntil(this.destroy$))
-      .subscribe(value => {
-        const sanitized = this.sanitizeDigits(value, 10);
-        if (value !== sanitized) {
-          this.memberForm.patchValue({ altPhone: sanitized }, { emitEvent: false });
         }
       });
 
@@ -210,7 +287,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
       .subscribe(centerId => {
         const selectedCenterId = Number(centerId);
         if (selectedCenterId) {
-          this.memberForm.patchValue({ pocId: '' });
+          this.memberForm.patchValue({ pocId: '', collectedBy: '' });
           // Fetch POCs for the selected center
           this.memberService.getAllPOCs().subscribe(pocs => {
             // Filter POCs by centerId if needed, or use API that supports centerId
@@ -221,9 +298,13 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
                 name: (poc.name || [poc.firstName, poc.middleName, poc.lastName].filter(Boolean).join(' ')).trim()
               }));
           });
+          
+          // Fetch collectors (users) for the selected center's branch
+          this.loadCollectorsForCenter(selectedCenterId);
         } else {
           this.pocs = [];
-          this.memberForm.patchValue({ pocId: '' });
+          this.collectors = [];
+          this.memberForm.patchValue({ pocId: '', collectedBy: '' });
         }
       });
 
@@ -431,8 +512,12 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
           guardianAge: Number(raw.guardianAge),
           guardianRelationship: guardianRelationship || null,
           centerId: selectedCenterId,
-          pocId: Number(raw.pocId)
-          ,occupation: (raw.occupation ?? '').toString().trim()
+          pocId: Number(raw.pocId),
+          occupation: (raw.occupation ?? '').toString().trim(),
+          paymentMode: (raw.paymentMode ?? '').toString() || null,
+          paymentAmount: raw.paymentAmount ? Number(raw.paymentAmount) : null,
+          paymentDate: raw.paymentDate ? this.formatDateForApi(raw.paymentDate) : null,
+          collectedBy: raw.collectedBy ? Number(raw.collectedBy) : null
         };
 
         const created = await firstValueFrom(this.memberService.createMember(payload as any));

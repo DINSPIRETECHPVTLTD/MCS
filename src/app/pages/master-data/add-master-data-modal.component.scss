@@ -1,8 +1,85 @@
-.form-actions {
-  margin-top: 24px;
+/* Modal content: scrollable with space for footer */
+ion-content.add-master-data-content {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 16px;
+  --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 100px);
+}
+
+ion-content.add-master-data-content::part(scroll) {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+form {
+  max-width: 600px;
+  margin: 0 auto;
+
+  ion-item {
+    --padding-start: 0;
+    --inner-padding-end: 0;
+    margin-bottom: 12px;
+    --border-radius: 8px;
+    --background: var(--ion-color-light);
+    border-radius: 8px;
+
+    ion-label {
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    ion-input,
+    ion-textarea,
+    ion-select {
+      --padding-start: 12px;
+    }
+
+    &.ion-invalid {
+      --border-color: var(--ion-color-danger);
+      --highlight-color-invalid: var(--ion-color-danger);
+    }
+  }
+
+  ion-note {
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+  }
+}
+
+ion-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+}
+
+ion-footer ion-toolbar {
+  padding: 12px 16px;
+  background: var(--ion-background-color, #fff);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.action-row.footer-row {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
+}
+
+.action-row.footer-row ion-button {
+  flex: 1 1 0;
+  --border-radius: 8px;
+  height: 48px;
+}
+
+.action-row.footer-row .save-button {
+  font-weight: 600;
+  text-transform: none;
+}
+
+.action-row.footer-row .cancel-button {
+  font-weight: 600;
+  text-transform: none;
 }
 
 .required {
