@@ -3,7 +3,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
-import { LedgerBalances, CreateFundTransferRequest } from '../models/ledger-balance.modal';
+import { LedgerBalances } from '../models/ledger-balance.modal';
+import { CreateFundTransferRequest } from '../models/fund-transfer.models';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 @Injectable({
@@ -38,7 +39,7 @@ export class LedgerBalanceService {
     if (token) {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
-    return this.http.post<LedgerBalances>(`${this.apiUrl}/ledgerbalances`, fundTransfer, { headers });
+    return this.http.post<LedgerBalances>(`${this.apiUrl}/ledgerbalances/fund-transfer`, fundTransfer, { headers });
   }
  
 }
