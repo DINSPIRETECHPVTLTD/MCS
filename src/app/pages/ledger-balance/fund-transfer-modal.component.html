@@ -1,6 +1,6 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Add Investment</ion-title>
+    <ion-title>Create Fund Transfer</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="closeModal()">
         <ion-icon name="close-outline" slot="icon-only"></ion-icon>
@@ -9,30 +9,30 @@
   </ion-toolbar>
 </ion-header>
 <ion-content>
-  <form [formGroup]="investmentForm">
-    <ion-item [class.ion-invalid]="isFieldInvalid('investorName')">
-      <ion-label position="stacked">From User <span class="required">*</span></ion-label>
+  <form [formGroup]="fundTransferForm" (ngSubmit)="onSubmit()">
+    <ion-item [class.ion-invalid]="isFieldInvalid('fromInvestorName')">
+      <ion-label position="stacked">Sender Name <span class="required">*</span></ion-label>
       <ion-select
-        formControlName="investorName"
-        placeholder="Select Investor"
+        formControlName="fromInvestorName"
+        placeholder="Select Sender Name"
         interface="popover">
         <ion-select-option *ngFor="let user of users" [value]="user.id">
           {{ user.firstName }} {{ user.lastName }}
         </ion-select-option>
       </ion-select>
-      <ion-note slot="error">{{ getFieldError('investorName') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('fromInvestorName') }}</ion-note>
     </ion-item>
-    <ion-item [class.ion-invalid]="isFieldInvalid('investorName')">
-      <ion-label position="stacked">To User <span class="required">*</span></ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('toInvestorName')">
+      <ion-label position="stacked">Recipient Name <span class="required">*</span></ion-label>
       <ion-select
-        formControlName="investorName"
-        placeholder="Select Investor"
+        formControlName="toInvestorName"
+        placeholder="Select Recipient Name"
         interface="popover">
         <ion-select-option *ngFor="let user of users" [value]="user.id">
           {{ user.firstName }} {{ user.lastName }}
         </ion-select-option>
       </ion-select>
-      <ion-note slot="error">{{ getFieldError('investorName') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('toInvestorName') }}</ion-note>
     </ion-item>
     <ion-item [class.ion-invalid]="isFieldInvalid('amount')">
       <ion-label position="stacked">Amount <span class="required">*</span></ion-label>
@@ -73,7 +73,8 @@
     <div class="action-row footer-row">
       <ion-button
         type="button"
-        [disabled]="investmentForm.invalid && submitted"
+        [disabled]="fundTransferForm.invalid && submitted"
+        (click)="onSubmit()"
         class="save-button">
         Save
       </ion-button>

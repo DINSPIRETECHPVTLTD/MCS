@@ -52,7 +52,25 @@ export class LedgerBalanceComponent implements OnInit, ViewWillEnter {
 
     this.columnDefs = [
       { headerName: 'User Name', field: 'userName', width: 100, sortable: true, filter: true },
-      { headerName: 'Amount', field: 'amount', width: 100, sortable: true, filter: true }
+      { headerName: 'Amount', field: 'amount', width: 100, sortable: true, filter: true },
+      { headerName: 'Actions',field: 'actions', width: 100,
+        sortable: false,
+        filter: false,
+        resizable: false,
+        cellRenderer: (params: any) => {
+          const container = document.createElement('div');
+          container.className = 'actions-cell';
+          container.style.display = 'flex';
+          container.style.gap = '6px';
+          container.style.alignItems = 'center';
+          container.innerHTML = `
+            <button class="ag-btn ag-navigate">Open Transaction</button>
+          `;
+          const navigateBtn = container.querySelector('.ag-navigate');
+          if (navigateBtn) navigateBtn.addEventListener('click', () => params.context.componentParent.openTransaction(params.data));
+          return container;
+        }
+      }
     ]; 
   }
 
