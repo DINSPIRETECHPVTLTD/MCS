@@ -178,7 +178,6 @@ export class AddLoanModalComponent implements OnInit {
 
   async createLoan(): Promise<void> {
     if (!this.isLoanFormValid() || this.isCreatingLoan) return;
-    
     this.isCreatingLoan = true;
     const loading = await this.loadingController.create({
       message: 'Creating loan...',

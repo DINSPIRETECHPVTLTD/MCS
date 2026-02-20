@@ -196,25 +196,47 @@
 .grid-wrapper {
   border: 1px solid var(--ion-color-medium);
   border-radius: 8px;
+  height: 60vh;
+  min-height: 300px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  ag-grid-angular {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  ::ng-deep .ag-root-wrapper {
+    height: 100% !important;
+  }
 }
 
 // AG Grid theme adjustments
 ::ng-deep .ag-theme-alpine {
   --ag-font-family: inherit;
   --ag-font-size: 13px;
-  
+
   .ag-header-cell {
     font-weight: 600;
     background-color: var(--ion-color-light);
   }
-  
+
   .ag-row-selected {
     background-color: var(--ion-color-primary-tint) !important;
   }
 
   .ag-checkbox-input-wrapper {
     border-radius: 4px;
+  }
+
+  // Single scroll: only the grid body scrolls; avoid duplicate scrollbars
+  .ag-body-viewport {
+    overflow: auto;
+  }
+  .ag-body-horizontal-scroll {
+    min-height: 0;
   }
 }
 

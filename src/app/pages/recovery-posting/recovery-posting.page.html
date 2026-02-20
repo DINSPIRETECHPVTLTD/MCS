@@ -33,6 +33,7 @@
                 (ionChange)="onCenterChange()"
                 placeholder="Select Center"
                 interface="popover">
+                <ion-select-option [value]="">Select Center</ion-select-option>
                 <ion-select-option *ngFor="let center of centers" [value]="center.id">
                   {{ center.code ? center.code + ' - ' + center.name : center.name }}
                 </ion-select-option>
@@ -46,6 +47,7 @@
                 placeholder="Select POC"
                 interface="popover"
                 [disabled]="!selectedCenter || pocs.length === 0">
+                <ion-select-option [value]="">Select POC</ion-select-option>
                 <ion-select-option *ngFor="let poc of pocs" [value]="poc.id">
                   {{ getPocDisplayName(poc) }}
                 </ion-select-option>
@@ -58,6 +60,7 @@
                 (ionChange)="onCollectByChange()"
                 placeholder="Select Collect By"
                 interface="popover">
+                <ion-select-option [value]="">Select Collect By</ion-select-option>
                 <ion-select-option *ngFor="let user of users" [value]="user.id">
                   {{ getUserDisplayName(user) }}
                 </ion-select-option>
@@ -82,18 +85,7 @@
 
     <!-- Action Bar -->
     <div class="action-bar">
-      <div class="select-actions">
-        <ion-checkbox 
-          [(ngModel)]="selectAllChecked" 
-          (ionChange)="selectAllChecked ? selectAll() : deselectAll()"
-          aria-label="Select all items">
-        </ion-checkbox>
-        <span>Select All</span>
-        <ion-button fill="outline" size="small" (click)="deselectAll()">
-          Deselect All
-        </ion-button>
-        <span class="action-hint">Select one or more members with the checkboxes, then click POST.</span>
-      </div>
+      <span class="action-hint">Select one or more members with the checkboxes, then click POST.</span>
     </div>
 
     <!-- AG Grid -->
@@ -114,16 +106,14 @@
       <div *ngIf="!isLoading && rowData.length > 0" class="grid-wrapper">
         <ag-grid-angular
           class="ag-theme-alpine"
-          style="width: 100%; height: 60vh;"
+          style="width: 100%; height: 100%;"
           [gridOptions]="gridOptions"
           [rowData]="rowData"
           [columnDefs]="columnDefs"
           [defaultColDef]="defaultColDef"
           [pagination]="pagination"
           [paginationPageSize]="paginationPageSize"
-          [rowSelection]="rowSelection"
-          (gridReady)="onGridReady($event)"
-          (selectionChanged)="onSelectionChanged()">
+          (gridReady)="onGridReady($event)">
         </ag-grid-angular>
       </div>
     </div>
