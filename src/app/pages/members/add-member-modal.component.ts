@@ -164,7 +164,8 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         paymentMode: ['', [Validators.required]],
         paymentAmount: ['', [Validators.required, Validators.min(0)]],
         paymentDate: ['', [Validators.required, this.noFutureDateValidator()]],
-        collectedBy: ['', [Validators.required]]
+        collectedBy: ['', [Validators.required]],
+        paymentComments: ['', [Validators.maxLength(500)]]
       },
       {
         validators: [this.uniquePhoneNumbersValidator(['phoneNumber', 'guardianPhone'])]
@@ -517,7 +518,8 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
           paymentMode: (raw.paymentMode ?? '').toString() || null,
           paymentAmount: raw.paymentAmount ? Number(raw.paymentAmount) : null,
           paymentDate: raw.paymentDate ? this.formatDateForApi(raw.paymentDate) : null,
-          collectedBy: raw.collectedBy ? Number(raw.collectedBy) : null
+          collectedBy: raw.collectedBy ? Number(raw.collectedBy) : null,
+          paymentComments: (raw.paymentComments ?? '').toString().trim() || null
         };
 
         const created = await firstValueFrom(this.memberService.createMember(payload as any));
