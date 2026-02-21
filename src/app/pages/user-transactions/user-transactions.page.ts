@@ -7,27 +7,29 @@ import { agGridTheme } from '../../ag-grid-theme';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { Investments } from 'src/app/models/investments.models';
 import { ModalController } from '@ionic/angular';
-import { InvestmentsService } from '../../services/investments.service';
-import { AddInvestmentsComponent } from './add-investments.component';
 import { UserService } from '../../services/user.service';
 import { forkJoin } from 'rxjs';
+import { UserTransactions } from 'src/app/models/user-transactions.models';
+import { UserTransactionsService } from '../../services/user-transactions.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
-  selector: 'app-investments',
-  templateUrl: './investments.page.html',
-  styleUrls: ['./investments.page.scss']
+  selector: 'app-user-transactions',
+  templateUrl: './user-transactions.page.html',
+  styleUrls: ['./user-transactions.page.scss']
 })
-export class InvestmentsComponent implements OnInit, ViewWillEnter {
-  activeMenu: string = 'Investments';
+export class UserTransactionsComponent implements OnInit, ViewWillEnter {
+  activeMenu: string = 'Ledger Balances';
 
-  investments: Investments[] = [];
-  rowData: Investments[] = [];
+  userTransactions: UserTransactions[] = [];
+  rowData: UserTransactions[] = [];
   columnDefs: ColDef[] = [];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
   pagination: boolean = true;
   paginationPageSize: number = 20;
   paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   isLoading: boolean = false;
+  transactionUserId: number | null = null;
   
     private gridApi?: GridApi;
     gridOptions = { theme: agGridTheme, context: { componentParent: this } };
@@ -38,10 +40,12 @@ export class InvestmentsComponent implements OnInit, ViewWillEnter {
     private toastController: ToastController,
     private loadingController: LoadingController,
     private modalController: ModalController,
-    private investmentsService: InvestmentsService,
-    private userService: UserService
+    private userService: UserService,
+    private userTransactionsService: UserTransactionsService,
+    private route: ActivatedRoute
   ) {
-    
+    const URLUserId = this.route.snapshot.paramMap.get('id');
+    this.transactionUserId = URLUserId ? +URLUserId : null;
   }
 
   ngOnInit(): void {
@@ -51,9 +55,18 @@ export class InvestmentsComponent implements OnInit, ViewWillEnter {
     }
 
     this.columnDefs = [
-      { headerName: 'User Name', field: 'userName', width: 150, sortable: true, filter: true },
+      { headerName: 'Sender Name', field: 'paidfromUserName', width: 150, sortable: true, filter: true },
+      { headerName: 'Receiver Name', field: 'paidtoUserName', width: 150, sortable: true, filter: true },
+      { headerName: 'Transaction Type', field: 'transactionType', width: 150, sortable: true, filter: true },
       { headerName: 'Amount', field: 'amount', width: 100, sortable: true, filter: true },
-      { headerName: 'Investment Date', field: 'investmentDate', width: 150, sortable: true, filter: true, 
+      { headerName: 'Created By', field: 'createdBy', width: 150, sortable: true, filter: true },
+      { headerName: 'Payment Date', field: 'paymentDate', width: 150, sortable: true, filter: true, 
+        valueFormatter: (params) => {
+        if (!params.value) return '';
+        return new Date(params.value).toLocaleDateString();
+        }
+      },
+      { headerName: 'created Date', field: 'createdDate', width: 150, sortable: true, filter: true, 
         valueFormatter: (params) => {
         if (!params.value) return '';
         return new Date(params.value).toLocaleDateString();
@@ -64,36 +77,38 @@ export class InvestmentsComponent implements OnInit, ViewWillEnter {
 
   ionViewWillEnter(): void {
     if (this.authService.isAuthenticated()) {
-      this.loadInvestments();
+      this.loadUserTransactions();
     }
   }
 
-  async loadInvestments(): Promise<void> {
+  async loadUserTransactions(): Promise<void> {
   this.isLoading = true;
   const loading = await this.loadingController.create({
-    message: 'Loading investments...',
+    message: 'Loading user transactions...',
     spinner: 'crescent'
   });
   await loading.present();
 
-  // Fetch both investments and all users in parallel
+  // Fetch both user transactions and all users in parallel
   forkJoin([
-    this.investmentsService.getInvestments(),
+    this.userTransactionsService.getUserTransactions(this.transactionUserId || 0),
     this.userService.getUsers()
   ]).subscribe({
-    next: ([investments, users]) => {
-      this.investments = investments || [];
+    next: ([userTransactions, users]) => {
+      this.userTransactions = userTransactions || [];
 
-      // Create user map with full name (single map, reuse for all investments)
+      // Create user map with full name (single map, reuse for all user transactions)
       const userMap = new Map();
       users.forEach(user => {
         userMap.set(user.id, `${user.firstName} ${user.lastName}`);
       });
 
-      // Map investments with userName
-      this.rowData = this.investments.map(inv => ({
-        ...inv,
-        userName: userMap.get(inv.userId) || 'Unknown'
+      // Map user transactions with userName
+      this.rowData = this.userTransactions.map(ut => ({
+        ...ut,
+        paidfromUserName: userMap.get(ut.paidFromUserId) || 'Unknown',
+        paidtoUserName: userMap.get(ut.paidToUserId) || 'Unknown',
+        createdBy: userMap.get(ut.createdBy) || 'Unknown'
       }));
 
       // Update grid
@@ -110,11 +125,11 @@ export class InvestmentsComponent implements OnInit, ViewWillEnter {
     error: (error) => {
       loading.dismiss();
       this.isLoading = false;
-      this.investments = [];
+      this.userTransactions = [];
       this.rowData = [];
       console.error('Error loading data:', error);
       if (error.status !== 404) {
-        this.showToast('Error loading investments: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
+        this.showToast('Error loading user transactions: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
       }
     }
   });
@@ -142,20 +157,6 @@ export class InvestmentsComponent implements OnInit, ViewWillEnter {
     }, 100);
   }
 
-  async openAddInvestmentModal(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: AddInvestmentsComponent,
-      cssClass: 'add-investment-modal'
-    });
-
-    await modal.present();
-
-    const { data } = await modal.onWillDismiss();
-    if (data && data.success) {
-      // Refresh investments list after successful save
-      this.loadInvestments();
-    }
-  }
 
   onMenuChange(menu: string): void {
     this.activeMenu = menu;

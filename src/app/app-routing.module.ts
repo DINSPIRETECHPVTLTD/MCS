@@ -48,6 +48,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/ledger-balance/ledger-balance.module').then(m => m.LedgerBalanceModule)
   },
   {
+    path: 'user-transactions/:id',
+    loadChildren: () => import('./pages/user-transactions/user-transactions.module').then(m => m.UserTransactionsPageModule)
+  },
+  {
     path: 'branch-dashboard',
     redirectTo: 'home',
     pathMatch: 'full'
