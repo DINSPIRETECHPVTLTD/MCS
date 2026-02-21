@@ -82,10 +82,12 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
         container.className = 'actions-cell';
         
         const viewBtn = document.createElement('button');
+        viewBtn.type = 'button';
         viewBtn.className = 'ag-btn ag-navigate';
         viewBtn.textContent = 'View Loan';
         
         const prepaymentBtn = document.createElement('button');
+        prepaymentBtn.type = 'button';
         prepaymentBtn.className = 'ag-btn ag-edit';
         prepaymentBtn.textContent = 'Prepayment Loan';
         
@@ -159,7 +161,7 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
     const id = loan.loanId;
     if (id != null) {
       this.ngZone.run(() => {
-        this.router.navigate(['/loan-detail', String(id)], { replaceUrl: true });
+        this.router.navigate(['/manage-loan', 'repayment-summary', String(id)], { replaceUrl: true });
       });
     } else {
       this.ngZone.run(() => {

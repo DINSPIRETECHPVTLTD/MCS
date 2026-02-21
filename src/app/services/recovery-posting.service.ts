@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { map, catchError, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   LoanSchedulerRecoveryDto,
-  LoanSchedulerRecoveryFilterRequest,
   LoanSchedulerSaveRequest
 } from '../models/recovery-posting.models';
 import { AuthService } from './auth.service';
@@ -28,29 +28,25 @@ export class RecoveryPostingService {
     });
   }
 
-  getLoanSchedulersForRecovery(filter: LoanSchedulerRecoveryFilterRequest): Observable<LoanSchedulerRecoveryDto[]> {
-    let params = new HttpParams().set('scheduleDate', filter.scheduleDate);
-
-    if (filter.branchId != null) {
-      params = params.set('branchId', filter.branchId.toString());
-    }
-    if (filter.centerId != null) {
-      params = params.set('centerId', filter.centerId.toString());
-    }
-    if (filter.pocId != null) {
-      params = params.set('pocId', filter.pocId.toString());
-    }
-    if (filter.pageNumber != null) {
-      params = params.set('pageNumber', filter.pageNumber.toString());
-    }
-    if (filter.pageSize != null) {
-      params = params.set('pageSize', filter.pageSize.toString());
-    }
-
-    return this.http.get<LoanSchedulerRecoveryDto[]>(`${this.baseUrl}/recovery`, {
-      headers: this.getHeaders(),
-      params
-    });
+  /**
+   * GET api/LoanSchedulers/loan/{loanId}
+   * Returns week-wise schedule rows for the given loan (for Loan Repayment Summary).
+   * Returns empty array on error or when no data exists.
+   */
+  getSchedulersByLoanId(loanId: number): Observable<LoanSchedulerRecoveryDto[]> {
+    return this.http.get<LoanSchedulerRecoveryDto[] | { $values?: LoanSchedulerRecoveryDto[] }>(
+      `${this.baseUrl}/loan/${loanId}`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      timeout(15000),
+      map((response: LoanSchedulerRecoveryDto[] | { $values?: LoanSchedulerRecoveryDto[] }) => {
+        if (Array.isArray(response)) return response;
+        if (response && typeof response === 'object' && '$values' in response && Array.isArray((response as { $values?: LoanSchedulerRecoveryDto[] }).$values))
+          return (response as { $values: LoanSchedulerRecoveryDto[] }).$values;
+        return [];
+      }),
+      catchError(() => of([]))
+    );
   }
 
   /**

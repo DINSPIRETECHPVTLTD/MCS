@@ -89,6 +89,25 @@ WHERE ls.ScheduleDate BETWEEN @From AND @To
 
 Then wrap in a CTE/subquery with `ROW_NUMBER() ... PARTITION BY ls.LoanId ORDER BY ls.InstallmentNo` and `WHERE rn = 1`. Use **parameterized queries** for all inputs.
 
+### 3.5. Backend troubleshooting (GET recovery returns no rows)
+
+If `GET .../LoanSchedulers/recovery?scheduleDate=2026-03-02&pageSize=20` returns an empty list even when the DB has rows for that date:
+
+1. **PaymentDate “unpaid” condition**  
+   The plan above uses `PaymentDate IS NULL`. In the actual DB, unpaid rows may use a sentinel value (e.g. `9999-01-01 00:00:00`) instead of NULL. In that case, **no rows** will match `PaymentDate IS NULL`.  
+   **Fix:** Treat unpaid as “not yet paid”, e.g.  
+   `(ls.PaymentDate IS NULL OR ls.PaymentDate >= '9999-01-01')`  
+   (or use the same sentinel value your schema uses). Do not rely only on `PaymentDate IS NULL` if the table uses a sentinel date.
+
+2. **ScheduleDate filter**  
+   Filter by **date only**, not datetime. The API receives `scheduleDate=2026-03-02`. Compare using the date part of `ScheduleDate` (e.g. `CAST(ls.ScheduleDate AS DATE) = @ScheduleDate` or equivalent), so rows with `2026-03-02 00:00:00.0000000` match.
+
+3. **branchId**  
+   If the backend requires `branchId` and returns no rows when it is missing, the frontend will send it when the user has a branch. For manual testing, add `&branchId=1` (or the correct branch id) to the URL.
+
+4. **“Next installment only”**  
+   If the API returns only the *next* unpaid installment per loan (ROW_NUMBER = 1), then for `2026-03-02` only one row per loan with that ScheduleDate should appear. Ensure the date filter is applied before or correctly inside that logic.
+
 ---
 
 ## 4. AG Grid – columns and behaviour

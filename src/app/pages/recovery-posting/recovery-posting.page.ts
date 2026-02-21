@@ -114,7 +114,8 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       return;
     }
     this.initializeGrid();
-    this.loadData();
+    // Default branch from logged-in user, then stored selection (set in ionViewWillEnter before first load)
+    this.applyDefaultBranchAndLoad();
   }
 
   ionViewWillEnter(): void {
@@ -122,17 +123,35 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
-    const branchId = this.selectedBranch?.id ?? this.getStoredBranchId();
+    this.applyDefaultBranchAndLoad();
+  }
+
+  /**
+   * Default selection on page load: use logged-in user's Branch (UserContext), then stored branch.
+   * Load centers for that branch; if branch has exactly one center, auto-select it (user's assigned center).
+   * Filter sequence: Date → Center → POC (results match all applicable conditions).
+   */
+  private applyDefaultBranchAndLoad(): void {
+    const branchId = this.selectedBranch?.id ?? this.userContext.branchId ?? this.getStoredBranchId();
     if (branchId != null) {
-      if (!this.selectedBranch) {
-        this.selectedBranch = { id: branchId } as Branch;
+      const id = Number(branchId);
+      if (!this.selectedBranch || this.selectedBranch.id !== id) {
+        this.selectedBranch = { id } as Branch;
+        try {
+          localStorage.setItem('selected_branch_id', String(id));
+        } catch {
+          // ignore
+        }
       }
-      this.loadCentersByBranch(Number(branchId));
+      this.loadCentersByBranch(id);
     } else {
       this.centers = [];
+      this.selectedCenter = '';
+      this.pocs = [];
+      this.selectedPoc = '';
+      this.loadData();
     }
     this.loadUsers();
-    this.loadData();
   }
 
   private loadUsers(): void {
@@ -364,6 +383,13 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     return { actualPrincipalAmount, actualInterestAmount };
   }
 
+  /**
+   * Load recovery grid. Filter sequence: Date → Center → POC.
+   * Step 1: Date only → all scheduled EMIs for that date (and branch).
+   * Step 2: Date + Center → EMIs for that date and center.
+   * Step 3: Date + Center + POC → EMIs for that date, center, and POC.
+   * Results match all applicable conditions.
+   */
   loadData(): void {
     this.isLoading = true;
 
@@ -376,36 +402,12 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       return;
     }
 
-    const branchId = this.selectedBranch?.id ?? this.getStoredBranchId() ?? null;
-    const centerId = this.selectedCenter ? Number(this.selectedCenter) : null;
-    const pocId = this.selectedPoc ? Number(this.selectedPoc) : null;
-
-    this.recoveryPostingService
-      .getLoanSchedulersForRecovery({
-        scheduleDate: this.selectedDate.trim(),
-        centerId: centerId && centerId > 0 ? centerId : undefined,
-        pocId: pocId && pocId > 0 ? pocId : undefined,
-        branchId: branchId ?? undefined,
-        pageSize: this.paginationPageSize
-      })
-      .subscribe({
-        next: (items) => {
-          this.rowData = (items || []).map((dto) => this.mapDtoToRow(dto));
-          this.isLoading = false;
-          if (this.gridApi) {
-            this.gridApi.setGridOption('rowData', this.rowData);
-            setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
-          }
-        },
-        error: () => {
-          this.rowData = [];
-          this.isLoading = false;
-          if (this.gridApi) {
-            this.gridApi.setGridOption('rowData', this.rowData);
-          }
-          this.showToast('Failed to load recovery posting data. Please try again.', 'danger');
-        }
-      });
+    // GET .../LoanSchedulers/recovery removed; restore API call when backend endpoint is recreated.
+    this.rowData = [];
+    this.isLoading = false;
+    if (this.gridApi) {
+      this.gridApi.setGridOption('rowData', this.rowData);
+    }
   }
 
   private mapDtoToRow(dto: LoanSchedulerRecoveryDto): RecoveryPostingMemberRow {
@@ -413,8 +415,8 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       loanSchedulerId: dto.loanSchedulerId,
       loanId: dto.loanId,
       installmentNo: dto.installmentNo,
-      interestAmount: dto.interestAmount,
-      principalAmount: dto.principalAmount,
+      interestAmount: dto.interestAmount ?? 0,
+      principalAmount: dto.principalAmount ?? 0,
       parentPocName: dto.parentPocName ?? '',
       centerName: dto.centerName ?? '',
       memberId: dto.memberId != null ? String(dto.memberId) : '',
@@ -614,11 +616,16 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
           name: c.name || '',
           code: (c as { code?: string }).code
         }));
-        // Do not auto-select: user selects Date → Center → POC → Collect By in order
-        this.selectedCenter = '';
         this.pocs = [];
         this.selectedPoc = '';
-        this.loadData();
+        // Auto-select user's assigned center when branch has exactly one center
+        if (this.centers.length === 1) {
+          this.selectedCenter = String(this.centers[0].id);
+          this.loadPocsForCenter();
+        } else {
+          this.selectedCenter = '';
+          this.loadData();
+        }
       },
       error: () => {
         this.centers = [];

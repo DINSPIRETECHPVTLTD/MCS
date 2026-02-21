@@ -12,13 +12,13 @@
       </div>
     </div>
     
-    <!-- Filter Section (same control design as Add Member) -->
+    <!-- Filter Section: sequence Date → Center → POC; results match all selected conditions -->
     <ion-card class="filter-card">
       <ion-card-content>
         <div class="filter-section">
           <div class="form-row form-row--filters">
             <ion-item>
-              <ion-label position="stacked">Select Date</ion-label>
+              <ion-label position="stacked">Select Date <span class="filter-step">(Step 1)</span></ion-label>
               <ion-input
                 [(ngModel)]="selectedDate"
                 name="selectedDate"
@@ -27,7 +27,7 @@
               </ion-input>
             </ion-item>
             <ion-item>
-              <ion-label position="stacked">Center</ion-label>
+              <ion-label position="stacked">Center <span class="filter-step">(Step 2)</span></ion-label>
               <ion-select
                 [(ngModel)]="selectedCenter"
                 (ionChange)="onCenterChange()"
@@ -40,7 +40,7 @@
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-label position="stacked">POC</ion-label>
+              <ion-label position="stacked">POC <span class="filter-step">(Step 3)</span></ion-label>
               <ion-select
                 [(ngModel)]="selectedPoc"
                 (ionChange)="onPocChange()"
