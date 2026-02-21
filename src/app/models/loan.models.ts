@@ -2,6 +2,16 @@
  * Loan data models
  */
 
+export interface ActiveLoanSummaryDto {
+  loanId: number;
+  memberName: string;
+  noOfTerms: number;
+  numberOfPaidEmis: number;
+  totalPaidAmount: number;
+  totalUnpaidAmount: number;
+  totalAmount: number;
+}
+
 export interface Loan {
   id?: number;
   memberId: number;
