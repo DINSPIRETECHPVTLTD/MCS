@@ -116,7 +116,7 @@ export class EditMemberModalComponent implements OnInit {
       occupation: ['', [Validators.required, Validators.maxLength(100)]],
       guardianFirstName: ['', [Validators.required, Validators.maxLength(100)]],
       guardianLastName: ['', [Validators.required, Validators.maxLength(100)]],
-      guardianPhone: ['', [Validators.pattern(/^\d{10}$/)]],
+      guardianPhone: ['', [Validators.pattern(/^(\d{10})?$/)]],
       guardianDOB: ['', [Validators.required]],
       guardianAge: ['', [Validators.min(18), Validators.max(150)]]
     });
@@ -200,7 +200,7 @@ export class EditMemberModalComponent implements OnInit {
         occupation: formValue.occupation || '',
         guardianFirstName: formValue.guardianFirstName || '',
         guardianLastName: formValue.guardianLastName || '',
-        guardianPhone: formValue.guardianPhone || '',
+        guardianPhone: (formValue.guardianPhone || '').trim() || '-',
         guardianDOB: formValue.guardianDOB || '',
         guardianAge: formValue.guardianAge || 0,
         centerId: formValue.centerId || '',
@@ -220,9 +220,32 @@ export class EditMemberModalComponent implements OnInit {
         },
         error: async (_error: unknown) => {
           await loading.dismiss();
+          const err: any = _error as any;
+          let errorMessage = '';
+
+          // Try to get detailed validation errors from backend
+          if (err?.error?.errors && typeof err.error.errors === 'object') {
+            // ASP.NET Core validation errors format
+            const fieldErrors = Object.entries(err.error.errors)
+              .map(([field, messages]: any) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+              .join('\n');
+            errorMessage = fieldErrors;
+          } else {
+            // Fallback to generic error messages
+            errorMessage =
+              err?.error?.message ||
+              err?.error?.title ||
+              (typeof err?.error === 'string' ? err.error : '') ||
+              '';
+          }
+
+          console.log('Member update validation errors:', err?.error?.errors);
+
           const toast = await this.toastController.create({
-            message: 'Failed to update member',
-            duration: 3000,
+            message: errorMessage
+              ? `Failed to update member:\n${errorMessage}`
+              : 'Failed to update member. One or more validation errors occurred.',
+            duration: 3500,
             color: 'danger'
           });
           await toast.present();

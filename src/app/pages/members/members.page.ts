@@ -34,10 +34,11 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   rowData: Array<Record<string, any>> = [];
   originalRowData: Array<Record<string, any>> = [];
   columnDefs: ColDef[] = [
-    { field: 'memberId', headerName: 'ID/Code' },
+    { field: 'memberId', headerName: 'ID', width: 60, minWidth: 80 },
     {
       headerName: 'Full Name',
-      flex: 1.3,
+      flex: 2,
+      minWidth: 280,
       cellRenderer: (params: any) => {
         const m = params.data;
         const memberName = `${(m.memberFirstName || '').trim()} ${(m.memberLastName || '').trim()}`.trim();
@@ -60,7 +61,8 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     },
     {
       headerName: 'Phone',
-      flex: 1.2,
+      flex: 1.8,
+      minWidth: 200,
       cellRenderer: (params: any) => {
         const m = params.data;
         const memberPhone = (m.memberPhone || '').trim();
@@ -86,7 +88,8 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     { field: 'center', headerName: 'Center'},
     {
       headerName: 'Address',
-      flex: 2,
+      flex: 2.5,
+      minWidth: 320,
       cellRenderer: (params: any) => {
         const m = params.data;
         const parts = [

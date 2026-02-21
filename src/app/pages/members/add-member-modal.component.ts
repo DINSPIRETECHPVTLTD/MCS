@@ -21,6 +21,8 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
   memberForm: FormGroup;
   /** Relationship options from master data (RELATIONSHIP), with "Other" added if not present */
   relationships: MasterLookup[] = [];
+  /** Payment mode options from master data (PAYMENT_TYPE) */
+  paymentModes: MasterLookup[] = [];
   isSubmitting = false;
   isLoading = false;
   submitted = false;
@@ -32,6 +34,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
   states: MasterLookup[] = [];
   isLoadingStates = false;
   isLoadingRelationships = false;
+  isLoadingPaymentModes = false;
   private organizationStateName: string | null = null;
 
   private destroy$ = new Subject<void>();
@@ -54,6 +57,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     this.loadAllCenters();
     this.loadStates();
     this.loadRelationships();
+    this.loadPaymentModes();
     this.setupFormListeners();
   }
 
@@ -126,6 +130,25 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadPaymentModes(): void {
+    this.isLoadingPaymentModes = true;
+    this.masterDataService.getMasterData().subscribe({
+      next: (allLookups) => {
+        this.paymentModes = allLookups
+          .filter(lookup => lookup.lookupKey === LookupKeys.PaymentType)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        this.isLoadingPaymentModes = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading payment modes:', error);
+        this.paymentModes = [];
+        this.isLoadingPaymentModes = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   ionViewWillEnter(): void {
     if (!this.centers || this.centers.length === 0) {
       this.loadAllCenters();
@@ -158,7 +181,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         guardianLastName: ['', [Validators.required, Validators.maxLength(100), this.alphanumericValidator()]],
         guardianRelationship: ['', [Validators.required]],
         guardianRelationshipOther: ['', [Validators.maxLength(100), this.alphanumericValidator()]],
-        guardianPhone: ['', [Validators.pattern(/^\d{10}$/)]],
+        guardianPhone: ['', [Validators.pattern(/^(\d{10})?$/)]],
         guardianDOB: ['', [Validators.required, this.noFutureDateValidator()]],
         guardianAge: ['', [Validators.min(18), Validators.max(150)]],
         paymentMode: ['', [Validators.required]],
@@ -484,7 +507,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         }
 
         const ageValue = raw.age ? Number(raw.age) : this.calculateAge(raw.dateOfBirth);
-        const guardianPhone = (raw.guardianPhone ?? '').toString();
+        const guardianPhone = (raw.guardianPhone ?? '').toString().trim() || '-';
         const relationshipSelection = (raw.guardianRelationship ?? '').toString();
         const guardianRelationship =
           relationshipSelection === 'Other'
@@ -539,17 +562,31 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         await loading.dismiss();
 
         const err: any = error as any;
-        const backendMessage =
-          err?.error?.message ||
-          err?.error?.title ||
-          (typeof err?.error === 'string' ? err.error : '') ||
-          '';
+        let errorMessage = '';
+
+        // Try to get detailed validation errors from backend
+        if (err?.error?.errors && typeof err.error.errors === 'object') {
+          // ASP.NET Core validation errors format
+          const fieldErrors = Object.entries(err.error.errors)
+            .map(([field, messages]: any) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('\n');
+          errorMessage = fieldErrors;
+        } else {
+          // Fallback to generic error messages
+          errorMessage =
+            err?.error?.message ||
+            err?.error?.title ||
+            (typeof err?.error === 'string' ? err.error : '') ||
+            '';
+        }
+
+        console.log('Validation errors:', err?.error?.errors);
 
         const toast = await this.toastController.create({
-          message: backendMessage
-            ? `Failed to add member: ${backendMessage}`
-            : 'Failed to add member. Please try again.',
-          duration: 2500,
+          message: errorMessage
+            ? `Failed to add member:\n${errorMessage}`
+            : 'Failed to add member. One or more validation errors occurred.',
+          duration: 3500,
           color: 'danger',
           position: 'top',
           icon: 'close-circle-outline',
