@@ -70,7 +70,7 @@ export class HeaderMenuComponent implements OnInit {
     }
 
     // Show Funds submenu if active menu is related to Funds (Org Mode)
-    if (this.activeMenu === 'Investments' || this.activeMenu === 'Funds Transfer') {
+    if (this.activeMenu === 'Investments' || this.activeMenu === 'Ledger Balances') {
       this.showFundsSubmenu = true;
     }
   }

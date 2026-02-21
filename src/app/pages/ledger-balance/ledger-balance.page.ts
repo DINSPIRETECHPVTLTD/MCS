@@ -11,6 +11,7 @@ import { ModalController } from '@ionic/angular';
 import { LedgerBalanceService } from '../../services/ledger-balance.service';
 import { UserService } from '../../services/user.service';
 import { forkJoin } from 'rxjs';
+import { NgZone, ApplicationRef } from '@angular/core';
 
 @Component({
   selector: 'app-ledger-balance',
@@ -39,7 +40,9 @@ export class LedgerBalanceComponent implements OnInit, ViewWillEnter {
     private loadingController: LoadingController,
     private modalController: ModalController,
     private ledgerBalanceService: LedgerBalanceService,
-    private userService: UserService
+    private userService: UserService,
+    private ngZone: NgZone,
+    private appRef: ApplicationRef
   ) {
     
   }
@@ -171,6 +174,16 @@ export class LedgerBalanceComponent implements OnInit, ViewWillEnter {
 
   onMenuChange(menu: string): void {
     this.activeMenu = menu;
+  }
+
+  openTransaction(data: { userId: number }): void {
+    this.ngZone.run(() => {
+      this.router.navigate(['/user-transactions', data.userId], { replaceUrl: true }).then((success) => {
+        if (success) {
+          this.ngZone.run(() => this.appRef.tick());
+        }
+      });
+    });
   }
 
 }
