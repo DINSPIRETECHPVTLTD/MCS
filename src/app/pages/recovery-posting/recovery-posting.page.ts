@@ -193,8 +193,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         headerName: 'Loan ID',
         width: 130,
         sortable: true,
-        filter: false,
-        hide: true
+        filter: false
       },
       {
         field: 'centerName',

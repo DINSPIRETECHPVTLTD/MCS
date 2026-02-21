@@ -46,17 +46,39 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
     { headerName: 'Processing Fee', valueGetter: (p) => (p.data as Loan)?.processingFee ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
     { headerName: 'Insurance Fee', valueGetter: (p) => (p.data as Loan)?.insuranceFee ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
     { headerName: 'Saving', valueGetter: (p) => (p.data as Loan)?.isSavingEnabled ? 'Yes' : 'No', width: 80, filter: 'agTextColumnFilter', sortable: true },
-    { headerName: 'Saving Amount', valueGetter: (p) => (p.data as Loan)?.savingAmount ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' }
+    { headerName: 'Saving Amount', valueGetter: (p) => (p.data as Loan)?.savingAmount ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
+    {
+      headerName: 'Action',
+      width: 100,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: { data: Loan; context?: { componentParent: ManageLoanComponent }; api?: { getGridOption: (k: string) => unknown } }) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ag-view-btn';
+        btn.textContent = 'View';
+        const comp = params.context?.componentParent;
+        btn.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (comp?.viewLoan) {
+            comp.viewLoan(params.data);
+          }
+        });
+        return btn;
+      }
+    }
   ];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
   pagination = true;
   paginationPageSize = 20;
   paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   private gridApi?: GridApi;
-  gridOptions = { theme: agGridTheme, getRowNodeId: (data: Loan) => String(data.id ?? '') };
-  get gridContext(): { component: ManageLoanComponent } {
-    return { component: this };
-  }
+  gridOptions = {
+    theme: agGridTheme,
+    getRowNodeId: (data: Loan) => String(data.id ?? ''),
+    context: { componentParent: this }
+  };
 
   constructor(
     private authService: AuthService,
@@ -100,7 +122,6 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
 
   onGridReady(params: GridReadyEvent): void {
     this.gridApi = params.api;
-    this.gridApi.setGridOption('context', { component: this });
     if (this.rowData?.length) {
       this.gridApi.setGridOption('rowData', this.rowData);
     }
@@ -110,8 +131,15 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
   viewLoan(loan: Loan): void {
     const id = loan.id ?? (loan as { id?: number }).id;
     if (id != null) {
+      const url = `/manage-loan/repayment-summary/${id}`;
       this.ngZone.run(() => {
-        this.router.navigate(['/loan-detail', String(id)], { replaceUrl: true });
+        setTimeout(() => {
+          this.router.navigateByUrl(url).then((success) => {
+            if (!success) {
+              this.router.navigate(['/manage-loan', 'repayment-summary', String(id)]);
+            }
+          });
+        }, 0);
       });
     } else {
       this.ngZone.run(() => {

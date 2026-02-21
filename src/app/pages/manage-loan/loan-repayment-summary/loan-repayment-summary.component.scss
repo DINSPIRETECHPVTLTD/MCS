@@ -1,0 +1,89 @@
+.repayment-summary-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+
+  .header-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    ion-button {
+      margin: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+  }
+
+  .loan-id-hint {
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
+    color: var(--ion-color-medium);
+  }
+}
+
+.loading-state,
+.error-state,
+.empty-state,
+.no-schedule-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  color: var(--ion-color-medium);
+
+  p {
+    margin: 0;
+  }
+}
+
+.error-state ion-icon {
+  color: var(--ion-color-danger);
+}
+
+.summary-card,
+.schedule-card {
+  margin-bottom: 1.5rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  .summary-label {
+    font-size: 0.875rem;
+    color: var(--ion-color-medium);
+  }
+
+  .summary-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+}
+
+.grid-wrapper {
+  width: 100%;
+  min-height: 200px;
+}
+
+.repayment-grid {
+  width: 100%;
+  --ag-row-height: 40px;
+}

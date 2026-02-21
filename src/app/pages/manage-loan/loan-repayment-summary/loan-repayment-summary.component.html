@@ -1,0 +1,79 @@
+<app-header-menu
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange()">
+  <ion-content [fullscreen]="true" class="ion-padding">
+    <div class="repayment-summary-container">
+      <div class="page-header">
+        <div class="header-row">
+          <ion-button fill="clear" (click)="goBack()">
+            <ion-icon name="arrow-back"></ion-icon>
+            Back to Manage Loan
+          </ion-button>
+          <h1>Loan Repayment Summary</h1>
+        </div>
+        <p *ngIf="loanId" class="loan-id-hint">Loan ID: {{ loanId }}</p>
+      </div>
+
+      <div *ngIf="isLoading" class="loading-state">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Loading repayment details...</p>
+      </div>
+
+      <div *ngIf="loadError" class="error-state">
+        <ion-icon name="alert-circle-outline" size="large"></ion-icon>
+        <p>{{ loadError }}</p>
+        <ion-button (click)="goBack()">Back to Manage Loan</ion-button>
+      </div>
+
+      <ng-container *ngIf="!isLoading && !loadError && loan">
+        <!-- Loan Summary Section (read-only) -->
+        <ion-card class="summary-card">
+          <ion-card-header>
+            <ion-card-title>Loan Summary</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <span class="summary-label">Total Amount Paid</span>
+                <span class="summary-value">{{ totalAmountPaid | number: '1.2-2' }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Remaining Balance</span>
+                <span class="summary-value">{{ remainingBalance | number: '1.2-2' }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Weekly Due (EMI)</span>
+                <span class="summary-value">{{ weeklyDue | number: '1.2-2' }}</span>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Week-wise Repayment Schedule (read-only grid) -->
+        <ion-card class="schedule-card">
+          <ion-card-header>
+            <ion-card-title>Week-wise Repayment Schedule</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <div *ngIf="hasSchedule; else noScheduleTemplate" class="grid-wrapper">
+              <ag-grid-angular
+                class="ag-theme-alpine repayment-grid"
+                [rowData]="scheduleRows"
+                [columnDefs]="columnDefs"
+                [defaultColDef]="defaultColDef"
+                [gridOptions]="gridOptions"
+                (gridReady)="onGridReady($event)">
+              </ag-grid-angular>
+            </div>
+            <ng-template #noScheduleTemplate>
+              <div class="no-schedule-message">
+                No Week-wise Repayment Schedule available.
+              </div>
+            </ng-template>
+          </ion-card-content>
+        </ion-card>
+      </ng-container>
+    </div>
+  </ion-content>
+</app-header-menu>
