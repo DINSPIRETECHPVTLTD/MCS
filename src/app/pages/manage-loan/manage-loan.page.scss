@@ -1,7 +1,117 @@
-.loan-list-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px;
+// Loan list container follows the global pattern defined in global.scss
+
+.search-filters-section {
+  margin-bottom: 24px;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  h3 {
+    margin: 0 0 16px 0;
+    color: var(--ion-color-primary);
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .search-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 16px;
+    align-items: end;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .filter-group {
+      ion-item {
+        --background: #f8f9fa;
+        --border-radius: 6px;
+        --border-color: #e9ecef;
+        --border-style: solid;
+        --border-width: 1px;
+
+        &:hover {
+          --background: #f1f3f5;
+        }
+
+        ion-label {
+          font-weight: 500;
+          color: var(--ion-color-dark);
+          margin-bottom: 4px;
+        }
+
+        ion-input {
+          --color: var(--ion-color-dark);
+          --placeholder-color: #6c757d;
+        }
+      }
+    }
+
+    .filter-actions {
+      display: flex;
+      align-items: center;
+      
+      ion-button {
+        --border-radius: 6px;
+        font-weight: 500;
+        
+        ion-icon {
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+}
+
+.grid-container {
+  .grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 0 4px;
+
+    h3 {
+      margin: 0;
+      color: var(--ion-color-dark);
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.loading-state, .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #6c757d;
+
+  ion-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+
+  p {
+    text-align: center;
+    font-size: 1rem;
+    margin: 0;
+    
+    &.empty-hint {
+      font-size: 0.9rem;
+      margin-top: 8px;
+      opacity: 0.7;
+    }
+  }
 }
 
 .loan-filter {
@@ -19,68 +129,6 @@
   overflow: hidden;
 }
 
-h1 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--ion-color-dark);
-}
+// Loading and empty states follow global patterns defined in global.scss
 
-.loading-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--ion-color-medium);
-
-  ion-spinner {
-    margin-bottom: 16px;
-  }
-
-  p {
-    margin: 8px 0;
-  }
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--ion-color-medium);
-
-  ion-icon {
-    font-size: 64px;
-    margin-bottom: 16px;
-  }
-
-  p {
-    margin: 8px 0;
-  }
-
-  .empty-hint {
-    font-size: 12px;
-    margin-top: 8px;
-    color: var(--ion-color-medium);
-  }
-}
-
-// AG Grid theme adjustments (same as staff/add-loan)
-::ng-deep .ag-theme-alpine {
-  --ag-font-family: inherit;
-  --ag-font-size: 14px;
-
-  .ag-header-cell {
-    font-weight: 600;
-  }
-
-  .ag-view-btn {
-    padding: 4px 12px;
-    font-size: 12px;
-    border-radius: 4px;
-    background: var(--ion-color-primary);
-    color: var(--ion-color-primary-contrast);
-    border: none;
-    cursor: pointer;
-
-    &:hover {
-      opacity: 0.9;
-    }
-  }
-}
+// Grid follows the global AG Grid pattern defined in global.scss

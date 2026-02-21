@@ -6,7 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { LoanService } from '../../services/loan.service';
 import { Branch } from '../../models/branch.models';
-import { Loan } from '../../models/loan.models';
+import { Loan, ActiveLoanSummaryDto } from '../../models/loan.models';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
@@ -18,67 +18,99 @@ import { agGridTheme } from '../../ag-grid-theme';
 })
 export class ManageLoanComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'Manage Loan';
-  loans: Loan[] = [];
-  rowData: Loan[] = [];
+  loans: ActiveLoanSummaryDto[] = [];
+  rowData: ActiveLoanSummaryDto[] = [];
   selectedBranch: Branch | null = null;
   isLoading: boolean = false;
 
+  // Search filter properties
+  searchFilters = {
+    firstName: '',
+    surname: '',
+    loanId: ''
+  };
+
   columnDefs: ColDef[] = [
     { 
-      headerName: 'Loan ID', 
-      valueGetter: (p) => {
-        const loan = p.data as Loan;
-        return loan?.id;
-      }, 
-      width: 100, 
-      filter: 'agNumberColumnFilter', 
-      sortable: true 
+      headerName: 'Member Name', 
+      field: 'memberName', 
+      width: 200, 
+      sortable: true,
+      editable: false
     },
     { 
-      headerName: 'Member ID', 
-      field: 'memberId', 
-      width: 120, 
-      filter: 'agNumberColumnFilter', 
-      sortable: true 
+      headerName: 'Total Amount', 
+      field: 'totalAmount', 
+      width: 150, 
+      sortable: true, 
+      valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '',
+      editable: false
     },
-    { headerName: 'Loan Amount', valueGetter: (p) => (p.data as Loan)?.loanAmount ?? 0, width: 130, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
-    { headerName: 'Interest', valueGetter: (p) => (p.data as Loan)?.interestAmount ?? 0, width: 110, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
-    { headerName: 'Processing Fee', valueGetter: (p) => (p.data as Loan)?.processingFee ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
-    { headerName: 'Insurance Fee', valueGetter: (p) => (p.data as Loan)?.insuranceFee ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
-    { headerName: 'Saving', valueGetter: (p) => (p.data as Loan)?.isSavingEnabled ? 'Yes' : 'No', width: 80, filter: 'agTextColumnFilter', sortable: true },
-    { headerName: 'Saving Amount', valueGetter: (p) => (p.data as Loan)?.savingAmount ?? 0, width: 120, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '' },
+    { 
+      headerName: 'No. of Weeks Paid', 
+      valueGetter: (p) => {
+        const loan = p.data as ActiveLoanSummaryDto;
+        const paidWeeks = loan?.numberOfPaidEmis || 0;
+        const totalWeeks = loan?.noOfTerms || 0;
+        return `${paidWeeks} / ${totalWeeks}`;
+      }, 
+      width: 150, 
+      sortable: true,
+      editable: false
+    },
+    { 
+      headerName: 'Total Amount Paid', 
+      field: 'totalPaidAmount', 
+      width: 160, 
+      sortable: true, 
+      valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '',
+      editable: false
+    },
+    { 
+      headerName: 'Remaining Balance', 
+      field: 'totalUnpaidAmount', 
+      width: 160, 
+      sortable: true, 
+      valueFormatter: (p) => p.value != null ? Number(p.value).toFixed(2) : '',
+      editable: false
+    },
     {
-      headerName: 'Action',
-      width: 100,
+      headerName: 'Actions',
+      width: 250,
+      cellRenderer: (params: any) => {
+        const container = document.createElement('div');
+        container.className = 'actions-cell';
+        
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'ag-btn ag-navigate';
+        viewBtn.textContent = 'View Loan';
+        
+        const prepaymentBtn = document.createElement('button');
+        prepaymentBtn.className = 'ag-btn ag-edit';
+        prepaymentBtn.textContent = 'Prepayment Loan';
+        
+        const comp = (params.context as { component?: ManageLoanComponent })?.component ?? this;
+        viewBtn.addEventListener('click', () => comp.viewLoan(params.data));
+        prepaymentBtn.addEventListener('click', () => comp.prepaymentLoan(params.data));
+        
+        container.appendChild(viewBtn);
+        container.appendChild(prepaymentBtn);
+        return container;
+      },
       sortable: false,
       filter: false,
-      cellRenderer: (params: { data: Loan; context?: { componentParent: ManageLoanComponent }; api?: { getGridOption: (k: string) => unknown } }) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'ag-view-btn';
-        btn.textContent = 'View';
-        const comp = params.context?.componentParent;
-        btn.addEventListener('click', (ev) => {
-          ev.preventDefault();
-          ev.stopPropagation();
-          if (comp?.viewLoan) {
-            comp.viewLoan(params.data);
-          }
-        });
-        return btn;
-      }
+      resizable: false
     }
   ];
-  defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
+  defaultColDef: ColDef = { sortable: true, filter: false, resizable: true };
   pagination = true;
   paginationPageSize = 20;
   paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   private gridApi?: GridApi;
-  gridOptions = {
-    theme: agGridTheme,
-    getRowNodeId: (data: Loan) => String(data.id ?? ''),
-    context: { componentParent: this }
-  };
+  gridOptions = { theme: agGridTheme, getRowNodeId: (data: ActiveLoanSummaryDto) => String(data.loanId ?? '') };
+  get gridContext(): { component: ManageLoanComponent } {
+    return { component: this };
+  }
 
   constructor(
     private authService: AuthService,
@@ -102,7 +134,7 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
-    this.loadLoansForCurrentBranch();
+    this.loadActiveLoans();
   }
 
   onMenuChange(menu: string): void {
@@ -111,35 +143,23 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
 
   onBranchChange(branch: Branch): void {
     this.selectedBranch = branch;
-    if (branch?.id != null) {
-      this.loadLoansByBranch(branch.id);
-    } else {
-      this.loans = [];
-      this.rowData = [];
-      if (this.gridApi) this.gridApi.setGridOption('rowData', []);
-    }
+    // No need to reload data since activeloansummary returns all loans regardless of branch
   }
 
   onGridReady(params: GridReadyEvent): void {
     this.gridApi = params.api;
+    this.gridApi.setGridOption('context', { component: this });
     if (this.rowData?.length) {
       this.gridApi.setGridOption('rowData', this.rowData);
     }
     setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
   }
 
-  viewLoan(loan: Loan): void {
-    const id = loan.id ?? (loan as { id?: number }).id;
+  viewLoan(loan: ActiveLoanSummaryDto): void {
+    const id = loan.loanId;
     if (id != null) {
-      const url = `/manage-loan/repayment-summary/${id}`;
       this.ngZone.run(() => {
-        setTimeout(() => {
-          this.router.navigateByUrl(url).then((success) => {
-            if (!success) {
-              this.router.navigate(['/manage-loan', 'repayment-summary', String(id)]);
-            }
-          });
-        }, 0);
+        this.router.navigate(['/loan-detail', String(id)], { replaceUrl: true });
       });
     } else {
       this.ngZone.run(() => {
@@ -153,32 +173,96 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
     }
   }
 
-  /** Exposed for template; returns current branch ID from selection, context, or localStorage */
-  getCurrentBranchId(): number | null {
-    const fromSelection = this.selectedBranch?.id;
-    if (fromSelection != null) return fromSelection;
-    const fromContext = this.userContext.branchId;
-    if (fromContext != null) return fromContext;
-    try {
-      const stored = localStorage.getItem('selected_branch_id');
-      if (stored) {
-        const num = Number(stored);
-        return Number.isNaN(num) ? null : num;
-      }
-    } catch (_) {}
-    return null;
-  }
-
-  private loadLoansForCurrentBranch(): void {
-    const branchId = this.getCurrentBranchId();
-    if (branchId != null) {
-      this.loadLoansByBranch(branchId);
+  prepaymentLoan(loan: ActiveLoanSummaryDto): void {
+    const id = loan.loanId;
+    if (id != null) {
+      this.ngZone.run(() => {
+        this.router.navigate(['/preclose-loan'], { 
+          queryParams: { loanId: id, memberName: loan.memberName },
+          replaceUrl: true 
+        });
+      });
     } else {
-      this.loans = [];
+      this.ngZone.run(() => {
+        this.toastController.create({
+          message: 'Cannot initiate prepayment: loan ID not available',
+          duration: 2000,
+          color: 'warning',
+          position: 'top'
+        }).then(toast => toast.present());
+      });
     }
   }
 
-  private async loadLoansByBranch(branchId: number): Promise<void> {
+  applySearch(): void {
+    if (!this.loans?.length) {
+      this.rowData = [];
+      if (this.gridApi) {
+        this.gridApi.setGridOption('rowData', this.rowData);
+      }
+      return;
+    }
+
+    let filteredLoans = [...this.loans];
+
+    // Filter by first name
+    if (this.searchFilters.firstName.trim()) {
+      filteredLoans = filteredLoans.filter(loan => 
+        this.extractFirstName(loan.memberName)
+          .toLowerCase()
+          .includes(this.searchFilters.firstName.trim().toLowerCase())
+      );
+    }
+
+    // Filter by surname 
+    if (this.searchFilters.surname.trim()) {
+      filteredLoans = filteredLoans.filter(loan => 
+        this.extractSurname(loan.memberName)
+          .toLowerCase()
+          .includes(this.searchFilters.surname.trim().toLowerCase())
+      );
+    }
+
+    // Filter by loan ID
+    if (this.searchFilters.loanId.trim()) {
+      filteredLoans = filteredLoans.filter(loan => 
+        loan.loanId?.toString().includes(this.searchFilters.loanId.trim())
+      );
+    }
+
+    this.rowData = filteredLoans;
+    if (this.gridApi) {
+      this.gridApi.setGridOption('rowData', this.rowData);
+    }
+  }
+
+  clearSearch(): void {
+    this.searchFilters = {
+      firstName: '',
+      surname: '',
+      loanId: ''
+    };
+    this.rowData = [...this.loans];
+    if (this.gridApi) {
+      this.gridApi.setGridOption('rowData', this.rowData);
+    }
+  }
+
+  private extractFirstName(fullName: string): string {
+    if (!fullName) return '';
+    const nameParts = fullName.trim().split(' ');
+    return nameParts[0] || '';
+  }
+
+  private extractSurname(fullName: string): string {
+    if (!fullName) return '';
+    const nameParts = fullName.trim().split(' ');
+    return nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+  }
+
+
+
+  private async loadActiveLoans(): Promise<void> {
     this.isLoading = true;
     const loading = await this.loadingController.create({
       message: 'Loading loans...',
@@ -186,10 +270,13 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
     });
     await loading.present();
 
-    this.loanService.getLoansByBranch(branchId).subscribe({
-      next: (list: Loan[]) => {
+    this.loanService.getActiveLoanSummary().subscribe({
+      next: (list: ActiveLoanSummaryDto[]) => {
         this.loans = list ?? [];
         this.rowData = [...this.loans];
+        
+        // Apply any existing search filters after data loads
+        this.applySearch();
         
         // Debug: Log first loan to see what fields API returns
         if (this.loans.length > 0) {

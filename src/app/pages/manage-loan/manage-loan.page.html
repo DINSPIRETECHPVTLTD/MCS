@@ -6,30 +6,84 @@
   <div class="loan-list-container">
     <div class="loan-filter" style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
       <div style="flex: 1; display: flex; align-items: center; gap: 12px;">
-        <h2 style="margin: 0">All Loans</h2>
+        <h2 style="margin: 0">Loan Management</h2>
       </div>
     </div>
+
+    <!-- Search Filters Section -->
+    <div class="search-filters-section">
+      <h3>Member Search</h3>
+      <div class="search-filters">
+        <div class="filter-group">
+          <ion-item>
+            <ion-label position="stacked">First Name</ion-label>
+            <ion-input
+              [(ngModel)]="searchFilters.firstName"
+              placeholder="Enter first name"
+              (ionInput)="applySearch()"
+              clearInput="true">
+            </ion-input>
+          </ion-item>
+        </div>
+        
+        <div class="filter-group">
+          <ion-item>
+            <ion-label position="stacked">Surname</ion-label>
+            <ion-input
+              [(ngModel)]="searchFilters.surname"
+              placeholder="Enter surname"
+              (ionInput)="applySearch()"
+              clearInput="true">
+            </ion-input>
+          </ion-item>
+        </div>
+        
+        <div class="filter-group">
+          <ion-item>
+            <ion-label position="stacked">Loan ID</ion-label>
+            <ion-input
+              [(ngModel)]="searchFilters.loanId"
+              placeholder="Enter loan ID"
+              (ionInput)="applySearch()"
+              clearInput="true"
+              inputmode="numeric"
+              pattern="[0-9]*">
+            </ion-input>
+          </ion-item>
+        </div>
+        
+        <div class="filter-actions">
+          <ion-button 
+            fill="clear" 
+            color="medium" 
+            (click)="clearSearch()">
+            <ion-icon name="refresh-outline" slot="start"></ion-icon>
+            Clear
+          </ion-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid Section -->
+    <div class="grid-container">
+      <div class="grid-header">
+        <h3>Active Loans ({{ rowData?.length || 0 }})</h3>
+      </div>
 
     <div *ngIf="isLoading" class="loading-state">
       <ion-spinner name="crescent"></ion-spinner>
       <p>Loading loans...</p>
     </div>
 
-    <div *ngIf="!isLoading && getCurrentBranchId() == null" class="empty-state">
-      <ion-icon name="business-outline" size="large"></ion-icon>
-      <p>Select a branch</p>
-      <p class="empty-hint">Choose a branch from the header to view its loans.</p>
-    </div>
-
-    <div *ngIf="!isLoading && getCurrentBranchId() != null && loans.length === 0" class="empty-state">
+    <div *ngIf="!isLoading && (!rowData || rowData.length === 0)" class="empty-state">
       <ion-icon name="document-text-outline" size="large"></ion-icon>
-      <p>No loans found</p>
-      <p class="empty-hint">There are no loans for this branch.</p>
+      <p>No loans found matching your search criteria</p>
+      <p class="empty-hint">Try adjusting your search filters or check back later.</p>
     </div>
 
-    <div *ngIf="!isLoading && loans.length > 0" class="ag-grid-wrapper">
+    <div *ngIf="!isLoading && rowData && rowData.length > 0" class="ag-grid-wrapper">
       <ag-grid-angular
-        class="ag-theme-alpine"
+        class="ag-theme-alpine loan-grid"
         style="width: 100%; height: 60vh;"
         [rowData]="rowData"
         [columnDefs]="columnDefs"
@@ -40,6 +94,7 @@
         [paginationPageSizeSelector]="paginationPageSizeSelector"
         (gridReady)="onGridReady($event)">
       </ag-grid-angular>
+    </div>
     </div>
   </div>
   </ion-content>

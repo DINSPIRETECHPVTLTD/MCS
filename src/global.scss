@@ -42,7 +42,8 @@
 .users-grid,
 .pocs-grid,
 .members-grid,
-.staff-grid {
+.staff-grid,
+.loan-grid {
   // Header cells with borders
   .ag-header-cell {
     border-right: 1px solid #d0d0d0 !important;
@@ -137,7 +138,8 @@
 .users-list-container,
 .staff-list-container,
 .pocs-list-container,
-.members-list-container {
+.members-list-container,
+.loan-list-container {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;

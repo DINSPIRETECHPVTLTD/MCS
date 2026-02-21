@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, timeout, catchError } from 'rxjs/operators';
 import { AuthService } from './auth.service';
-import { Loan, CreateLoanRequest } from '../models/loan.models';
+import { Loan, CreateLoanRequest, ActiveLoanSummaryDto } from '../models/loan.models';
 
 @Injectable({
   providedIn: 'root'
@@ -42,6 +42,21 @@ export class LoanService {
     }).pipe(
       timeout(15000),
       map((response: { $values?: Loan[] } | Loan[]) => {
+        const list = (response && typeof response === 'object' && '$values' in response && response.$values)
+          ? response.$values
+          : (Array.isArray(response) ? response : []);
+        return list ?? [];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  getActiveLoanSummary(): Observable<ActiveLoanSummaryDto[]> {
+    return this.http.get<{ $values?: ActiveLoanSummaryDto[] } | ActiveLoanSummaryDto[]>(`${this.apiUrl}/activeloansummary`, {
+      headers: this.getHeaders()
+    }).pipe(
+      timeout(15000),
+      map((response: { $values?: ActiveLoanSummaryDto[] } | ActiveLoanSummaryDto[]) => {
         const list = (response && typeof response === 'object' && '$values' in response && response.$values)
           ? response.$values
           : (Array.isArray(response) ? response : []);
