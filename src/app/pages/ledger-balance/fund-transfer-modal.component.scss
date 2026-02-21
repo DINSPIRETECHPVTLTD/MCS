@@ -19,6 +19,10 @@ form {
       margin-bottom: 8px;
     }
 
+    ion-select::part(placeholder), ion-select::part(text), ion-select::part(icon) {
+      padding: 8px;
+    }
+
     ion-input {
       --padding-start: 12px;
     }

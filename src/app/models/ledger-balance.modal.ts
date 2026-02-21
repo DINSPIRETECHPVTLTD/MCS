@@ -3,8 +3,3 @@ export interface LedgerBalances {
   userId : number;
   amount : number;
 }
-
-export interface CreateFundTransferRequest {
-  userId : number;
-  amount : number;
-}

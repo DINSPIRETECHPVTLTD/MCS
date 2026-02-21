@@ -1,14 +1,14 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController, IonicModule } from '@ionic/angular';
-import { InvestmentsService } from '../../services/investments.service';
-import { CreateInvestmentRequest } from 'src/app/models/investments.models';
 import { IonDatetime } from '@ionic/angular';
 import { ViewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { UserService } from '../../services/user.service';
 import { User } from 'src/app/models/user.models';
 import { CommonModule } from '@angular/common';
+import { CreateFundTransferRequest } from 'src/app/models/fund-transfer.models';
+import { LedgerBalanceService } from '../../services/ledger-balance.service';
 
 @Component({
   selector: 'app-add-fund-transfer',
@@ -21,7 +21,7 @@ import { CommonModule } from '@angular/common';
 export class AddFundTransferComponent implements OnInit {
 
   @ViewChild('datePickerModal') datePickerModal!: IonDatetime;
-  investmentForm: FormGroup;
+  fundTransferForm: FormGroup;
   submitted: boolean = false;
   selectedDate: string = new Date().toISOString(); // Initialize with current date
   formattedDate: string | null = null;
@@ -33,15 +33,16 @@ export class AddFundTransferComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private modalController: ModalController,
-    private investmentsService: InvestmentsService,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private datePipe: DatePipe,
-    private userService: UserService
+    private userService: UserService,
+    private ledgerBalanceService: LedgerBalanceService
   ) {
 
-    this.investmentForm = this.formBuilder.group({
-      investorName : ['', [Validators.required]],
+    this.fundTransferForm = this.formBuilder.group({
+      fromInvestorName : ['', [Validators.required]],
+      toInvestorName : ['', [Validators.required]],
       amount: ['', [Validators.required, Validators.min(0.01)]],
       investmentDate: ['', [Validators.required]]
     });
@@ -50,14 +51,14 @@ export class AddFundTransferComponent implements OnInit {
 
   ngOnInit(): void {
     // Initialization logic if needed
-    this.maxDate = new Date().toISOString();
+    this.maxDate = new Date().toLocaleDateString('en-CA'); // Set max date to today in YYYY-MM-DD format
     this.loadUsers();
   }
 
   loadUsers(): void {
     this.userService.getUsers().subscribe({
       next: (users) => {
-        this.users = (users || []).filter(user => user.role === 'Investor');
+        this.users = (users || []).filter(user => user.role === 'Investor' || user.role === 'Owner');
       },
       error: (error) => {
         console.error('Error loading users:', error);
@@ -68,11 +69,11 @@ export class AddFundTransferComponent implements OnInit {
   async onSubmit(): Promise<void> {
     this.submitted = true;
 
-    Object.keys(this.investmentForm.controls).forEach(key => {
-      this.investmentForm.get(key)?.markAsTouched();
+    Object.keys(this.fundTransferForm.controls).forEach(key => {
+      this.fundTransferForm.get(key)?.markAsTouched();
     });
 
-    if (this.investmentForm.invalid) {
+    if (this.fundTransferForm.invalid) {
       this.showToast('Please fill in all required fields correctly', 'danger');
       return;
     }
@@ -83,26 +84,27 @@ export class AddFundTransferComponent implements OnInit {
     });
     await loading.present();
 
-    const investmentData: CreateInvestmentRequest = {
-      userId: this.investmentForm.get('investorName')?.value,
-      amount: this.investmentForm.value.amount,
-      investmentDate: this.investmentForm.value.investmentDate
+    const fundTransferData: CreateFundTransferRequest = {
+      paidFromUserId: this.fundTransferForm.get('fromInvestorName')?.value,
+      paidToUserId: this.fundTransferForm.get('toInvestorName')?.value, // Replace with actual recipient ID
+      amount: this.fundTransferForm.value.amount,
+      investmentDate: this.fundTransferForm.value.investmentDate
     };
 
-    console.log('Investment data to submit:', investmentData); // Debug log
+    console.log('Fund transfer data to submit:', fundTransferData); // Debug log
 
-    if(investmentData.userId) {
-      this.investmentsService.createInvestment(investmentData).subscribe({
-        next: async (investment) => {
+    if(fundTransferData.paidFromUserId && fundTransferData.paidToUserId) {
+      this.ledgerBalanceService.createFundTransfer(fundTransferData).subscribe({
+        next: async (fundTransfer) => {
           await loading.dismiss();
-          this.showToast('Investment created successfully!', 'success');
-          await this.modalController.dismiss({ success: true, investment });
+          this.showToast('Fund transfer created successfully!', 'success');
+          await this.modalController.dismiss({ success: true, fundTransfer });
         },
         error: async (error) => {
           await loading.dismiss();
-          const errorMessage = error.error?.message || error.message || 'Failed to create investment. Please try again.';
+          const errorMessage = error.error?.message || error.message || 'Failed to create fund transfer. Please try again.';
           this.showToast(errorMessage, 'danger');
-          console.error('Error creating investment:', error);
+          console.error('Error creating fund transfer:', error);
         }
       });
     } 
@@ -110,7 +112,7 @@ export class AddFundTransferComponent implements OnInit {
     {
       await loading.dismiss();
       this.showToast('Invalid investor selected. Please try again.', 'danger');
-      console.error('Invalid investor ID:', investmentData.userId);
+
     }
   }
 
@@ -119,7 +121,7 @@ export class AddFundTransferComponent implements OnInit {
   }
 
   getFieldError(fieldName: string): string {
-    const field = this.investmentForm.get(fieldName);
+    const field = this.fundTransferForm.get(fieldName);
     if (field && field.invalid && (field.touched || this.submitted)) {
       if (field.errors?.['required']) {
         return `${this.getFieldLabel(fieldName)} is required`;
@@ -133,7 +135,8 @@ export class AddFundTransferComponent implements OnInit {
 
   getFieldLabel(fieldName: string): string {
     const labels: { [key: string]: string } = {
-      investorName: 'Investor Name',
+      fromInvestorName: 'Sender Name',
+      toInvestorName: 'Recipient Name',
       amount: 'Amount',
       investmentDate: 'Investment Date'
     };
@@ -141,7 +144,7 @@ export class AddFundTransferComponent implements OnInit {
   }
 
   isFieldInvalid(fieldName: string): boolean {
-    const field = this.investmentForm.get(fieldName);
+    const field = this.fundTransferForm.get(fieldName);
     return !!(field && field.invalid && (field.touched || this.submitted));
   }
 
@@ -151,7 +154,7 @@ export class AddFundTransferComponent implements OnInit {
   set date(value: any) {
     console.log({ value });
     this.dateValue = value;
-    this.investmentForm.setValue({ ...this.investmentForm.value, investmentDate: value });
+    this.fundTransferForm.setValue({ ...this.fundTransferForm.value, investmentDate: value });
   }
 
   onDateChange(event: any, popover: any) {

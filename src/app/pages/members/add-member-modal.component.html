@@ -152,8 +152,12 @@
             </ion-select>
             <ion-note slot="error">{{ getFieldError('collectedBy') }}</ion-note>
           </ion-item>
-        </div>
-      </div>
+          <ion-item [class.ion-invalid]="isFieldInvalid('paymentComments')">
+            <ion-label position="stacked">Comments</ion-label>
+            <ion-input formControlName="paymentComments" placeholder="Enter comments" type="text" maxlength="500"></ion-input>
+            <ion-note slot="error">{{ getFieldError('paymentComments') }}</ion-note>
+          </ion-item>
+        </div>      </div>
     
     <!-- Section 5:Guardian Details -->
     <div class="section-card section-card--alt">
@@ -194,8 +198,6 @@
           <ion-input formControlName="guardianDOB" type="date" [max]="todayString"></ion-input>
           <ion-note slot="error">{{ getFieldError('guardianDOB') }}</ion-note>
         </ion-item>
-      </div>
-      <div class="form-row">
         <ion-item [class.ion-invalid]="isFieldInvalid('guardianAge')">
           <ion-label position="stacked">Age</ion-label>
           <ion-input
