@@ -49,48 +49,18 @@ export class AddBranchModalComponent implements OnInit {
   }
 
 ngOnInit(): void {
-  const organizationId = this.userContext.organizationId;
-  if (organizationId) {
-    this.branchForm.patchValue({ organizationId });
-  }
-
-  // Load organization state (if available) from stored organization info
-  this.loadOrganizationStateFromStorage();
-
   // Load states from master data (LookupKey = STATE)
-  this.loadStates();
+ 
 
-  // Load branches for dropdown
-  this.branchService.getBranches().subscribe({
-    next: (data) => {
-      this.branches = data; // <-- branch array with only id & name
-    },
-    error: (err) => console.error('Failed to load branches', err)
-  });
+  
 
   // If editing, load the branch details
   if (this.isEditing && this.editingBranchId) {
     this.loadBranchDetails(this.editingBranchId);
+    
   }
+   this.loadStates();
 }
-
-  private loadOrganizationStateFromStorage(): void {
-    const stored = localStorage.getItem('organization_info');
-    if (!stored) {
-      return;
-    }
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const org: any = JSON.parse(stored);
-      const state: unknown = org?.state;
-      if (state && typeof state === 'string' && state.trim().length > 0) {
-        this.organizationStateName = state.trim();
-      }
-    } catch {
-      // Ignore parsing errors and proceed without default state
-      this.organizationStateName = null;
-    }
-  }
 
   private applyOrgStateDefaultIfNeeded(): void {
     if (this.isEditing) return;

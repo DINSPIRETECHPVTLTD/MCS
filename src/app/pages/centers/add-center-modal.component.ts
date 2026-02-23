@@ -54,7 +54,7 @@ export class AddCenterModalComponent implements OnInit {
   }
 
   private loadBranches(): void {
-    this.branchService.getBranches().subscribe({
+    this.branchService.branches$.subscribe({
       next: (branches) => {
         this.branches = branches ?? [];
 

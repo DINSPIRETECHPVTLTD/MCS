@@ -204,47 +204,21 @@ export class StaffComponent implements OnInit, ViewWillEnter {
   }
 
   loadSelectedBranch(): void {
-    // Try to get from localStorage first (set by header menu)
     const savedBranchId = localStorage.getItem('selected_branch_id');
     if (savedBranchId) {
-      // First try to get branches from login response
-      const branchesFromLogin = this.authService.getBranchesFromLogin();
-      
-      if (branchesFromLogin && branchesFromLogin.length > 0) {
-        const branch = branchesFromLogin.find(b => b.id.toString() === savedBranchId);
+      this.branchService.branches$.subscribe(branches => {
+        const branch = branches.find(b => b.id.toString() === savedBranchId);
         if (branch) {
           this.selectedBranch = branch;
-          this.loadStaff(); // Found in cache, load once and return
-          return;
-        }
-      }
-      
-      // Cache miss or no branches from login: try API (async)
-      this.branchService.getBranches().subscribe({
-        next: (branches) => {
-          const branch = branches.find(b => b.id.toString() === savedBranchId);
-          if (branch) {
-            this.selectedBranch = branch;
-          } else {
-            // Fallback to user context if saved branch not found
-            const branchId = this.userContext.branchId;
-            if (branchId) {
-              this.selectedBranch = { id: branchId } as Branch;
-            }
-          }
-          this.loadStaff();
-        },
-        error: () => {
-          // API failed, use user context branch
+        } else {
           const branchId = this.userContext.branchId;
           if (branchId) {
             this.selectedBranch = { id: branchId } as Branch;
           }
-          this.loadStaff();
         }
+        this.loadStaff();
       });
     } else {
-      // No saved branch, use user context
       const branchId = this.userContext.branchId;
       if (branchId) {
         this.selectedBranch = { id: branchId } as Branch;
