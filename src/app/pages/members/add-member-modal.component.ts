@@ -5,6 +5,7 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil, distinctUntilChanged } from 'rxjs/operators';
 import { MemberService } from '../../services/member.service';
 import { UserService } from '../../services/user.service';
+import { UserContextService } from '../../services/user-context.service';
 import { MasterDataService } from '../../services/master-data.service';
 import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 import { CenterOption, POCOption } from '../../models/member.models';
@@ -43,6 +44,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     private formBuilder: FormBuilder,
     private memberService: MemberService,
     private userService: UserService,
+    private userContext: UserContextService,
     private masterDataService: MasterDataService,
     private modalController: ModalController,
     private loadingController: LoadingController,
@@ -54,7 +56,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadOrganizationStateFromStorage();
-    this.loadAllCenters();
+    this.loadCentersForBranch();
     this.loadStates();
     this.loadRelationships();
     this.loadPaymentModes();
@@ -196,24 +198,32 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Load branches from service
-
-
-  // Load all centers from service
-  loadAllCenters(): void {
+  // Load centers for the current branch
+  loadCentersForBranch(): void {
+    const branchId = this.userContext.branchId;
+    if (!branchId) {
+      this.centers = [];
+      return;
+    }
     this.isLoading = true;
-    this.memberService.getAllCenters().subscribe({
+    this.memberService.getCentersByBranch(branchId).subscribe({
       next: (centers: CenterOption[]) => {
         this.centers = centers ?? [];
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error loading centers:', error);
         this.centers = [];
         this.isLoading = false;
         this.cdr.detectChanges();
       }
     });
+  }
+
+  // Load all centers from service (kept for backward compatibility)
+  loadAllCenters(): void {
+    this.loadCentersForBranch();
   }
 
   // Load collectors (users) for the selected center
