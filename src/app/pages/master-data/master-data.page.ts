@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController, ViewWillEnter, ModalController, AlertController } from '@ionic/angular';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { MasterDataService } from '../../services/master-data.service';
 import { MasterLookup } from '../../models/master-data.models';
@@ -45,13 +46,13 @@ export class MasterDataComponent implements OnInit, ViewWillEnter {
     private alertController: AlertController
   ) {
     this.columnDefs = [
-      { headerName: 'ID', field: 'id', width: 70, filter: 'agNumberColumnFilter', sortable: true },
+      { headerName: 'ID', field: 'id', width: 70, filter: 'agNumberColumnFilter', sortable: true, hide: true },
       { headerName: 'Lookup Key', field: 'lookupKey', width: 130, filter: 'agTextColumnFilter', sortable: true },
       { headerName: 'Lookup Code', field: 'lookupCode', width: 120, filter: 'agTextColumnFilter', sortable: true },
       { headerName: 'Lookup Value', field: 'lookupValue', width: 180, filter: 'agTextColumnFilter', sortable: true },
       { headerName: 'Numeric Value', field: 'numericValue', width: 110, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? String(Number(p.value)) : '' },
       { headerName: 'Sort Order', field: 'sortOrder', width: 100, filter: 'agNumberColumnFilter', sortable: true },
-      { headerName: 'Description', field: 'description', flex: 1, filter: 'agTextColumnFilter', sortable: true },
+      { headerName: 'Description', field: 'description', flex: 1, filter: 'agTextColumnFilter', sortable: true,hide: true },
       {
         headerName: 'Status',
         width: 90,
@@ -105,7 +106,7 @@ export class MasterDataComponent implements OnInit, ViewWillEnter {
     });
     await loading.present();
     this.masterDataService.getMasterData(this.includeInactive).subscribe({
-      next: (list) => {
+      next: (list: MasterLookup[] | any) => {
         loading.dismiss();
         this.isLoading = false;
         this.items = list ?? [];
@@ -115,7 +116,7 @@ export class MasterDataComponent implements OnInit, ViewWillEnter {
           setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
         }
       },
-      error: () => {
+      error: (err: HttpErrorResponse | any) => {
         loading.dismiss();
         this.isLoading = false;
         this.items = [];
@@ -193,7 +194,7 @@ export class MasterDataComponent implements OnInit, ViewWillEnter {
                 this.showToast('Deleted successfully', 'success');
                 this.loadMasterData();
               },
-              error: async (err) => {
+              error: async (err: HttpErrorResponse | any) => {
                 await loading.dismiss();
                 this.showToast(err?.error?.message || 'Failed to delete', 'danger');
               }
