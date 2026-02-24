@@ -9,13 +9,14 @@ import { Branch } from '../../models/branch.models';
 import { AddBranchModalComponent } from './add-branch-modal.component';
 import { ColDef, ValueGetterParams, ICellRendererParams, GridOptions } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-branches',
   templateUrl: './branches.page.html'
 })
-export class BranchesComponent implements OnInit, ViewWillEnter {
-  branches: Branch[] = [];
+export class BranchesComponent implements ViewWillEnter {
+  //fbranches: Branch[] = [];
   branchForm: FormGroup;
   showAddForm: boolean = false;
   isEditing: boolean = false;
@@ -23,6 +24,7 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
   activeMenu: string = 'All Branches';
   isLoading: boolean = false;
   selectedBranch: Branch | null = null;
+  private subscriptions = new Subscription();
 
   // AG Grid configuration
   rowData: Branch[] = [];
@@ -109,105 +111,30 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
   gridOptions: GridOptions;
 
   ngOnInit(): void {
-    // Check authentication
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // ✅ Load initial data
+    this.branchService.loadBranches();
+
+    // ✅ Subscribe once - auto-updates on every change!
+    this.subscriptions.add(
+      this.branchService.branches$.subscribe(branches => {
+        this.rowData = branches;
+      })
+    );
+  }
+
+  ionViewWillEnter(): void {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
     }
   }
 
-  ionViewWillEnter(): void {
-    // Reload branches when page becomes active
-    if (this.authService.isAuthenticated()) {
-      this.loadBranches();
-    }
-  }
 
-  async loadBranches(forceRefresh: boolean = false): Promise<void> {
-    // First, try to get branches from login response
-    const branchesFromLogin = this.authService.getBranchesFromLogin();
-
-    // If we have branches from login and not forcing refresh, use them
-    if (!forceRefresh && branchesFromLogin && branchesFromLogin.length > 0) {
-      const normalized = this.normalizeBranches(branchesFromLogin);
-      this.branches = normalized;
-      this.rowData = normalized;
-      this.isLoading = false;
-      return;
-    }
-
-    this.isLoading = true;
-    const loading = await this.loadingController.create({
-      message: 'Loading branches...',
-      spinner: 'crescent'
-    });
-    await loading.present();
-
-    this.branchService.getBranches().subscribe({
-      next: (branches) => {
-        loading.dismiss();
-        this.isLoading = false;
-        const normalized = this.normalizeBranches(branches);
-        this.branches = normalized;
-        this.rowData = normalized;
-      },
-      error: (_error) => {
-        // Try alternative endpoint
-        this.branchService.getBranchesList().subscribe({
-          next: (branches) => {
-            loading.dismiss();
-            this.isLoading = false;
-            const normalized = this.normalizeBranches(branches);
-            this.branches = normalized;
-            this.rowData = normalized;
-          },
-          error: (err) => {
-            loading.dismiss();
-            this.isLoading = false;
-            this.branches = [];
-            this.rowData = [];
-            console.error('Error loading branches:', err);
-            if (err.status !== 404) {
-              this.showToast('Error loading branches: ' + (err.error?.message || err.message || 'Unknown error'), 'danger');
-            }
-          }
-        });
-      }
-    });
-  }
-
-  private normalizeBranches(raw: Branch[] | { data?: Branch[]; items?: Branch[]; rows?: Branch[]; branches?: Branch[]; value?: Branch[]; result?: Branch[] } | Branch): Branch[] {
-    if (!raw) return [];
-
-    // Extract array from different response formats
-    let list: Branch[];
-    if (Array.isArray(raw)) {
-      list = raw;
-    } else {
-      const response = raw as { data?: Branch[]; items?: Branch[]; rows?: Branch[]; branches?: Branch[]; value?: Branch[]; result?: Branch[] };
-      if (response.data && Array.isArray(response.data)) list = response.data;
-      else if (response.items && Array.isArray(response.items)) list = response.items;
-      else if (response.rows && Array.isArray(response.rows)) list = response.rows;
-      else if (response.branches && Array.isArray(response.branches)) list = response.branches;
-      else if (response.value && Array.isArray(response.value)) list = response.value;
-      else if (response.result && Array.isArray(response.result)) list = response.result;
-      else list = [raw as Branch];
-    }
-
-    // Map to ensure all Branch DTO properties are present
-    return list.map((branch: Branch) => ({
-      id: branch.id ?? 0,
-      name: branch.name ?? '',
-      address1: branch.address1 ?? '',
-      address2: branch.address2 ?? '',
-      city: branch.city ?? '',
-      state: branch.state ?? '',
-      country: branch.country ?? '',
-      zipCode: branch.zipCode ?? '',
-      phoneNumber: branch.phoneNumber ?? '',
-      orgId: branch.orgId ?? 0
-    }));
-  }
 
   async toggleAddForm(): Promise<void> {
     if (this.showAddForm) {
@@ -238,10 +165,6 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
     await modal.present();
 
     const { data } = await modal.onWillDismiss();
-    if (data && data.success) {
-      // Refresh branches list after successful save (force API fetch)
-      this.loadBranches(true);
-    }
     this.showAddForm = false;
     this.resetForm();
   }
@@ -267,8 +190,7 @@ export class BranchesComponent implements OnInit, ViewWillEnter {
               next: async () => {
                 await loading.dismiss();
                 this.showToast('Branch marked as inactive', 'success');
-                this.loadBranches(true);
-              },
+                },
               error: async (err) => {
                 await loading.dismiss();
                 console.error('Inactive error', err);

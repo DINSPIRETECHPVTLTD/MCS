@@ -401,9 +401,6 @@ export class CentersPage implements OnInit, ViewWillEnter {
     if (this.isLoading) return;
 
     const selectedBranchId = this.getSelectedBranchId();
-
-    // Avoid reloading (and re-showing the loader) when the user taps the Centers menu again
-    // and nothing relevant changed.
     if (!forceRefresh && this.rowData.length > 0 && this.selectedBranchId === selectedBranchId) {
       return;
     }
@@ -412,61 +409,35 @@ export class CentersPage implements OnInit, ViewWillEnter {
     this.selectedBranchId = selectedBranchId;
     this.selectedBranchName = '';
 
-    // Fetch both centers and branches in parallel
+    // Use branches$ for local copy and auto-updates
     this.centerService.getAllCenters().subscribe({
       next: async (centers) => {
-        this.branchService.getBranches().subscribe({
-          next: async branches => {
-            const branchMap = new Map(branches.map(b => [Number(b.id), b.name]));
-            const selectedBranchName = selectedBranchId != null ? (branchMap.get(Number(selectedBranchId)) || '') : '';
-            this.selectedBranchName = selectedBranchName;
+        this.branchService.branches$.subscribe(branches => {
+          const branchMap = new Map(branches.map(b => [Number(b.id), b.name]));
+          const selectedBranchName = selectedBranchId != null ? (branchMap.get(Number(selectedBranchId)) || '') : '';
+          this.selectedBranchName = selectedBranchName;
 
-            const mapped = (centers ?? []).map(center => {
-              const centerRec = center as unknown as Record<string, unknown>;
-              const bIdNum = Number(centerRec['branchId'] ?? centerRec['BranchId'] ?? (center as any)?.branchId ?? 0);
-              const branchId = Number.isFinite(bIdNum) && bIdNum > 0 ? bIdNum : undefined;
-              const branchName = branchMap.get(Number(branchId ?? 0)) || (center as any)?.branchName || '';
-              return this.normalizeCenter(center, branchName, branchId);
-            });
+          const mapped = (centers ?? []).map(center => {
+            const centerRec = center as unknown as Record<string, unknown>;
+            const bIdNum = Number(centerRec['branchId'] ?? centerRec['BranchId'] ?? (center as any)?.branchId ?? 0);
+            const branchId = Number.isFinite(bIdNum) && bIdNum > 0 ? bIdNum : undefined;
+            const branchName = branchMap.get(Number(branchId ?? 0)) || (center as any)?.branchName || '';
+            return this.normalizeCenter(center, branchName, branchId);
+          });
 
-            // If a branch is selected (e.g. user clicked Navigate), show only that branch's centers
-            this.centers = selectedBranchId != null
-              ? mapped.filter(c => Number(c.branchId) === Number(selectedBranchId) || (!!selectedBranchName && c.branchName === selectedBranchName))
-              : mapped;
+          this.centers = selectedBranchId != null
+            ? mapped.filter(c => Number(c.branchId) === Number(selectedBranchId) || (!!selectedBranchName && c.branchName === selectedBranchName))
+            : mapped;
 
-            this.rowData = [...this.centers];
-            if (this.gridApi) {
-              this.gridApi.setGridOption('rowData', this.rowData);
-              this.gridApi.paginationGoToFirstPage();
-              this.paginatorPageIndex = 0;
-            }
-            this.syncPaginatorFromGrid();
-            this.updateGridHeight();
-            this.isLoading = false;
-          },
-          error: async () => {
-            // If branches fail to load, still filter by branchId if present
-            const mapped = (centers ?? []).map(center => {
-              const centerRec = center as unknown as Record<string, unknown>;
-              const bIdNum = Number(centerRec['branchId'] ?? centerRec['BranchId'] ?? (center as any)?.branchId ?? 0);
-              const branchId = Number.isFinite(bIdNum) && bIdNum > 0 ? bIdNum : undefined;
-              return this.normalizeCenter(center, (center as any)?.branchName || '', branchId);
-            });
-            this.centers = selectedBranchId != null
-              ? mapped.filter(c => Number(c.branchId) === Number(selectedBranchId))
-              : mapped;
-
-            this.rowData = [...this.centers];
-            if (this.gridApi) {
-              this.gridApi.setGridOption('rowData', this.rowData);
-              this.gridApi.paginationGoToFirstPage();
-              this.paginatorPageIndex = 0;
-            }
-            this.syncPaginatorFromGrid();
-            this.updateGridHeight();
-            this.isLoading = false;
-            await this.showToast('Failed to load branches.', 'danger');
+          this.rowData = [...this.centers];
+          if (this.gridApi) {
+            this.gridApi.setGridOption('rowData', this.rowData);
+            this.gridApi.paginationGoToFirstPage();
+            this.paginatorPageIndex = 0;
           }
+          this.syncPaginatorFromGrid();
+          this.updateGridHeight();
+          this.isLoading = false;
         });
       },
       error: async () => {
