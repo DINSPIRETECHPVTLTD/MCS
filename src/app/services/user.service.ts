@@ -22,11 +22,9 @@ export class UserService {
     let headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
-    
     if (token) {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
-
     return this.http.get<User[]>(`${this.apiUrl}/Users`, { headers });
   }
 
@@ -41,7 +39,6 @@ export class UserService {
     }
     return this.http.post<User>(`${this.apiUrl}/Users`, user, { headers });
   }
-
   getUser(id: number): Observable<User> {
     const token = this.authService.getToken();
     let headers = new HttpHeaders({

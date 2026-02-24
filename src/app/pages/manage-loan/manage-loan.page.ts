@@ -89,7 +89,7 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
         const prepaymentBtn = document.createElement('button');
         prepaymentBtn.type = 'button';
         prepaymentBtn.className = 'ag-btn ag-edit';
-        prepaymentBtn.textContent = 'Prepayment Loan';
+        prepaymentBtn.textContent = 'Prepayment';
         
         const comp = (params.context as { component?: ManageLoanComponent })?.component ?? this;
         viewBtn.addEventListener('click', () => comp.viewLoan(params.data));

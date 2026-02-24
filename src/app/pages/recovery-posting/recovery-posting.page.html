@@ -34,7 +34,7 @@
                 placeholder="Select Center"
                 interface="popover">
                 <ion-select-option [value]="">Select Center</ion-select-option>
-                <ion-select-option *ngFor="let center of centers" [value]="center.id">
+                <ion-select-option *ngFor="let center of centers" [value]="center.id + ''">
                   {{ center.code ? center.code + ' - ' + center.name : center.name }}
                 </ion-select-option>
               </ion-select>

@@ -114,7 +114,7 @@
       <div class="nav-item-container">
         <button 
           class="nav-item" 
-          [class.active]="activeMenu === 'Loan' || activeMenu === 'Add Loan' || activeMenu === 'Manage Loan' || activeMenu === 'Preclose Loan'"
+          [class.active]="activeMenu === 'Loan' || activeMenu === 'Add Loan' || activeMenu === 'Manage Loan'"
           (click)="setActiveMenu('Loan')">
           <span>Loans</span>
           <ion-icon [name]="showLoanSubmenu ? 'chevron-forward-outline' : 'chevron-down-outline'" class="submenu-icon"></ion-icon>
@@ -122,7 +122,6 @@
         <div class="submenu-vertical" *ngIf="showLoanSubmenu">
           <button class="submenu-item" [class.active]="activeMenu === 'Add Loan'" (click)="selectSubmenu('Add Loan')">Add Loan</button>
           <button class="submenu-item" [class.active]="activeMenu === 'Manage Loan'" (click)="selectSubmenu('Manage Loan')">Manage Loan</button>
-          <button class="submenu-item" [class.active]="activeMenu === 'Preclose Loan'" (click)="selectSubmenu('Preclose Loan')">Preclose Loan</button>
         </div>
       </div>
       <button 

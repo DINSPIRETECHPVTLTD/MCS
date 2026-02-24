@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   LoanSchedulerRecoveryDto,
+  LoanSchedulerRecoveryFilterRequest,
   LoanSchedulerSaveRequest
 } from '../models/recovery-posting.models';
 import { AuthService } from './auth.service';
@@ -26,6 +27,27 @@ export class RecoveryPostingService {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
+  }
+
+  /**
+   * GET api/LoanSchedulers/recovery
+   * Returns one row per loan (next unpaid installment) for the given schedule date and optional branch/center/POC filters.
+   */
+  getLoanSchedulersForRecovery(filter: LoanSchedulerRecoveryFilterRequest): Observable<LoanSchedulerRecoveryDto[]> {
+    let params = new HttpParams().set('scheduleDate', filter.scheduleDate);
+    if (filter.branchId != null) params = params.set('branchId', filter.branchId.toString());
+    if (filter.centerId != null) params = params.set('centerId', filter.centerId.toString());
+    if (filter.pocId != null) params = params.set('pocId', filter.pocId.toString());
+    if (filter.pageNumber != null) params = params.set('pageNumber', filter.pageNumber.toString());
+    if (filter.pageSize != null) params = params.set('pageSize', filter.pageSize.toString());
+
+    return this.http.get<LoanSchedulerRecoveryDto[]>(`${this.baseUrl}/recovery`, {
+      headers: this.getHeaders(),
+      params
+    }).pipe(
+      timeout(15000),
+      catchError(() => of([]))
+    );
   }
 
   /**

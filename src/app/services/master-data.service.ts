@@ -26,6 +26,15 @@ export class MasterDataService {
     });
   }
 
+  /** GET api/MasterLookups/keys - valid LookupKey values for dropdown (from API, not hardcoded). */
+  getLookupKeys(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/keys`, {
+      headers: this.getHeaders()
+    }).pipe(
+      catchError(() => of([]))
+    );
+  }
+
   getMasterData(includeInactive = false): Observable<MasterLookup[]> {
     return this.http.get<{ $values?: MasterLookup[] } | MasterLookup[]>(this.baseUrl, {
       headers: this.getHeaders()

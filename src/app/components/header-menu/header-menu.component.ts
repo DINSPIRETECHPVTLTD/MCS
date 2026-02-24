@@ -60,8 +60,8 @@ export class HeaderMenuComponent implements OnInit {
     this.initializeHeader();
     
     // Show Loan submenu if active menu is related to Loan (Branch User only)
-    if (this.activeMenu === 'Loan' || this.activeMenu === 'Add Loan' || 
-        this.activeMenu === 'Manage Loan' || this.activeMenu === 'Preclose Loan') {
+    if (this.activeMenu === 'Loan' || this.activeMenu === 'Add Loan' ||
+        this.activeMenu === 'Manage Loan') {
       this.showLoanSubmenu = true;
     }
     // Show Master submenu if active menu is Master Data or Payment Terms (Org Mode)
@@ -361,7 +361,7 @@ export class HeaderMenuComponent implements OnInit {
       this.showFundsSubmenu = false;
     }
     // Keep Branches submenu open for Org Owner when selecting Loan submenu items
-    if (this.isOrgOwner && (submenu === 'Add Loan' || submenu === 'Manage Loan' || submenu === 'Preclose Loan')) {
+    if (this.isOrgOwner && (submenu === 'Add Loan' || submenu === 'Manage Loan')) {
       this.showBranchesSubmenu = true;
     } else {
       this.showBranchesSubmenu = false;
@@ -393,8 +393,6 @@ export class HeaderMenuComponent implements OnInit {
       route = '/add-loan';
     } else if (submenu === 'Manage Loan') {
       route = '/manage-loan';
-    } else if (submenu === 'Preclose Loan') {
-      route = '/preclose-loan';
     } else if (submenu === 'Recovery Posting') {
       route = '/recovery-posting';
     } else if (submenu === 'Master Data') {

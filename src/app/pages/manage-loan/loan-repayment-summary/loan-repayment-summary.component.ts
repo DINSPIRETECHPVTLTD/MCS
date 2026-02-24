@@ -77,7 +77,19 @@ export class LoanRepaymentSummaryComponent implements OnInit {
           }
           const rows = this.mapSchedulersToScheduleRows(schedulers);
           this.scheduleRows = rows;
-          this.totalAmountPaid = rows.reduce((sum, r) => sum + (Number(r.paidAmount) || 0), 0);
+          // Total Amount = sum of Paid Amount for rows with Status Paid or Partial/Partially Paid.
+          this.totalAmountPaid = (schedulers || []).reduce(
+            (sum, s) => {
+              const normalizedStatus = String(s.status ?? '').replace(/\s+/g, '').toLowerCase();
+              const isPaidOrPartial =
+                normalizedStatus === 'paid' ||
+                normalizedStatus === 'partial' ||
+                normalizedStatus === 'partiallypaid' ||
+                normalizedStatus === 'partialpaid';
+              return isPaidOrPartial ? sum + (Number(s.paymentAmount) || 0) : sum;
+            },
+            0
+          );
           const total = loan.totalAmount ?? 0;
           this.remainingBalance = Math.max(0, total - this.totalAmountPaid);
           if (loan.totalAmount != null && loan.noOfTerms != null) {

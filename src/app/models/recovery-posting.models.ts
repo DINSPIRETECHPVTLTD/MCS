@@ -37,9 +37,9 @@ export interface LoanSchedulerSaveRequest {
   loanSchedulerId: number;
   status?: string;
   paymentMode: string;
-  actualEmiAmount: number;
-  actualInterestAmount: number;
-  actualPrincipalAmount: number;
+  paymentAmount: number;
+  principalAmount: number;
+  interestAmount: number;
   comments: string;
   collectedBy?: number;
 }

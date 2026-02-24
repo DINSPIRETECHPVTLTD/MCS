@@ -1,34 +1,150 @@
-<app-header-menu 
+<app-header-menu
   [activeMenu]="activeMenu"
   (menuChange)="onMenuChange($event)"
   (branchChange)="onBranchChange($event)">
-  <ion-content [fullscreen]="true" class="ion-padding">
-  <div class="content-container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h1>Preclose Loan</h1>
-    </div>
-    
-    <div *ngIf="loans.length === 0" class="empty-state">
-      <ion-icon name="close-circle-outline" size="large"></ion-icon>
-      <p>No loans available for preclosure</p>
-      <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
-        Loans eligible for preclosure will be displayed here
-      </p>
-    </div>
-    
-    <ion-list *ngIf="loans.length > 0">
-      <ion-item *ngFor="let loan of loans" class="loan-item">
-        <ion-label>
-          <h2>{{ loan.loanNumber || 'Loan #' + loan.id }}</h2>
-          <p *ngIf="loan.memberName">Member: {{ loan.memberName }}</p>
-          <p *ngIf="loan.amount">Amount: {{ loan.amount }}</p>
-          <p *ngIf="loan.outstandingAmount">Outstanding: {{ loan.outstandingAmount }}</p>
-        </ion-label>
-        <ion-button slot="end" fill="outline" color="warning">
-          Preclose
+  <ion-content [fullscreen]="true">
+    <div class="repayment-summary-container">
+      <div class="page-header">
+        <h2>Prepayment / Part-Payment</h2>
+        <ion-button *ngIf="loanId != null" fill="clear" (click)="goBackToManageLoan()">
+          <ion-icon name="arrow-back-outline" slot="start"></ion-icon>
+          Back to Manage Loan
         </ion-button>
-      </ion-item>
-    </ion-list>
-  </div>
+      </div>
+
+      <!-- No loanId: empty state -->
+      <div *ngIf="loanId == null && !isLoading" class="empty-state">
+        <ion-icon name="document-text-outline" size="large"></ion-icon>
+        <p>Select a loan from Manage Loan to process prepayment</p>
+        <p class="empty-hint">Use "Prepayment / Part-Payment" on a loan row to open this screen.</p>
+        <ion-button fill="solid" color="primary" (click)="goBackToManageLoan()">
+          Go to Manage Loan
+        </ion-button>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loanId != null && isLoading" class="loading-state">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Loading prepayment data...</p>
+      </div>
+
+      <!-- Load error -->
+      <div *ngIf="loanId != null && loadError && !isLoading" class="error-state">
+        <ion-icon name="alert-circle-outline" size="large"></ion-icon>
+        <p>{{ loadError }}</p>
+        <ion-button fill="outline" (click)="goBackToManageLoan()">Back to Manage Loan</ion-button>
+      </div>
+
+      <!-- Loaded: summary + EMI table -->
+      <ng-container *ngIf="loanId != null && !isLoading && !loadError && loan">
+        <div class="summary-section">
+          <h3>Loan Summary</h3>
+          <p *ngIf="memberName" class="member-name">Member: {{ memberName }}</p>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="label">Total Amount</span>
+              <span class="value">{{ formatAmount(totalAmountPaid) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Remaining Balance</span>
+              <span class="value">{{ formatAmount(remainingBalance) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="schedule-section">
+          <h3>EMI Schedule – Part-Payment / Pre-Closure</h3>
+          <p class="table-hint">Select Not Paid rows, set Payment Mode and Collected By, then click Save.</p>
+          <div class="table-wrapper">
+            <table class="schedule-table">
+              <thead>
+                <tr>
+                  <th class="col-check">Select</th>
+                  <th>Week No</th>
+                  <th>Collection Date</th>
+                  <th>Paid Date</th>
+                  <th>Payment Status</th>
+                  <th>Paid Amount</th>
+                  <th>Weekly Due (EMI)</th>
+                  <th>Payment Mode</th>
+                  <th>Collected By</th>
+                  <th>Reasons</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of emiRows" [class.readonly-row]="!isNotPaid(row)">
+                  <td class="col-check">
+                    <ion-checkbox
+                      *ngIf="isNotPaid(row)"
+                      [checked]="row.selected"
+                      (ionChange)="row.selected = $any($event).detail.checked">
+                    </ion-checkbox>
+                    <span *ngIf="!isNotPaid(row)">–</span>
+                  </td>
+                  <td>{{ row.weekNo }}</td>
+                  <td>{{ formatDateDDMMYY(row.collectionDate) }}</td>
+                  <td>{{ formatDate(row.paidDate) }}</td>
+                  <td>{{ row.paymentStatus }}</td>
+                  <td>{{ formatAmount(row.paidAmount) }}</td>
+                  <td>{{ formatAmount(row.weeklyDue) }}</td>
+                  <td>
+                    <ion-select
+                      *ngIf="isNotPaid(row)"
+                      [value]="row.paymentMode"
+                      (ionChange)="row.paymentMode = $any($event).detail.value"
+                      interface="popover"
+                      placeholder="Mode">
+                      <ion-select-option *ngFor="let opt of paymentModeValues" [value]="opt">
+                        {{ opt }}
+                      </ion-select-option>
+                    </ion-select>
+                    <span *ngIf="!isNotPaid(row)">{{ row.paymentMode === 'Select' ? '–' : row.paymentMode }}</span>
+                  </td>
+                  <td>
+                    <ion-select
+                      *ngIf="isNotPaid(row)"
+                      [value]="row.collectedBy"
+                      (ionChange)="row.collectedBy = $any($event).detail.value != null ? +$any($event).detail.value : null"
+                      interface="popover"
+                      placeholder="Collected By">
+                      <ion-select-option *ngFor="let u of users" [value]="u.id">
+                        {{ getUserIdDisplayName(u.id ?? null) }}
+                      </ion-select-option>
+                    </ion-select>
+                    <span *ngIf="!isNotPaid(row)">{{ getUserIdDisplayName(row.collectedBy) || '–' }}</span>
+                  </td>
+                  <td>
+                    <ion-input
+                      *ngIf="isNotPaid(row)"
+                      [value]="row.reasons"
+                      (ionInput)="row.reasons = $any($event).target?.value ?? ''"
+                      placeholder="Reasons"
+                      [maxlength]="100">
+                    </ion-input>
+                    <span *ngIf="!isNotPaid(row)">{{ row.reasons || '–' }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p *ngIf="emiRows.length === 0" class="no-rows">No schedule</p>
+        </div>
+
+        <div class="action-bar">
+          <ion-button
+            color="primary"
+            fill="solid"
+            [disabled]="!canSave"
+            (click)="save()">
+            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+            Save
+          </ion-button>
+          <ion-button color="medium" fill="solid" (click)="cancel()">
+            <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+            Cancel
+          </ion-button>
+        </div>
+      </ng-container>
+    </div>
   </ion-content>
 </app-header-menu>
