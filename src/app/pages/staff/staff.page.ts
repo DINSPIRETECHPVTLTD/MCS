@@ -97,10 +97,9 @@ export class StaffComponent implements OnInit, ViewWillEnter {
               return false;
             }
 
-            // Password policy: at least one uppercase, one lowercase or digit, one digit, one special char, min length 8
-            const policy = /(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}/;
-            if (!policy.test(newPwd)) {
-              this.showToast('Password must include uppercase letters, numbers and special characters (min 8 chars)', 'danger');
+            // Password policy: exactly 8 characters
+            if (newPwd.length !== 8) {
+              this.showToast('Password must be exactly 8 characters', 'danger');
               return false;
             }
 
@@ -181,6 +180,35 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         filter: 'agTextColumnFilter'
       },
       { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter' },
+      {
+        headerName: 'Email',
+        field: 'email',
+        width: 180,
+        editable: true,
+        filter: 'agTextColumnFilter',
+        valueGetter: () => '', // Always show empty
+        valueSetter: (params: any) => {
+          params.data.email = params.newValue || '';
+          return true;
+        }
+      },
+      {
+        headerName: 'Password',
+        field: 'password',
+        width: 140,
+        editable: true,
+        filter: 'agTextColumnFilter',
+        valueGetter: () => '', // Always show empty
+        valueSetter: (params: any) => {
+          const pwd = (params.newValue || '').toString();
+          if (pwd && pwd.length !== 8) {
+            setTimeout(() => this.showToast('Password must be exactly 8 characters', 'warning'), 100);
+            return false; // Reject the change
+          }
+          params.data.password = pwd;
+          return true;
+        }
+      },
       // keep actions column (edit/delete/reset) at end
       {
         headerName: 'Actions', field: 'actions', width: 300, cellRenderer: (params: any) => {
@@ -428,6 +456,13 @@ export class StaffComponent implements OnInit, ViewWillEnter {
       return;
     }
 
+    // Validate password if present
+    const password = (data.password || '').toString().trim();
+    if (password && password.length !== 8) {
+      this.showToast('Password must be exactly 8 characters', 'danger');
+      return;
+    }
+
     // Build clean payload similar to modal to avoid sending unexpected fields
     const payload: any = {
       firstName: (data.firstName || '').toString().trim(),
@@ -438,11 +473,21 @@ export class StaffComponent implements OnInit, ViewWillEnter {
       city: (data.city || '').toString().trim(),
       state: (data.state || '').toString().trim(),
       pinCode: (data.pinCode || data.pinCode || '').toString().trim(),
-      email: (data.email || '').toString().trim(),
       role: data.role || 'Staff',
       organizationId: data.organizationId || this.userContext.organizationId || 0,
       branchId: data.branchId || this.selectedBranch?.id || this.userContext.branchId || null
     };
+
+    // Only add email to payload if it's provided and not empty
+    const email = (data.email || '').toString().trim();
+    if (email) {
+      payload.email = email;
+    }
+
+    // Only add password to payload if it's provided and not empty
+    if (password) {
+      payload.password = password;
+    }
 
     (async () => {
       const loading = await this.loadingController.create({ message: 'Saving changes...', spinner: 'crescent' });
