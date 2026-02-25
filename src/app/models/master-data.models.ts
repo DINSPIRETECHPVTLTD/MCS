@@ -5,7 +5,8 @@
 /** Category keys for lookups (match backend LookupKeys) */
 export const LookupKeys = {
   LoanTerm: 'LOAN_TERM',
-  PaymentType: 'PAYMENT_TYPE'
+  PaymentType: 'PAYMENT_TYPE',
+  State: 'STATE'
 } as const;
 
 export type LookupKeyType = typeof LookupKeys[keyof typeof LookupKeys] | string;

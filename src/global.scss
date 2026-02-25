@@ -90,44 +90,55 @@
 }
 
 .ag-btn {
-  appearance: none;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  appearance: none !important;
+  border: none !important;
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
 }
 
 .ag-edit {
-  background: var(--ion-color-primary);
-  color: white;
+  background: #007bff !important;
+  color: white !important;
 }
 
 .ag-edit:hover {
-  background: var(--ion-color-primary-shade);
-  transform: translateY(-1px);
+  background: #0056b3 !important;
+  transform: translateY(-1px) !important;
 }
 
 .ag-delete {
-  background: var(--ion-color-danger);
-  color: white;
+  background: #007bff !important;
+  color: white !important;
 }
 
 .ag-delete:hover {
-  background: var(--ion-color-danger-shade);
-  transform: translateY(-1px);
+  background: #0056b3 !important;
+  transform: translateY(-1px) !important;
+}
+
+.ag-reset {
+  background: #ffffff !important;
+  color: #333 !important;
+  border: 1px solid #ccc !important;
+}
+
+.ag-reset:hover {
+  background: #f0f0f0 !important;
+  transform: translateY(-1px) !important;
 }
 
 .ag-navigate {
-  background: var(--ion-color-success);
-  color: white;
+  background: var(--ion-color-success) !important;
+  color: white !important;
 }
 
 .ag-navigate:hover {
-  background: var(--ion-color-success-shade);
-  transform: translateY(-1px);
+  background: var(--ion-color-success-shade) !important;
+  transform: translateY(-1px) !important;
 }
 
 /* Common Page Container Styles */

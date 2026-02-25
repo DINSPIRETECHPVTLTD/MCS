@@ -56,4 +56,52 @@
   gap: 12px;
 }
 
+// AG Grid Actions Column Styling
+.ag-btn {
+  padding: 6px 12px !important;
+  border: none !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  color: white !important;
+
+  &:hover {
+    opacity: 0.9 !important;
+    transform: translateY(-1px) !important;
+  }
+
+  &:active {
+    transform: translateY(0) !important;
+  }
+
+  &.ag-edit {
+    background-color: #007bff !important;
+    color: white !important;
+
+    &:hover {
+      background-color: #0056b3 !important;
+    }
+  }
+
+  &.ag-delete {
+    background-color: #007bff !important;
+    color: white !important;
+
+    &:hover {
+      background-color: #0056b3 !important;
+    }
+  }
+
+  &.ag-loan {
+    background-color: #28a745 !important;
+    color: white !important;
+
+    &:hover {
+      background-color: #218838 !important;
+    }
+  }
+}
+
 

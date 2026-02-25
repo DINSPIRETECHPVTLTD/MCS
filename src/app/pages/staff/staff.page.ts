@@ -15,7 +15,8 @@ import { POCData } from '../branch-dashboard/branch-dashboard.page';
 
 @Component({
   selector: 'app-staff',
-  templateUrl: './staff.page.html'
+  templateUrl: './staff.page.html',
+  styleUrls: ['./staff.page.scss']
 })
 export class StaffComponent implements OnInit, ViewWillEnter {
   staff: User[] = [];
@@ -71,12 +72,14 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         {
           name: 'newPassword',
           type: 'password',
-          placeholder: 'New Password'
+          placeholder: 'New Password',
+          attributes: { maxlength: 8 }
         },
         {
           name: 'confirmPassword',
           type: 'password',
-          placeholder: 'Confirm Password'
+          placeholder: 'Confirm Password',
+          attributes: { maxlength: 8 }
         }
       ],
       buttons: [
@@ -84,14 +87,16 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         {
           text: 'Submit',
           handler: async (data: any) => {
-            const newPwd = (data?.newPassword || '').toString();
-            const confirm = (data?.confirmPassword || '').toString();
+            const newPwd = (data?.newPassword || '').toString().trim();
+            const confirm = (data?.confirmPassword || '').toString().trim();
 
-            // Basic validation: non-empty, match, and password policy
+            // Basic validation: non-empty
             if (!newPwd || !confirm) {
               this.showToast('Please fill both password fields', 'warning');
               return false; // prevent dismiss
             }
+
+            // Passwords must match
             if (newPwd !== confirm) {
               this.showToast('Passwords do not match', 'danger');
               return false;
@@ -180,35 +185,7 @@ export class StaffComponent implements OnInit, ViewWillEnter {
         filter: 'agTextColumnFilter'
       },
       { headerName: 'Phone', field: 'phoneNumber', editable: false, width: 140, filter: 'agTextColumnFilter' },
-      {
-        headerName: 'Email',
-        field: 'email',
-        width: 180,
-        editable: true,
-        filter: 'agTextColumnFilter',
-        valueGetter: () => '', // Always show empty
-        valueSetter: (params: any) => {
-          params.data.email = params.newValue || '';
-          return true;
-        }
-      },
-      {
-        headerName: 'Password',
-        field: 'password',
-        width: 140,
-        editable: true,
-        filter: 'agTextColumnFilter',
-        valueGetter: () => '', // Always show empty
-        valueSetter: (params: any) => {
-          const pwd = (params.newValue || '').toString();
-          if (pwd && pwd.length !== 8) {
-            setTimeout(() => this.showToast('Password must be exactly 8 characters', 'warning'), 100);
-            return false; // Reject the change
-          }
-          params.data.password = pwd;
-          return true;
-        }
-      },
+      { headerName: 'Email', field: 'email', editable: false, width: 200, filter: 'agTextColumnFilter' },
       // keep actions column (edit/delete/reset) at end
       {
         headerName: 'Actions', field: 'actions', width: 300, cellRenderer: (params: any) => {

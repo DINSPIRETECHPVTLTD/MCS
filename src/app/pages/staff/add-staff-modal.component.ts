@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators, AbstractControl, ValidatorFn, Valid
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { UserContextService } from '../../services/user-context.service';
+import { MasterDataService } from '../../services/master-data.service';
+import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 
 @Component({
   selector: 'app-add-staff-modal',
@@ -16,6 +18,7 @@ export class AddStaffModalComponent implements OnInit {
   
   staffForm: FormGroup;
   submitted: boolean = false;
+  states: MasterLookup[] = [];
 
   constructor(
     private formBuilder: FormBuilder,
@@ -23,7 +26,8 @@ export class AddStaffModalComponent implements OnInit {
     private userService: UserService,
     private userContext: UserContextService,
     private loadingController: LoadingController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private masterDataService: MasterDataService
   ) {
     this.staffForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
@@ -132,7 +136,25 @@ export class AddStaffModalComponent implements OnInit {
     }
   }
 
+  loadStates(): void {
+    this.masterDataService.getMasterData().subscribe({
+      next: (masterData) => {
+        // Filter for STATE lookup key
+        this.states = masterData.filter(m => m.lookupKey === LookupKeys.State);
+        // Sort by sortOrder
+        this.states.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        console.log('States loaded:', this.states);
+      },
+      error: (err) => {
+        console.error('Failed to load states from master data', err);
+      }
+    });
+  }
+
   ngOnInit(): void {
+    // Load states from master data
+    this.loadStates();
+
     // Set organization ID
     const organizationId = this.userContext.organizationId;
     if (organizationId) {
@@ -175,7 +197,8 @@ export class AddStaffModalComponent implements OnInit {
           const zipCodeValue = (user as any)?.zipCode || (user as any)?.ZipCode || (user as any)?.pinCode || '';
           console.log('User loaded for edit:', user, 'zipCode value:', zipCodeValue);
           this.staffForm.patchValue({
-            // Email and password fields remain empty - do not prepopulate
+            email: user.email || '',
+            // Password field remains empty - do not prepopulate for security
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             phoneNumber: user.phoneNumber || '',
