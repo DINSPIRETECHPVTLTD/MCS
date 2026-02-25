@@ -70,13 +70,13 @@
 
           <!-- Action Buttons -->
           <div class="filter-group action-buttons">
+            <div class="total-amount-collected" [class.has-value]="totalAmountCollected > 0">
+              <div class="total-label">Total Amount Collected</div>
+              <div class="total-value">₹ {{ totalAmountCollected | number:'1.2-2' }}</div>
+            </div>
             <ion-button color="primary" fill="solid" (click)="postSelected()">
               <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
               POST
-            </ion-button>
-            <ion-button color="medium" fill="solid" (click)="close()">
-              <ion-icon name="close-circle-outline" slot="start"></ion-icon>
-              CLOSE
             </ion-button>
           </div>
         </div>

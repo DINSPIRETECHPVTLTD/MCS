@@ -94,6 +94,37 @@
     flex-direction: row;
     gap: 12px;
     margin-left: auto;
+    align-items: center;
+
+    .total-amount-collected {
+      min-width: 220px;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+
+      &.has-value {
+        border-color: #22c55e;
+        background: #ecfdf3;
+
+        .total-value {
+          color: #16a34a;
+        }
+      }
+
+      .total-label {
+        font-size: 12px;
+        color: var(--ion-color-medium);
+        margin-bottom: 2px;
+      }
+
+      .total-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ion-color-dark);
+        line-height: 1.1;
+      }
+    }
 
     ion-button {
       --padding-start: 20px;
