@@ -7,6 +7,7 @@ import { MemberService } from '../../services/member.service';
 import { MasterDataService } from '../../services/master-data.service';
 import { MasterLookup } from '../../models/master-data.models';
 import { UserService } from '../../services/user.service';
+import { OrganizationService } from '../../services/organization.service';
 import { User } from '../../models/user.models';
 
 export interface Center {
@@ -46,6 +47,7 @@ export class AddPocModalComponent implements OnInit {
     private memberService: MemberService,
     private masterDataService: MasterDataService,
     private userService: UserService,
+    private organizationService: OrganizationService,
     private loadingController: LoadingController,
     private toastController: ToastController
   ) {
@@ -98,7 +100,7 @@ export class AddPocModalComponent implements OnInit {
       this.pocForm.get('collectionDay')?.updateValueAndValidity();
     }
 
-    this.loadOrganizationStateFromStorage();
+    this.loadOrganizationState();
     this.loadStates();
 
     // Load active users
@@ -152,18 +154,20 @@ export class AddPocModalComponent implements OnInit {
     });
   }
 
-  private loadOrganizationStateFromStorage(): void {
-    const stored = localStorage.getItem('organization_info');
-    if (!stored) return;
-    try {
-      const org: { state?: string } = JSON.parse(stored);
-      const state = org?.state;
-      if (state && typeof state === 'string' && state.trim().length > 0) {
-        this.organizationStateName = state.trim();
+  private loadOrganizationState(): void {
+    const organizationId = this.userContext.organizationId;
+    if (!organizationId) return;
+
+    this.organizationService.getOrganization(organizationId).subscribe({
+      next: (org) => {
+        const state = (org?.state ?? '').toString().trim();
+        this.organizationStateName = state.length > 0 ? state : null;
+        this.applyOrgStateDefaultIfNeeded();
+      },
+      error: () => {
+        this.organizationStateName = null;
       }
-    } catch {
-      this.organizationStateName = null;
-    }
+    });
   }
 
   private applyOrgStateDefaultIfNeeded(): void {

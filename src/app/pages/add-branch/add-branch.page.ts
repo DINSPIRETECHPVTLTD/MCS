@@ -5,6 +5,8 @@ import { LoadingController, ToastController, ViewWillEnter } from '@ionic/angula
 import { AuthService } from '../../services/auth.service';
 import { BranchService } from '../../services/branch.service';
 import { MasterDataService } from '../../services/master-data.service';
+import { OrganizationService } from '../../services/organization.service';
+import { UserContextService } from '../../services/user-context.service';
 import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 import { Branch } from '../../models/branch.models';
 
@@ -26,6 +28,8 @@ export class AddBranchComponent implements OnInit, ViewWillEnter {
     private authService: AuthService,
     private branchService: BranchService,
     private masterDataService: MasterDataService,
+    private organizationService: OrganizationService,
+    private userContext: UserContextService,
     private router: Router,
     private loadingController: LoadingController,
     private toastController: ToastController
@@ -47,22 +51,24 @@ export class AddBranchComponent implements OnInit, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
-    this.loadOrganizationStateFromStorage();
+    this.loadOrganizationState();
     this.loadStates();
   }
 
-  private loadOrganizationStateFromStorage(): void {
-    const stored = localStorage.getItem('organization_info');
-    if (!stored) return;
-    try {
-      const org: { state?: string } = JSON.parse(stored);
-      const state = org?.state;
-      if (state && typeof state === 'string' && state.trim().length > 0) {
-        this.organizationStateName = state.trim();
+  private loadOrganizationState(): void {
+    const organizationId = this.userContext.organizationId;
+    if (!organizationId) return;
+
+    this.organizationService.getOrganization(organizationId).subscribe({
+      next: (org) => {
+        const state = (org?.state ?? '').toString().trim();
+        this.organizationStateName = state.length > 0 ? state : null;
+        this.applyOrgStateDefaultIfNeeded();
+      },
+      error: () => {
+        this.organizationStateName = null;
       }
-    } catch {
-      this.organizationStateName = null;
-    }
+    });
   }
 
   private applyOrgStateDefaultIfNeeded(): void {
