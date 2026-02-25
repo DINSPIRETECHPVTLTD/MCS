@@ -70,15 +70,18 @@
       <ion-note slot="error">{{ getFieldError('email') }}</ion-note>
     </ion-item>
 
-    <ion-item [class.ion-invalid]="isFieldInvalid('password')">
-      <ion-label position="stacked">Password <span *ngIf="!isEditing" class="required">*</span></ion-label>
+    <ion-item [class.ion-invalid]="isFieldInvalid('password')" *ngIf="!isEditing">
+      <ion-label position="stacked">Password <span class="required">*</span></ion-label>
       <ion-input
         formControlName="password"
         placeholder="Enter password"
         type="password"
-        maxlength="12"
+        maxlength="10"
         (ionInput)="onPasswordInput($event)">
       </ion-input>
+      <ion-note slot="helper" *ngIf="!isFieldInvalid('password')">
+        Must contain uppercase letters, numbers, special characters, 8-10 characters
+      </ion-note>
       <ion-note slot="error">{{ getFieldError('password') }}</ion-note>
     </ion-item>
 

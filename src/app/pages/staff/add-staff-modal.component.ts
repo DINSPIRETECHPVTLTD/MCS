@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidatorFn, ValidationErrors } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { UserContextService } from '../../services/user-context.service';
@@ -27,7 +27,7 @@ export class AddStaffModalComponent implements OnInit {
   ) {
     this.staffForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
-      password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(12)]],
+      password: ['', [Validators.required, this.passwordPolicyValidator()]],
       firstName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       lastName: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/^[a-zA-Z0-9 ]+$/)]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
@@ -41,6 +41,29 @@ export class AddStaffModalComponent implements OnInit {
       role: ['Staff', [Validators.required]]
       
     });
+  }
+
+  // Custom validator for password policy
+  // Password must contain: at least one uppercase letter, one number, one special character, min length 8, max length 10
+  passwordPolicyValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) {
+        return null; // let required validator handle this
+      }
+
+      const password = control.value;
+      const hasUpperCase = /[A-Z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+      const hasMinLength = password.length >= 8;
+      const hasMaxLength = password.length <= 10;
+
+      if (!hasUpperCase || !hasNumber || !hasSpecialChar || !hasMinLength || !hasMaxLength) {
+        return { passwordPolicy: true };
+      }
+
+      return null;
+    };
   }
 
   onEmailInput(event: any): void {
@@ -93,10 +116,9 @@ export class AddStaffModalComponent implements OnInit {
 
   onPasswordInput(event: any): void {
     const raw = event?.detail?.value ?? '';
-    const truncated = (raw || '').slice(0, 12);
     const control = this.staffForm.get('password');
-    if (control && control.value !== truncated) {
-      control.setValue(truncated);
+    if (control && control.value !== raw) {
+      control.setValue(raw);
     }
   }
 
@@ -153,7 +175,7 @@ export class AddStaffModalComponent implements OnInit {
           const zipCodeValue = (user as any)?.zipCode || (user as any)?.ZipCode || (user as any)?.pinCode || '';
           console.log('User loaded for edit:', user, 'zipCode value:', zipCodeValue);
           this.staffForm.patchValue({
-            email: user.email || '',
+            // Email and password fields remain empty - do not prepopulate
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             phoneNumber: user.phoneNumber || '',
@@ -352,9 +374,12 @@ export class AddStaffModalComponent implements OnInit {
           return 'Please enter a valid 6-digit pin code';
         }
       }
+      if (field.errors?.['passwordPolicy']) {
+        return 'Password must include uppercase letters, numbers, special characters and be 8-10 characters long';
+      }
       if (field.errors?.['minlength']) {
         if (fieldName === 'password') {
-          return 'Password must be at least 6 characters long';
+          return 'Password must be at least 8 characters long';
         }
       }
     }
