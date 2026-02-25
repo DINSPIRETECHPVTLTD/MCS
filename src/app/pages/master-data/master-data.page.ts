@@ -51,7 +51,7 @@ export class MasterDataComponent implements OnInit, ViewWillEnter {
       { headerName: 'Lookup Value', field: 'lookupValue', width: 180, filter: 'agTextColumnFilter', sortable: true },
       { headerName: 'Numeric Value', field: 'numericValue', width: 110, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? String(Number(p.value)) : '' },
       { headerName: 'Sort Order', field: 'sortOrder', width: 100, filter: 'agNumberColumnFilter', sortable: true },
-      { headerName: 'Description', field: 'description', flex: 1, filter: 'agTextColumnFilter', sortable: true },
+      { headerName: 'Description', field: 'description', flex: 1, filter: 'agTextColumnFilter', sortable: true ,hide: true},
       {
         headerName: 'Status',
         width: 90,
