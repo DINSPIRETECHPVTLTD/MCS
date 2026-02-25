@@ -45,13 +45,13 @@ export class MasterDataComponent implements OnInit, ViewWillEnter {
     private alertController: AlertController
   ) {
     this.columnDefs = [
-      { headerName: 'ID', field: 'id', width: 70, filter: 'agNumberColumnFilter', sortable: true },
+      { headerName: 'ID', field: 'id', width: 70, filter: 'agNumberColumnFilter', sortable: true,hide: true },
       { headerName: 'Lookup Key', field: 'lookupKey', width: 130, filter: 'agTextColumnFilter', sortable: true },
       { headerName: 'Lookup Code', field: 'lookupCode', width: 120, filter: 'agTextColumnFilter', sortable: true },
       { headerName: 'Lookup Value', field: 'lookupValue', width: 180, filter: 'agTextColumnFilter', sortable: true },
       { headerName: 'Numeric Value', field: 'numericValue', width: 110, filter: 'agNumberColumnFilter', sortable: true, valueFormatter: (p) => p.value != null ? String(Number(p.value)) : '' },
       { headerName: 'Sort Order', field: 'sortOrder', width: 100, filter: 'agNumberColumnFilter', sortable: true },
-      { headerName: 'Description', field: 'description', flex: 1, filter: 'agTextColumnFilter', sortable: true ,hide: true},
+      { headerName: 'Description', field: 'description', flex: 1, filter: 'agTextColumnFilter', sortable: true, hide: true },
       {
         headerName: 'Status',
         width: 90,

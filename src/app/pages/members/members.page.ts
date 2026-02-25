@@ -167,8 +167,8 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     private loadingController: LoadingController,
     private alertController: AlertController
   ) {
-    // Fetch all branches for mapping
-    this.branchService.getBranches().subscribe(branches => {
+    // Fetch all branches for mapping using branches$ observable
+    this.branchService.branches$.subscribe(branches => {
       this.branches = branches ?? [];
       this.branchMap = new Map(this.branches.map(b => [Number(b.id), b.name]));
     });

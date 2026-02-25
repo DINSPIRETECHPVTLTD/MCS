@@ -112,6 +112,11 @@ ion-footer {
   }
 }
 
+// Assignment Details section uses 2 columns
+.section-card:first-child .form-row {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 form {
   .form-row ion-item {
     --padding-start: 0;
@@ -125,6 +130,8 @@ form {
     ion-label {
       font-weight: 500;
       margin-bottom: 6px;
+      white-space: normal;
+      word-break: break-word;
     }
 
     ion-input,

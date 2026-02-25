@@ -19,7 +19,7 @@
       <p>Loading branches...</p>
     </div>
     
-    <div *ngIf="!isLoading && branches.length === 0" class="empty-state">
+    <div *ngIf="!isLoading && rowData.length === 0" class="empty-state">
       <ion-icon name="business-outline" size="large"></ion-icon>
       <p>No branches found</p>
       <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
@@ -27,7 +27,7 @@
       </p>
     </div>
     
-    <div *ngIf="!isLoading && branches.length > 0" class="branches-grid">
+    <div *ngIf="!isLoading && rowData.length > 0" class="branches-grid">
       <ag-grid-angular
         class="ag-theme-alpine"
         style="width: 100%; height: 60vh;"

@@ -144,27 +144,17 @@ export class HeaderMenuComponent implements OnInit {
     }
     
     // Fallback: Fetch branches from API if not available from login
-    this.branchService.getBranches().subscribe({
-      next: (branches) => {
-        this.branches = branches;
-        this.setSelectedBranch(branches);
-        this.updateModeFlags();
-      },
-      error: (_error) => {
-        // Try alternative endpoint
-        this.branchService.getBranchesList().subscribe({
-          next: (branches) => {
-            this.branches = branches;
-            this.setSelectedBranch(branches);
-            this.updateModeFlags();
-          },
-          error: (err) => {
-            console.error('Error loading branches:', err);
-            this.branches = [];
-          }
-        });
-      }
-    });
+      this.branchService.branches$.subscribe({
+        next: (branches) => {
+          this.branches = branches;
+          this.setSelectedBranch(branches);
+          this.updateModeFlags();
+        },
+        error: (error) => {
+          console.error('Error loading branches:', error);
+          this.branches = [];
+        }
+      });
   }
 
   private updateModeFlags(): void {
