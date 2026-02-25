@@ -6,6 +6,7 @@
 export const LookupKeys = {
   LoanTerm: 'LOAN_TERM',
   PaymentType: 'PAYMENT_TYPE',
+  PaymentMode: 'PAYMENTMODE',
   Relationship: 'RELATIONSHIP',
   State: 'STATE'
 } as const;

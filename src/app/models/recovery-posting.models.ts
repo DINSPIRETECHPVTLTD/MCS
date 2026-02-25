@@ -1,24 +1,26 @@
+/** Matches LoanSchedulers table / GET api/LoanSchedulers/loan/{loanId} and /recovery response. */
 export interface LoanSchedulerRecoveryDto {
   loanSchedulerId: number;
   loanId: number;
-  memberId: number;
-  memberName: string;
-  centerName: string;
-  parentPocName: string;
   scheduleDate: string;
+  /** When paid; may be "9999-01-01..." when not paid. */
+  paymentDate?: string | null;
   installmentNo: number;
-  interestAmount: number;
-  principalAmount: number;
   paymentAmount: number;
   status: string;
-  due: number;
+  comments?: string | null;
   actualEmiAmount?: number | null;
   actualInterestAmount?: number | null;
   actualPrincipalAmount?: number | null;
-  comments?: string | null;
-  /** Principal share of EMI as percentage (from backend). Used for partial payment split. */
+  /** Recovery listing only: member/center/poc and amounts. */
+  memberId?: number;
+  memberName?: string;
+  centerName?: string;
+  parentPocName?: string;
+  interestAmount?: number;
+  principalAmount?: number;
+  due?: number;
   principalPercentage?: number;
-  /** Interest share of EMI as percentage (from backend). Used for partial payment split. */
   interestPercentage?: number;
 }
 
@@ -35,9 +37,9 @@ export interface LoanSchedulerSaveRequest {
   loanSchedulerId: number;
   status?: string;
   paymentMode: string;
-  actualEmiAmount: number;
-  actualInterestAmount: number;
-  actualPrincipalAmount: number;
+  paymentAmount: number;
+  principalAmount: number;
+  interestAmount: number;
   comments: string;
   collectedBy?: number;
 }

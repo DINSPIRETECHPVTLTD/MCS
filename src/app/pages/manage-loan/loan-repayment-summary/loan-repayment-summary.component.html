@@ -1,0 +1,78 @@
+<app-header-menu
+  [activeMenu]="activeMenu"
+  (menuChange)="onMenuChange($event)"
+  (branchChange)="onBranchChange($event)">
+  <ion-content [fullscreen]="true">
+    <div class="repayment-summary-container">
+      <div class="page-header">
+        <h2>Loan Repayment Summary</h2>
+        <ion-button fill="clear" (click)="goBack()">
+          <ion-icon name="arrow-back-outline" slot="start"></ion-icon>
+          Back to Manage Loan
+        </ion-button>
+      </div>
+
+      <div *ngIf="isLoading" class="loading-state">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Loading repayment summary...</p>
+      </div>
+
+      <div *ngIf="loadError && !isLoading" class="error-state">
+        <ion-icon name="alert-circle-outline" size="large"></ion-icon>
+        <p>{{ loadError }}</p>
+        <ion-button fill="outline" (click)="goBack()">Back to Manage Loan</ion-button>
+      </div>
+
+      <ng-container *ngIf="!isLoading && !loadError && loan">
+        <!-- Loan Summary Section (Read-Only) -->
+        <div class="summary-section">
+          <h3>Loan Summary</h3>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="label">Total Amount (Sum of Paid Amount)</span>
+              <span class="value">{{ formatAmount(totalAmountPaid) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Remaining Balance</span>
+              <span class="value">{{ formatAmount(remainingBalance) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Weekly Due (EMI)</span>
+              <span class="value">{{ formatAmount(weeklyDue) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Week-wise Repayment Schedule (Read-Only Grid) -->
+        <div class="schedule-section">
+          <h3>Week-wise Repayment Schedule</h3>
+          <div class="table-wrapper">
+            <table class="schedule-table">
+              <thead>
+                <tr>
+                  <th>Week No</th>
+                  <th>Collection Date</th>
+                  <th>Paid Date</th>
+                  <th>Payment Status</th>
+                  <th>Paid Amount</th>
+                  <th>Reasons</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of scheduleRows">
+                  <td>{{ row.weekNo }}</td>
+                  <td>{{ formatDateDDMMYY(row.collectionDate) }}</td>
+                  <td>{{ formatDate(row.paidDate) }}</td>
+                  <td>{{ row.paymentStatus }}</td>
+                  <td>{{ formatAmount(row.paidAmount) }}</td>
+                  <td>{{ row.reasons || '' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p *ngIf="scheduleRows.length === 0" class="no-rows">No Schedule</p>
+        </div>
+      </ng-container>
+    </div>
+  </ion-content>
+</app-header-menu>

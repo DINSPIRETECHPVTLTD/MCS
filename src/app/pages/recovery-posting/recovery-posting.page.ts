@@ -16,6 +16,8 @@ import {
   LoanSchedulerSaveRequest
 } from '../../models/recovery-posting.models';
 import { RecoveryPostingService } from '../../services/recovery-posting.service';
+import { MasterDataService } from '../../services/master-data.service';
+import { LookupKeys } from '../../models/master-data.models';
 
 /** One row per member: POC info + member info, selectable via checkbox */
 export interface RecoveryPostingMemberRow {
@@ -35,9 +37,9 @@ export interface RecoveryPostingMemberRow {
   paymentAmount?: number | null;
   paymentMode?: string | null;
   status?: string | null;
-  /** From API: principal share of EMI %. Used to auto-calc actual principal from actual paid amount. */
+  /** From API: principal share of EMI %. Used to auto-calc principal/interest from payment amount. */
   principalPercentage?: number;
-  /** From API: interest share of EMI %. Used to auto-calc actual interest from actual paid amount. */
+  /** From API: interest share of EMI %. Used to auto-calc principal/interest from payment amount. */
   interestPercentage?: number;
 }
 
@@ -57,6 +59,9 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   pocs: POCOption[] = [];
   selectedCollectBy: string = '';
   users: User[] = [];
+
+  /** Payment Mode options from Master Data (LookupKey = PAYMENTMODE); dropdown shows Lookup Value (e.g. Online, Cash). */
+  paymentModeValues: string[] = ['Select'];
 
   // Date: ion-input type="date" (same as add loan popup)
   selectedDate: string = '';
@@ -92,7 +97,8 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     private memberService: MemberService,
     private userService: UserService,
     private userContext: UserContextService,
-    private recoveryPostingService: RecoveryPostingService
+    private recoveryPostingService: RecoveryPostingService,
+    private masterDataService: MasterDataService
   ) {
     const today = new Date();
     this.todayDate = today.toLocaleDateString('en-US', { 
@@ -114,7 +120,9 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       return;
     }
     this.initializeGrid();
-    this.loadData();
+    this.loadPaymentModes();
+    // Default branch from logged-in user, then stored selection (set in ionViewWillEnter before first load)
+    this.applyDefaultBranchAndLoad();
   }
 
   ionViewWillEnter(): void {
@@ -122,27 +130,42 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
-    const branchId = this.selectedBranch?.id ?? this.getStoredBranchId();
-    if (branchId != null) {
-      if (!this.selectedBranch) {
-        this.selectedBranch = { id: branchId } as Branch;
-      }
-      this.loadCentersByBranch(Number(branchId));
-    } else {
-      this.centers = [];
-    }
-    this.loadUsers();
-    this.loadData();
+    this.applyDefaultBranchAndLoad();
   }
 
+  /**
+   * Default selection on page load: use logged-in user's Branch (UserContext), then stored branch.
+   * Load centers for that branch; if branch has exactly one center, auto-select it (user's assigned center).
+   * Filter sequence: Date → Center → POC (results match all applicable conditions).
+   */
+  private applyDefaultBranchAndLoad(): void {
+    const branchId = this.selectedBranch?.id ?? this.userContext.branchId ?? this.getStoredBranchId();
+    if (branchId != null) {
+      const id = Number(branchId);
+      if (!this.selectedBranch || this.selectedBranch.id !== id) {
+        this.selectedBranch = { id } as Branch;
+        try {
+          localStorage.setItem('selected_branch_id', String(id));
+        } catch {
+          // ignore
+        }
+      }
+      this.loadCentersByBranch(id);
+    } else {
+      this.centers = [];
+      this.selectedCenter = '';
+      this.pocs = [];
+      this.selectedPoc = '';
+      this.loadData();
+    }
+    this.loadUsers();
+  }
+
+  /** Load all users from system/DB for Collected By dropdown. */
   private loadUsers(): void {
     this.userService.getUsers().subscribe({
       next: (list) => {
-        const all = (list || []).filter(u => u.id != null);
-        const branchId = this.selectedBranch?.id;
-        this.users = branchId != null
-          ? all.filter(u => Number(u.branchId) === Number(branchId))
-          : all;
+        this.users = (list || []).filter(u => u.id != null);
         const currentUserId = this.userContext.userId;
         if (currentUserId != null) {
           const found = this.users.find(u => u.id === currentUserId);
@@ -155,6 +178,34 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       },
       error: () => {
         this.users = [];
+      }
+    });
+  }
+
+  /** Load Payment Mode options from Master Data (LookupKey = PAYMENTMODE) and update grid column. */
+  private loadPaymentModes(): void {
+    this.masterDataService.getMasterData().subscribe({
+      next: (list) => {
+        const rawList = list || [];
+        const getKey = (l: Record<string, unknown>) =>
+          String(l['lookupKey'] ?? l['LookupKey'] ?? '').toUpperCase();
+        const filtered = rawList
+          .filter(l => getKey(l as unknown as Record<string, unknown>) === LookupKeys.PaymentMode)
+          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        const getValue = (m: Record<string, unknown>) =>
+          String(m['lookupValue'] ?? m['LookupValue'] ?? m['lookupCode'] ?? m['LookupCode'] ?? '').trim();
+        const values = filtered.map(m => getValue(m as unknown as Record<string, unknown>)).filter(Boolean);
+        this.paymentModeValues = ['Select', ...values];
+        const paymentModeCol = this.columnDefs.find(c => c.field === 'paymentMode');
+        if (paymentModeCol && paymentModeCol.cellEditorParams) {
+          (paymentModeCol.cellEditorParams as { values: string[] }).values = this.paymentModeValues;
+        }
+        if (this.gridApi) {
+          this.gridApi.setGridOption('columnDefs', this.columnDefs);
+        }
+      },
+      error: () => {
+        this.paymentModeValues = ['Select', 'Online', 'Cash'];
       }
     });
   }
@@ -230,38 +281,13 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         filter: false
       },
       {
-        field: 'paymentAmount',
-        headerName: 'Payment Amount',
-        width: 140,
-        sortable: true,
-        filter: false,
-        valueFormatter: numberFormatter
-      },
-      {
-        field: 'principalAmount',
-        headerName: 'Principal Amount',
-        width: 150,
-        sortable: true,
-        filter: false,
-        valueFormatter: numberFormatter
-      },
-      {
-        field: 'interestAmount',
-        headerName: 'Interest Amount',
-        width: 140,
-        sortable: true,
-        filter: false,
-        valueFormatter: numberFormatter
-      },
-      {
         field: 'actualEmiAmount',
-        headerName: 'Actual Paid Amount',
+        headerName: 'ActualEmiAmount',
         width: 140,
         sortable: true,
         filter: false,
-        editable: true,
-        valueFormatter: numberFormatter,
-        valueParser: this.numberValueParser
+        editable: false,
+        valueFormatter: numberFormatter
       },
       {
         field: 'actualPrincipalAmount',
@@ -282,6 +308,35 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         valueFormatter: numberFormatter
       },
       {
+        colId: 'paymentAmount',
+        field: 'paymentAmount',
+        headerName: 'Payment Amount',
+        width: 140,
+        sortable: true,
+        filter: false,
+        editable: true,
+        valueFormatter: numberFormatter,
+        valueParser: this.numberValueParser
+      },
+      {
+        field: 'principalAmount',
+        headerName: 'Principal Amount',
+        width: 150,
+        sortable: true,
+        filter: false,
+        editable: false,
+        valueFormatter: numberFormatter
+      },
+      {
+        field: 'interestAmount',
+        headerName: 'Interest Amount',
+        width: 140,
+        sortable: true,
+        filter: false,
+        editable: false,
+        valueFormatter: numberFormatter
+      },
+      {
         field: 'paymentMode',
         headerName: 'Payment Mode *',
         width: 140,
@@ -289,7 +344,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         filter: false,
         editable: true,
         cellEditor: 'agSelectCellEditor',
-        cellEditorParams: { values: ['Online', 'Cash'] }
+        cellEditorParams: { values: this.paymentModeValues?.length ? this.paymentModeValues : ['Select', 'Online', 'Cash'] }
       },
       {
         field: 'status',
@@ -297,9 +352,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         width: 130,
         sortable: true,
         filter: false,
-        editable: true,
-        cellEditor: 'agSelectCellEditor',
-        cellEditorParams: { values: ['Paid', 'Partial Paid'] }
+        editable: false
       },
       {
         field: 'comments',
@@ -321,49 +374,80 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     return isNaN(n) ? null : n;
   }
 
-  /** When Actual Paid Amount changes, auto-calculate Actual Principal and Actual Interest from schedule ratio. */
+  /** When Payment Amount changes, auto-calculate Principal and Interest using same ratio as Add Loan / backend EMI. */
   private onGridCellValueChanged(event: CellValueChangedEvent<RecoveryPostingMemberRow>): void {
-    if (!event.data || event.column?.getColId() !== 'actualEmiAmount') return;
+    if (!event.data) return;
+    const colId = event.column?.getColId();
     const row = event.data;
-    const paid = row.actualEmiAmount;
-    const { actualPrincipalAmount, actualInterestAmount } = this.calculatePartialEmiSplit(
-      paid,
-      row.principalAmount,
-      row.paymentAmount,
-      row.principalPercentage,
-      row.interestPercentage
-    );
-    row.actualPrincipalAmount = actualPrincipalAmount;
-    row.actualInterestAmount = actualInterestAmount;
-    event.api.refreshCells({ rowNodes: [event.node], force: true });
+
+    if (colId !== 'paymentAmount') return;
+
+    const payment = row.paymentAmount != null && !Number.isNaN(Number(row.paymentAmount)) ? Number(row.paymentAmount) : 0;
+    if (payment <= 0) {
+      row.principalAmount = 0;
+      row.interestAmount = 0;
+      event.api.refreshCells({ rowNodes: [event.node], columns: ['principalAmount', 'interestAmount'], force: true });
+      return;
+    }
+
+    const { principalAmount, interestAmount } = this.calculatePaymentSplitFromSchedule(row, payment);
+    row.principalAmount = principalAmount;
+    row.interestAmount = interestAmount;
+    row.status = this.deriveStatusFromAmounts(row);
+    event.api.refreshCells({ rowNodes: [event.node], columns: ['principalAmount', 'interestAmount', 'status'], force: true });
   }
 
   /**
-   * Splits actual paid amount into principal and interest using schedule ratio (so full payment matches scheduled).
-   * Ensures actualPrincipal + actualInterest = actualPaidAmount exactly (interest = paid - principal).
+   * Auto-derive UI status from amount comparison:
+   * - paymentAmount == actualEmiAmount => Paid
+   * - paymentAmount != actualEmiAmount => Partial Paid
    */
-  private calculatePartialEmiSplit(
-    actualPaidAmount: number | null | undefined,
-    principalAmount: number | null | undefined,
-    paymentAmount: number | null | undefined,
-    principalPercentage: number | null | undefined,
-    interestPercentage: number | null | undefined
-  ): { actualPrincipalAmount: number; actualInterestAmount: number } {
-    const paid = actualPaidAmount != null && !Number.isNaN(Number(actualPaidAmount)) ? Number(actualPaidAmount) : 0;
-    const principal = principalAmount != null && !Number.isNaN(Number(principalAmount)) ? Number(principalAmount) : 0;
-    const payment = paymentAmount != null && paymentAmount > 0 && !Number.isNaN(Number(paymentAmount)) ? Number(paymentAmount) : 0;
-
-    let actualPrincipalAmount: number;
-    if (payment > 0) {
-      actualPrincipalAmount = Math.round((paid * principal / payment) * 100) / 100;
-    } else {
-      const pPct = principalPercentage != null && !Number.isNaN(Number(principalPercentage)) ? Number(principalPercentage) : 0;
-      actualPrincipalAmount = Math.round((paid * pPct) / 100 * 100) / 100;
-    }
-    const actualInterestAmount = Math.round((paid - actualPrincipalAmount) * 100) / 100;
-    return { actualPrincipalAmount, actualInterestAmount };
+  private deriveStatusFromAmounts(row: RecoveryPostingMemberRow): string {
+    const payment = row.paymentAmount != null && !Number.isNaN(Number(row.paymentAmount))
+      ? Number(row.paymentAmount)
+      : 0;
+    const actualEmi = row.actualEmiAmount != null && !Number.isNaN(Number(row.actualEmiAmount))
+      ? Number(row.actualEmiAmount)
+      : 0;
+    if (payment <= 0 || actualEmi <= 0) return 'Partial Paid';
+    return Math.abs(payment - actualEmi) <= 0.01 ? 'Paid' : 'Partial Paid';
   }
 
+  /**
+   * Same formula as Add Loan + backend GenerateEmiSchedule:
+   * principalPerInstallment = LoanAmount/NoOfTerms, interestPerInstallment = InterestAmount/NoOfTerms,
+   * paymentPerInstallment = (LoanAmount+InterestAmount)/NoOfTerms.
+   * Ratio = ActualPrincipalAmount/ActualEmiAmount (exact, no percentage rounding). Then:
+   * principal = round(payment * ratio, 2), interest = round(payment - principal, 2).
+   */
+  private calculatePaymentSplitFromSchedule(
+    row: RecoveryPostingMemberRow,
+    payment: number
+  ): { principalAmount: number; interestAmount: number } {
+    if (payment <= 0 || Number.isNaN(payment)) {
+      return { principalAmount: 0, interestAmount: 0 };
+    }
+    const total = row.actualEmiAmount != null && row.actualEmiAmount > 0 ? Number(row.actualEmiAmount) : 0;
+    const principal = row.actualPrincipalAmount != null ? Number(row.actualPrincipalAmount) : 0;
+    if (total > 0) {
+      const principalRatio = principal / total;
+      const principalAmount = Math.round(payment * principalRatio * 100) / 100;
+      const interestAmount = Math.round((payment - principalAmount) * 100) / 100;
+      return { principalAmount, interestAmount };
+    }
+    const pPct = row.principalPercentage != null && !Number.isNaN(Number(row.principalPercentage)) ? Number(row.principalPercentage) : 0;
+    const principalAmount = Math.round((payment * pPct) / 100 * 100) / 100;
+    const interestAmount = Math.round((payment - principalAmount) * 100) / 100;
+    return { principalAmount, interestAmount };
+  }
+
+  /**
+   * Load recovery grid. Filter sequence: Date → Center → POC.
+   * Step 1: Date only → all scheduled EMIs for that date (and branch).
+   * Step 2: Date + Center → EMIs for that date and center.
+   * Step 3: Date + Center + POC → EMIs for that date, center, and POC.
+   * Results match all applicable conditions.
+   */
   loadData(): void {
     this.isLoading = true;
 
@@ -376,36 +460,38 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       return;
     }
 
-    const branchId = this.selectedBranch?.id ?? this.getStoredBranchId() ?? null;
+    const branchId = this.selectedBranch?.id ?? this.userContext.branchId ?? this.getStoredBranchId() ?? null;
     const centerId = this.selectedCenter ? Number(this.selectedCenter) : null;
     const pocId = this.selectedPoc ? Number(this.selectedPoc) : null;
 
-    this.recoveryPostingService
-      .getLoanSchedulersForRecovery({
-        scheduleDate: this.selectedDate.trim(),
-        centerId: centerId && centerId > 0 ? centerId : undefined,
-        pocId: pocId && pocId > 0 ? pocId : undefined,
-        branchId: branchId ?? undefined,
-        pageSize: this.paginationPageSize
-      })
-      .subscribe({
-        next: (items) => {
-          this.rowData = (items || []).map((dto) => this.mapDtoToRow(dto));
-          this.isLoading = false;
-          if (this.gridApi) {
-            this.gridApi.setGridOption('rowData', this.rowData);
-            setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
-          }
-        },
-        error: () => {
-          this.rowData = [];
-          this.isLoading = false;
-          if (this.gridApi) {
-            this.gridApi.setGridOption('rowData', this.rowData);
-          }
-          this.showToast('Failed to load recovery posting data. Please try again.', 'danger');
+    this.recoveryPostingService.getLoanSchedulersForRecovery({
+      scheduleDate: this.selectedDate.trim(),
+      branchId: branchId ?? undefined,
+      centerId: centerId && centerId > 0 ? centerId : undefined,
+      pocId: pocId && pocId > 0 ? pocId : undefined,
+      pageNumber: 1,
+      pageSize: this.paginationPageSize
+    }).subscribe({
+      next: (items) => {
+        // Show only Not Paid schedules in Recovery Posting grid.
+        const filteredItems = (items || []).filter(dto => {
+          const status = String(dto.status ?? '').replace(/\s+/g, '').toLowerCase();
+          return status === 'notpaid';
+        });
+        this.rowData = filteredItems.map(dto => this.mapDtoToRow(dto));
+        this.isLoading = false;
+        if (this.gridApi) {
+          this.gridApi.setGridOption('rowData', this.rowData);
+          setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
         }
-      });
+      },
+      error: () => {
+        this.rowData = [];
+        this.isLoading = false;
+        if (this.gridApi) this.gridApi.setGridOption('rowData', this.rowData);
+        this.showToast('Failed to load recovery posting data. Please try again.', 'danger');
+      }
+    });
   }
 
   private mapDtoToRow(dto: LoanSchedulerRecoveryDto): RecoveryPostingMemberRow {
@@ -413,8 +499,8 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       loanSchedulerId: dto.loanSchedulerId,
       loanId: dto.loanId,
       installmentNo: dto.installmentNo,
-      interestAmount: dto.interestAmount,
-      principalAmount: dto.principalAmount,
+      interestAmount: 0,
+      principalAmount: 0,
       parentPocName: dto.parentPocName ?? '',
       centerName: dto.centerName ?? '',
       memberId: dto.memberId != null ? String(dto.memberId) : '',
@@ -423,8 +509,8 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       actualInterestAmount: dto.actualInterestAmount ?? null,
       actualPrincipalAmount: dto.actualPrincipalAmount ?? null,
       comments: dto.comments ?? null,
-      paymentAmount: dto.paymentAmount ?? null,
-      paymentMode: null,
+      paymentAmount: 0,
+      paymentMode: 'Select',
       status: dto.status === 'Partial' ? 'Partial Paid' : (dto.status ?? null),
       principalPercentage: dto.principalPercentage ?? undefined,
       interestPercentage: dto.interestPercentage ?? undefined
@@ -450,48 +536,53 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       return;
     }
 
-    // Collected By is mandatory for Post – must be sent to DB
+    // Collected By is mandatory – show dedicated message if not selected
     const collectedByValue = (this.selectedCollectBy ?? '').toString().trim();
     if (!collectedByValue) {
-      await this.showToast('Please select Collected By before posting.', 'warning');
+      await this.showToast('Cannot post. Please select Collected By.', 'warning');
       return;
     }
 
-    // Comment is required only when Status = Partial Paid
-    const collectedById = Number(this.selectedCollectBy);
-    const invalidRows = selectedRows.filter(row =>
-      row.loanSchedulerId == null ||
-      row.actualEmiAmount == null ||
-      row.actualEmiAmount < 0 ||
-      row.actualInterestAmount == null ||
-      row.actualInterestAmount < 0 ||
-      row.actualPrincipalAmount == null ||
-      row.actualPrincipalAmount < 0 ||
-      !row.paymentMode ||
-      !row.status ||
-      (row.status === 'Partial Paid' && (!row.comments || String(row.comments).trim() === ''))
-    );
+    // All mandatory: Payment Amount, Principal Amount, Interest Amount, Payment Mode, Status, Comments
+    const missingInRows = new Set<string>();
+    for (const row of selectedRows) {
+      if (row.loanSchedulerId == null) continue;
+      if (row.paymentAmount == null || row.paymentAmount < 0 || Number.isNaN(Number(row.paymentAmount)))
+        missingInRows.add('Payment Amount');
+      if (row.principalAmount == null || row.principalAmount < 0 || Number.isNaN(Number(row.principalAmount)))
+        missingInRows.add('Principal Amount');
+      if (row.interestAmount == null || row.interestAmount < 0 || Number.isNaN(Number(row.interestAmount)))
+        missingInRows.add('Interest Amount');
+      if (!row.paymentMode || row.paymentMode === 'Select') missingInRows.add('Payment Mode');
+      if (!row.status || String(row.status).trim() === '') missingInRows.add('Status');
+      if (row.comments == null || String(row.comments).trim() === '') missingInRows.add('Comments');
+    }
 
-    if (invalidRows.length > 0) {
-      const needsComment = selectedRows.some(row =>
-        row.status === 'Partial Paid' && (!row.comments || String(row.comments).trim() === '')
-      );
-      const message = needsComment
-        ? 'Comment is required.'
-        : 'Please fill all mandatory fields (Payment Mode, Status, Actual amounts, Collected By).';
+    if (missingInRows.size > 0) {
+      const message = 'Cannot post. Please fill or select: ' + Array.from(missingInRows).join(', ') + '.';
       await this.showToast(message, 'warning');
       return;
     }
 
-    // If Status is Paid, Actual Paid Amount must match Payment Amount
-    const paidAmountMismatch = selectedRows.filter(row => {
-      if (row.status !== 'Paid') return false;
-      const actual = row.actualEmiAmount ?? 0;
-      const scheduled = row.paymentAmount ?? 0;
-      return Math.abs(actual - scheduled) > 0.01;
+    // Sanity: principal + interest should equal payment (within rounding)
+    const sumMismatch = selectedRows.filter(row => {
+      const payment = row.paymentAmount ?? 0;
+      const sum = (row.principalAmount ?? 0) + (row.interestAmount ?? 0);
+      return Math.abs(payment - sum) > 0.02;
     });
-    if (paidAmountMismatch.length > 0) {
-      await this.showToast('Amount does not match. For row(s) with Status "Paid", Actual Paid Amount must equal Payment Amount. Change status to "Partial Paid" or correct the amount.', 'warning');
+    if (sumMismatch.length > 0) {
+      await this.showToast('Principal + Interest must equal Payment Amount for selected row(s).', 'warning');
+      return;
+    }
+
+    // Payment Amount cannot exceed Actual EMI Amount.
+    const exceedsScheduled = selectedRows.filter(row => {
+      const payment = row.paymentAmount ?? 0;
+      const actualEmi = row.actualEmiAmount ?? 0;
+      return payment > actualEmi;
+    });
+    if (exceedsScheduled.length > 0) {
+      await this.showToast('Payment amount cannot exceed scheduled amount.', 'warning');
       return;
     }
 
@@ -508,21 +599,26 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         await this.showToast('Collected By must be a valid user. Please select from the list.', 'danger');
         return;
       }
-      const payload: LoanSchedulerSaveRequest[] = selectedRows.map(row => ({
+      // Post to DB: PaymentAmount, PrincipalAmount, InterestAmount (Actual* columns are not updated on post)
+      const payload: LoanSchedulerSaveRequest[] = selectedRows.map(row => {
+        const derivedStatus = this.deriveStatusFromAmounts(row);
+        return ({
         loanSchedulerId: row.loanSchedulerId,
-        paymentMode: row.paymentMode ?? '',
-        status: row.status === 'Partial Paid' ? 'Partial' : (row.status ?? undefined),
-        actualEmiAmount: row.actualEmiAmount ?? 0,
-        actualInterestAmount: row.actualInterestAmount ?? 0,
-        actualPrincipalAmount: row.actualPrincipalAmount ?? 0,
+        // Backend expects lookup VALUE (e.g. Cash / Online), not the code.
+        paymentMode: (row.paymentMode === 'Select' || !row.paymentMode) ? '' : row.paymentMode,
+        status: derivedStatus === 'Paid' ? 'Paid' : 'Partial',
+        paymentAmount: row.paymentAmount ?? 0,
+        principalAmount: row.principalAmount ?? 0,
+        interestAmount: row.interestAmount ?? 0,
         comments: row.comments ?? '',
         collectedBy: Number.isNaN(collectedByIdNumber) ? undefined : collectedByIdNumber
-      }));
+      });
+      });
 
       await this.recoveryPostingService.save(payload).toPromise();
 
       loading.dismiss();
-      await this.showToast(`Successfully posted ${selectedRows.length} entry/entries`, 'success');
+      await this.showToast('Successful EMI Paid', 'success');
 
       // Reload data
       this.loadData();
@@ -543,10 +639,16 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
 
   /** Map API error to user-friendly message; show "Comment is required" for Comments validation. */
   private getPostErrorMessage(err: {
-    error?: { message?: string; errors?: Record<string, string[]>; title?: string };
+    error?: { message?: string; errors?: Record<string, string[]>; title?: string } | string;
     message?: string;
   }): string {
-    const errors = err?.error?.errors;
+    // Backend may return plain string for BadRequest("...").
+    if (typeof err?.error === 'string' && err.error.trim() !== '') {
+      return err.error;
+    }
+
+    const errorObj = (err?.error && typeof err.error === 'object') ? err.error : undefined;
+    const errors = errorObj?.errors;
     if (errors && typeof errors === 'object') {
       const keys = Object.keys(errors);
       if (keys.some(k => /Comments/i.test(k))) {
@@ -556,7 +658,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       const firstMsg = firstKey && Array.isArray(errors[firstKey]) ? errors[firstKey][0] : null;
       if (firstMsg) return firstMsg;
     }
-    return err?.error?.message || err?.message || 'Failed to post entries. Please try again.';
+    return errorObj?.message || err?.message || 'Failed to post entries. Please try again.';
   }
 
   close(): void {
@@ -614,11 +716,16 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
           name: c.name || '',
           code: (c as { code?: string }).code
         }));
-        // Do not auto-select: user selects Date → Center → POC → Collect By in order
-        this.selectedCenter = '';
         this.pocs = [];
         this.selectedPoc = '';
-        this.loadData();
+        // On page open: default select first center so grid loads with date + first center filter
+        if (this.centers.length > 0) {
+          this.selectedCenter = String(this.centers[0].id);
+          this.loadPocsForCenter();
+        } else {
+          this.selectedCenter = '';
+          this.loadData();
+        }
       },
       error: () => {
         this.centers = [];

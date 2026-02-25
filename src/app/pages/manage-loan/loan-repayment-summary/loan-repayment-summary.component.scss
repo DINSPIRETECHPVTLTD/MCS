@@ -1,7 +1,7 @@
 .repayment-summary-container {
+  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
 }
 
 .page-header {
@@ -25,56 +25,6 @@
   }
 }
 
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--ion-color-medium);
-
-  ion-icon {
-    font-size: 64px;
-    margin-bottom: 16px;
-  }
-
-  p {
-    margin: 8px 0;
-  }
-
-  .empty-hint {
-    font-size: 12px;
-    margin-top: 8px;
-    color: var(--ion-color-medium-shade);
-  }
-
-  ion-button {
-    margin-top: 16px;
-  }
-}
-
-.loading-state,
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: var(--ion-color-medium-shade);
-
-  ion-icon {
-    font-size: 4rem;
-    margin-bottom: 16px;
-    opacity: 0.5;
-  }
-
-  ion-spinner {
-    margin-bottom: 16px;
-  }
-
-  p {
-    text-align: center;
-    margin: 0 0 16px 0;
-  }
-}
-
 .summary-section {
   margin-bottom: 24px;
   background: white;
@@ -87,12 +37,6 @@
     color: var(--ion-color-primary);
     font-weight: 600;
     font-size: 1.1rem;
-  }
-
-  .member-name {
-    margin: 0 0 12px 0;
-    font-size: 0.95rem;
-    color: var(--ion-color-dark);
   }
 
   .summary-grid {
@@ -125,19 +69,12 @@
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 24px;
 
   h3 {
     margin: 0 0 16px 0;
     color: var(--ion-color-primary);
     font-weight: 600;
     font-size: 1.1rem;
-  }
-
-  .table-hint {
-    margin: 0 0 16px 0;
-    font-size: 0.875rem;
-    color: var(--ion-color-medium-shade);
   }
 
   .table-wrapper {
@@ -151,8 +88,7 @@
     border-collapse: collapse;
     font-size: 0.9rem;
 
-    th,
-    td {
+    th, td {
       padding: 10px 12px;
       text-align: left;
       border-bottom: 1px solid var(--ion-color-light);
@@ -164,33 +100,12 @@
       color: var(--ion-color-dark);
     }
 
-    .col-check {
-      width: 70px;
-      text-align: center;
-    }
-
     tbody tr:last-child td {
       border-bottom: none;
     }
 
     tbody tr:hover {
       background: var(--ion-color-light);
-    }
-
-    tbody tr.readonly-row {
-      background: var(--ion-color-light-tint);
-    }
-
-    ion-checkbox {
-      margin: 0;
-    }
-
-    ion-select,
-    ion-input {
-      --padding-start: 8px;
-      --padding-end: 8px;
-      min-width: 100px;
-      max-width: 180px;
     }
   }
 
@@ -201,8 +116,26 @@
   }
 }
 
-.action-bar {
+.loading-state, .error-state {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--ion-color-medium-shade);
+
+  ion-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+
+  p {
+    text-align: center;
+    margin: 0 0 16px 0;
+  }
 }

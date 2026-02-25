@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { MasterDataService } from '../../services/master-data.service';
-import { MasterLookup, CreateMasterLookupRequest, LookupKeys } from '../../models/master-data.models';
+import { MasterLookup, CreateMasterLookupRequest } from '../../models/master-data.models';
 
 @Component({
   selector: 'app-add-master-data-modal',
@@ -17,7 +17,7 @@ export class AddMasterDataModalComponent implements OnInit {
   submitted = false;
   isSubmitting = false;
   isLoadingKeys = false;
-  /** Distinct lookupKey values from GET api/MasterLookups; fallback to LookupKeys if empty */
+  /** LookupKey options from GET api/MasterLookups/keys */
   lookupKeyOptions: { value: string; label: string }[] = [];
 
   constructor(
@@ -47,40 +47,32 @@ export class AddMasterDataModalComponent implements OnInit {
 
   private loadLookupKeys(): void {
     this.isLoadingKeys = true;
-    this.masterDataService.getMasterData(true).subscribe({
-      next: (items) => {
-        const keys = items && items.length > 0
-          ? [...new Set(items.map(x => x.lookupKey).filter(Boolean))].sort()
-          : [];
-        this.lookupKeyOptions = keys.length > 0
-          ? keys.map(key => ({ value: key, label: this.formatLookupKeyLabel(key) }))
-          : this.getFallbackLookupKeyOptions();
+    this.masterDataService.getLookupKeys().subscribe({
+      next: (keys) => {
+        this.lookupKeyOptions = (keys || []).map(key => ({
+          value: key,
+          label: this.formatLookupKeyLabel(key)
+        }));
         this.isLoadingKeys = false;
       },
       error: () => {
-        this.lookupKeyOptions = this.getFallbackLookupKeyOptions();
+        this.lookupKeyOptions = [];
         this.isLoadingKeys = false;
       }
     });
   }
 
   private formatLookupKeyLabel(key: string): string {
-    const known: Record<string, string> = {
-      [LookupKeys.LoanTerm]: 'Loan Term (LOAN_TERM)',
-      [LookupKeys.PaymentType]: 'Payment Type (PAYMENT_TYPE)',
-      [LookupKeys.Relationship]: 'Relationship (RELATIONSHIP)',
-      [LookupKeys.State]: 'State (STATE)'
+    if (!key) return '';
+    const normalized = key.toUpperCase().replace(/\s/g, '_');
+    const labels: Record<string, string> = {
+      'LOAN_TERM': 'Loan Term (LOAN_TERM)',
+      'PAYMENT_TYPE': 'Payment Type (PAYMENT_TYPE)',
+      'RELATIONSHIP': 'Relationship (RELATIONSHIP)',
+      'STATE': 'State (STATE)',
+      'PAYMENTMODE': 'Payment Mode (PAYMENTMODE)'
     };
-    return known[key] ?? key;
-  }
-
-  private getFallbackLookupKeyOptions(): { value: string; label: string }[] {
-    return [
-      { value: LookupKeys.LoanTerm, label: 'Loan Term (LOAN_TERM)' },
-      { value: LookupKeys.PaymentType, label: 'Payment Type (PAYMENT_TYPE)' },
-      { value: LookupKeys.Relationship, label: 'Relationship (RELATIONSHIP)' },
-      { value: LookupKeys.State, label: 'State (STATE)' }
-    ];
+    return labels[normalized] ?? key;
   }
 
   async loadData(): Promise<void> {

@@ -49,3 +49,21 @@ export interface CreateLoanRequest {
   collectionTerm: string;
   noOfTerms: number;
 }
+
+/** One row in the week-wise repayment schedule (read-only). */
+export interface RepaymentScheduleRow {
+  weekNo: number;
+  collectionDate: string;
+  paidDate?: string | null;
+  paymentStatus: string;
+  paidAmount: number;
+  reasons?: string | null;
+}
+
+/** Optional backend DTO when API returns summary + schedule. */
+export interface RepaymentSummaryDto {
+  totalAmountPaid: number;
+  remainingBalance: number;
+  weeklyDue: number;
+  scheduleRows?: RepaymentScheduleRow[];
+}
