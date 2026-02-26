@@ -15,7 +15,7 @@ import { MemberService } from '../../services/member.service';
 })
 export class AddLoanModalComponent implements OnInit {
   @Input() selectedMember!: Member;
-  
+
   loanForm: CreateLoanRequest = {
     memberId: 0,
     loanAmount: 0,
@@ -30,7 +30,7 @@ export class AddLoanModalComponent implements OnInit {
     collectionTerm: '',
     noOfTerms: 0
   };
-  
+
   isCreatingLoan: boolean = false;
   memberPoc: Poc | null = null;
   paymentTerms: Payment[] = [];
@@ -46,7 +46,7 @@ export class AddLoanModalComponent implements OnInit {
     private pocService: PocService,
     private paymentsService: PaymentsService,
     private memberService: MemberService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     if (this.selectedMember) {
@@ -67,8 +67,8 @@ export class AddLoanModalComponent implements OnInit {
 
   loadMemberPoc(): void {
     if (!this.selectedMember?.pocId) return;
-    
-    this.pocService.getPocs().subscribe({
+
+    this.pocService.pocs$.subscribe({
       next: (pocs: Poc[]) => {
         this.memberPoc = pocs.find(p => p.id === this.selectedMember.pocId) || null;
         // Auto-populate collection term from POC's collection frequency
@@ -97,7 +97,7 @@ export class AddLoanModalComponent implements OnInit {
 
   loadMemberCenter(): void {
     if (!this.selectedMember?.centerId) return;
-    
+
     this.memberService.getAllCenters().subscribe({
       next: (centers: CenterOption[]) => {
         this.memberCenter = centers.find(c => c.id === this.selectedMember.centerId) || null;
@@ -110,10 +110,10 @@ export class AddLoanModalComponent implements OnInit {
   }
 
   get showCollectionDay(): boolean {
-    return !!(this.memberPoc && 
-             this.memberPoc.collectionFrequency && 
-             this.memberPoc.collectionFrequency.toLowerCase() === 'weekly' &&
-             this.memberPoc.collectionDay);
+    return !!(this.memberPoc &&
+      this.memberPoc.collectionFrequency &&
+      this.memberPoc.collectionFrequency.toLowerCase() === 'weekly' &&
+      this.memberPoc.collectionDay);
   }
 
   get centerName(): string {
@@ -138,7 +138,7 @@ export class AddLoanModalComponent implements OnInit {
 
     // Parse date as local date to avoid timezone issues
     const collectionDate = this.parseLocalDate(this.loanForm.collectionStartDate);
-    
+
     const dayOfWeek = collectionDate.toLocaleDateString('en-US', { weekday: 'long' });
     const pocDay = this.memberPoc.collectionDay.trim();
 
@@ -189,10 +189,10 @@ export class AddLoanModalComponent implements OnInit {
       next: async (loan: Loan) => {
         await loading.dismiss();
         this.isCreatingLoan = false;
-        
+
         // Get member name
         const memberName = `${this.selectedMember.firstName || ''} ${this.selectedMember.lastName || ''}`.trim() || 'Member';
-        
+
         // Show alert with member name and loan ID
         const alert = await this.alertController.create({
           header: 'Loan Created Successfully',
@@ -214,11 +214,11 @@ export class AddLoanModalComponent implements OnInit {
         await loading.dismiss();
         this.isCreatingLoan = false;
         console.error('Create loan error:', err);
-        
+
         // Extract error details from response
         let errorTitle = 'Error';
         let errorMessage = 'Failed to create loan. Please try again.';
-        
+
         if (err && typeof err === 'object' && 'error' in err) {
           const errorResponse = (err as any).error;
           if (errorResponse) {
@@ -231,7 +231,7 @@ export class AddLoanModalComponent implements OnInit {
             }
           }
         }
-        
+
         // Show alert with error details
         const alert = await this.alertController.create({
           header: errorTitle,
@@ -259,7 +259,7 @@ export class AddLoanModalComponent implements OnInit {
       input.value = input.value.replace(/[^0-9.]/g, '');
       const numValue = parseFloat(input.value) || 0;
       (this.loanForm[fieldName] as number) = numValue;
-      
+
       // Recalculate fees when loan amount changes
       if (fieldName === 'loanAmount') {
         this.calculateLoanDetails();
@@ -292,18 +292,18 @@ export class AddLoanModalComponent implements OnInit {
     const paymentTerm = this.selectedPaymentTerm;
 
     // Calculate Interest Amount = (rateOfInterest * loanAmount) / 100
-    this.loanForm.interestAmount = paymentTerm.rateOfInterest 
-      ? (paymentTerm.rateOfInterest * loanAmount) / 100 
+    this.loanForm.interestAmount = paymentTerm.rateOfInterest
+      ? (paymentTerm.rateOfInterest * loanAmount) / 100
       : 0;
 
     // Calculate Processing Fee = (processingFee * loanAmount) / 100
-    this.loanForm.processingFee = paymentTerm.processingFee 
-      ? (paymentTerm.processingFee * loanAmount) / 100 
+    this.loanForm.processingFee = paymentTerm.processingFee
+      ? (paymentTerm.processingFee * loanAmount) / 100
       : 0;
 
     // Calculate Insurance Fee = (insuranceFee * loanAmount) / 100
-    this.loanForm.insuranceFee = paymentTerm.insuranceFee 
-      ? (paymentTerm.insuranceFee * loanAmount) / 100 
+    this.loanForm.insuranceFee = paymentTerm.insuranceFee
+      ? (paymentTerm.insuranceFee * loanAmount) / 100
       : 0;
 
     // Set No of Terms from payment term
@@ -328,11 +328,11 @@ export class AddLoanModalComponent implements OnInit {
     if (this.loanForm.disbursementDate) {
       // Parse date as local date to avoid timezone issues
       const disbursementDate = this.parseLocalDate(this.loanForm.disbursementDate);
-      
+
       // Add 7 days
       const collectionDate = new Date(disbursementDate);
       collectionDate.setDate(collectionDate.getDate() + 7);
-      
+
       // Format the collection date
       this.loanForm.collectionStartDate = this.formatDate(collectionDate);
     }

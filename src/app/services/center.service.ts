@@ -1,36 +1,27 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { AuthService } from './auth.service';
-import { ApiResponseService } from './api-response.service';
 import { Center, CreateCenterRequest } from '../models/center.models';
-
-export interface BranchLookup {
-  id: number;
-  name: string;
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class CenterService {
-  private readonly centersUrl = '/Centers';
-  private readonly branchesUrl = '/Branches';
+  private apiUrl = '/api/Centers';
+
+  // ✅ BehaviorSubject holds current centers state
+  private centersSubject = new BehaviorSubject<Center[]>([]);
+  public centers$ = this.centersSubject.asObservable();
+
+  // Track the current branchId so auto-reloads after create/update/delete use the same branch
+  private currentBranchId: number | null = null;
 
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private apiResponse: ApiResponseService
-  ) {}
-
-  private asRecord(value: unknown): Record<string, unknown> | null {
-    return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
-  }
-
-  private text(value: unknown): string {
-    return value == null ? '' : String(value);
-  }
+  ) { }
 
   private getHeaders(): HttpHeaders {
     const token = this.authService.getToken();
@@ -40,128 +31,57 @@ export class CenterService {
     });
   }
 
-  /**
-   * Update a center by ID (PUT: api/Centers/{id})
-   */
-  updateCenter(id: number, payload: Partial<Center>): Observable<Center> {
-    return this.http.put<Center>(`${this.centersUrl}/${id}`, payload, {
+  // ✅ Load centers for a specific branch and broadcast via BehaviorSubject
+  loadCenters(branchId: number): void {
+    this.currentBranchId = branchId;
+    this.http.get<Center[]>(`${this.apiUrl}/${branchId}`, { headers: this.getHeaders() }).subscribe({
+      next: (centers) => this.centersSubject.next(centers),
+      error: (err) => {
+        console.error('Error loading centers:', err);
+        this.centersSubject.next([]);
+      }
+    });
+  }
+
+  getCenterById(id: number): Observable<Center> {
+    return this.http.get<Center>(`${this.apiUrl}/detail/${id}`, {
       headers: this.getHeaders()
     });
   }
 
-  getAllCenters(): Observable<Center[]> {
-    return this.http
-      .get<unknown>(this.centersUrl, { headers: this.getHeaders() })
-      .pipe(
-        map((response: unknown) => {
-          const list = this.apiResponse.unwrapList<Record<string, unknown>>(response);
-          return list
-            .filter(Boolean)
-            .map((c: Record<string, unknown>) => {
-              const branch = this.asRecord(c['branch'] ?? c['Branch']);
-
-              const centerName = this.text(c['centerName'] ?? c['CenterName'] ?? c['name'] ?? c['Name']).trim();
-              const centerAddress = this.text(c['centerAddress'] ?? c['CenterAddress'] ?? c['address'] ?? c['Address']);
-              const branchId = Number(c['branchId'] ?? c['BranchId'] ?? 0) || undefined;
-              const branchName = this.text(
-                c['branchName'] ??
-                  c['BranchName'] ??
-                  c['branch'] ??
-                  c['Branch'] ??
-                  branch?.['name'] ??
-                  branch?.['Name']
-              ).trim();
-              const city = this.text(c['city'] ?? c['City']).trim();
-
-              return {
-                id: Number(c['id'] ?? c['Id'] ?? 0) || undefined,
-                centerName,
-                centerAddress,
-                branchName,
-                branchId,
-                city
-              } satisfies Center;
-            })
-            .filter((c: Center) => !!c.centerName);
-        })
-      );
-  }
-
-  getBranchNamesFromCenters(): Observable<string[]> {
-    return this.http
-      .get<unknown>(this.centersUrl, { headers: this.getHeaders() })
-      .pipe(
-        map((response: unknown) => {
-          const list = this.apiResponse.unwrapList<Record<string, unknown>>(response);
-          const names = list
-            .map((c: Record<string, unknown>) => {
-              const branch = this.asRecord(c['branch'] ?? c['Branch']);
-              return this.text(
-                c['branchName'] ??
-                  c['BranchName'] ??
-                  c['branch'] ??
-                  c['Branch'] ??
-                  branch?.['name'] ??
-                  branch?.['Name']
-              ).trim();
-            })
-            .filter(Boolean);
-
-          return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b));
-        })
-      );
-  }
-
   /**
-   * Fetch branch names from GET: api/Branches
+   * Update a center by ID (PUT: api/Centers/{id})
    */
-  getBranchNames(): Observable<string[]> {
-    return this.http.get<unknown>(this.branchesUrl, { headers: this.getHeaders() }).pipe(
-      map((response: unknown) => {
-        const list = this.apiResponse.unwrapList<Record<string, unknown>>(response);
-        const names = list
-          .map((b: Record<string, unknown>) =>
-            this.text(b['name'] ?? b['Name'] ?? b['branchName'] ?? b['BranchName']).trim()
-          )
-          .filter(Boolean);
-
-        return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b));
-      })
-    );
-  }
-
-  /**
-   * Fetch branches with IDs from GET: /Branches
-   */
-  getBranches(): Observable<BranchLookup[]> {
-    return this.http.get<unknown>(this.branchesUrl, { headers: this.getHeaders() }).pipe(
-      map((response: unknown) => {
-        const list = this.apiResponse.unwrapList<Record<string, unknown>>(response);
-
-        return list
-          .filter(Boolean)
-          .map((b: Record<string, unknown>) => ({
-            id: Number(b['id'] ?? b['Id'] ?? 0),
-            name: this.text(b['name'] ?? b['Name'] ?? b['branchName'] ?? b['BranchName']).trim()
-          }))
-          .filter((b: BranchLookup) => b.id > 0 && !!b.name)
-          .sort((a, b) => a.name.localeCompare(b.name));
+  updateCenter(id: number, payload: Partial<Center>): Observable<Center> {
+    return this.http.put<Center>(`${this.apiUrl}/${id}`, payload, {
+      headers: this.getHeaders()
+    }).pipe(
+      tap(() => {
+        if (this.currentBranchId != null) this.loadCenters(this.currentBranchId);
       })
     );
   }
 
   createCenter(payload: CreateCenterRequest): Observable<Center> {
-    return this.http.post<Center>(this.centersUrl, payload, {
+    return this.http.post<Center>(this.apiUrl, payload, {
       headers: this.getHeaders()
-    });
+    }).pipe(
+      tap(() => {
+        if (this.currentBranchId != null) this.loadCenters(this.currentBranchId);
+      })
+    );
   }
 
   /**
    * Delete a center by ID (DELETE: api/Centers/{id})
    */
   deleteCenter(id: number): Observable<unknown> {
-    return this.http.delete(`${this.centersUrl}/${id}`, {
+    return this.http.delete(`${this.apiUrl}/${id}`, {
       headers: this.getHeaders()
-    });
+    }).pipe(
+      tap(() => {
+        if (this.currentBranchId != null) this.loadCenters(this.currentBranchId);
+      })
+    );
   }
 }

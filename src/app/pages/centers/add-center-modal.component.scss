@@ -1,27 +1,11 @@
-ion-content.add-center-content {
+ion-content {
   --padding-start: 16px;
   --padding-end: 16px;
   --padding-top: 16px;
-  --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 96px);
-}
-
-ion-content.add-center-content::part(scroll) {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-ion-content.add-center-content::part(scroll)::-webkit-scrollbar {
-  display: none;
+  --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 160px);
 }
 
 form {
-  max-width: 600px;
-  margin: 0 auto;
-
-  .branch-field {
-    display: none;
-  }
-
   ion-item {
     --padding-start: 0;
     --inner-padding-end: 0;
@@ -35,15 +19,12 @@ form {
       margin-bottom: 8px;
     }
 
-    ion-input,
-    ion-textarea,
-    ion-select {
+    ion-input {
       --padding-start: 12px;
     }
 
     &.ion-invalid {
       --border-color: var(--ion-color-danger);
-      --highlight-color-invalid: var(--ion-color-danger);
     }
   }
 
@@ -69,7 +50,7 @@ ion-footer {
 ion-footer ion-toolbar {
   padding: 12px 16px;
   background: var(--ion-background-color, #fff);
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .action-row.footer-row {
@@ -81,14 +62,15 @@ ion-footer ion-toolbar {
   flex: 1 1 0;
   --border-radius: 8px;
   height: 48px;
+  font-weight: 600;
+  text-transform: none;
 }
 
 .action-row.footer-row .save-button {
-  font-weight: 600;
-  text-transform: none;
+  --background: var(--ion-color-primary, #3880ff);
+  color: var(--ion-color-light, #fff);
 }
 
 .action-row.footer-row .cancel-button {
-  font-weight: 600;
-  text-transform: none;
+  --border-radius: 8px;
 }

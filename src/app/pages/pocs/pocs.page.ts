@@ -1,38 +1,39 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { ViewWillEnter, ModalController, LoadingController, ToastController, AlertController } from '@ionic/angular';
+import { ViewWillEnter, ModalController, ToastController, AlertController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { Branch } from '../../models/branch.models';
 import { AddPocModalComponent } from './add-poc-modal.component';
 import { ColDef, ValueGetterParams, ICellRendererParams, GridOptions, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
 import { Poc, PocService } from '../../services/poc.service';
-import { MemberService } from '../../services/member.service';
+import { CenterService } from '../../services/center.service';
 import { UserService } from '../../services/user.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-pocs',
   templateUrl: './pocs.page.html'
 })
-export class PocsComponent implements OnInit, ViewWillEnter {
+export class PocsComponent implements OnInit, OnDestroy, ViewWillEnter {
   activeMenu: string = 'POCs';
-  pocs: Poc[] = [];
   selectedBranch: Branch | null = null;
   isLoading: boolean = false;
+  private subscriptions = new Subscription();
 
   // AG Grid configuration
   rowData: Poc[] = [];
   columnDefs: ColDef[] = [
-    { 
+    {
       headerName: 'Name',
       valueGetter: (params: ValueGetterParams) => {
         const first = params.data?.firstName || '';
         const last = params.data?.lastName || '';
         return [first, last].filter(Boolean).join(' ');
       },
-      sortable: true, 
-      filter: true, 
-      flex: 1 
+      sortable: true,
+      filter: true,
+      flex: 1
     },
     {
       headerName: 'Contact Numbers',
@@ -45,21 +46,21 @@ export class PocsComponent implements OnInit, ViewWillEnter {
       filter: true,
       width: 180
     },
-    { 
-      headerName: 'Address', 
+    {
+      headerName: 'Address',
       valueGetter: (params: ValueGetterParams) => {
         const a1 = params.data?.address1 || '';
         const a2 = params.data?.address2 || '';
         const city = params.data?.city || '';
         const state = params.data?.state || '';
-        const pin = params.data?.pinCode || '';
+        const pin = params.data?.zipCode || '';
         return [a1, a2, city, state, pin].filter(Boolean).join(', ');
-      }, 
-      sortable: true, 
-      filter: true, 
-      flex: 1 
+      },
+      sortable: true,
+      filter: true,
+      flex: 1
     },
-    { 
+    {
       headerName: 'Center Name',
       valueGetter: (params: ValueGetterParams) => params.context?.componentParent?.getCenterName(params.data?.centerId),
       sortable: true,
@@ -106,10 +107,10 @@ export class PocsComponent implements OnInit, ViewWillEnter {
       }
     }
   ];
-  defaultColDef: ColDef = { 
-    resizable: true, 
-    sortable: true, 
-    filter: true 
+  defaultColDef: ColDef = {
+    resizable: true,
+    sortable: true,
+    filter: true
   };
   pagination: boolean = true;
   paginationPageSize: number = 20;
@@ -124,9 +125,8 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     private router: Router,
     private modalController: ModalController,
     private pocService: PocService,
-    private memberService: MemberService,
+    private centerService: CenterService,
     private userService: UserService,
-    private loadingController: LoadingController,
     private toastController: ToastController,
     private alertController: AlertController
   ) {
@@ -142,6 +142,18 @@ export class PocsComponent implements OnInit, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
+
+
+    // Subscribe once — all refreshes flow through here
+    const sub = this.pocService.pocs$.subscribe(pocs => {
+      this.rowData = pocs;
+      this.isLoading = false;
+    });
+    this.subscriptions.add(sub);
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   ionViewWillEnter(): void {
@@ -162,37 +174,11 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     this.gridApi = params.api;
   }
 
-  async loadPocs(): Promise<void> {
-    if (!this.selectedBranch) {
-      return;
-    }
-
+  loadPocs(): void {
+    if (!this.selectedBranch) return;
     this.isLoading = true;
-    const loading = await this.loadingController.create({
-      message: 'Loading POCs...',
-      spinner: 'crescent'
-    });
-    await loading.present();
-
-    this.pocService.getPocsByBranch(this.selectedBranch.id).subscribe({
-      next: (pocs) => {
-        loading.dismiss();
-        this.isLoading = false;
-        this.pocs = pocs;
-        this.rowData = pocs;
-      },
-      error: (error) => {
-        loading.dismiss();
-        this.isLoading = false;
-        this.pocs = [];
-        this.rowData = [];
-        if (error.status !== 404) {
-          this.showToast('Error loading POCs: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
-        } else {
-          this.showToast('No POCs found for this branch', 'warning');
-        }
-      }
-    });
+    // loadPocsByBranch pushes into pocs$ — our subscriber above handles the result
+    this.pocService.loadPocsByBranch(this.selectedBranch.id);
   }
 
   onMenuChange(menu: string): void {
@@ -201,14 +187,11 @@ export class PocsComponent implements OnInit, ViewWillEnter {
 
   onBranchChange(branch: Branch): void {
     this.selectedBranch = branch;
-    // Load POCs for the selected branch
-    this.loadCenters(branch.id);
-    this.loadUsers();
-    this.loadPocs();
   }
 
   loadCenters(branchId: number): void {
-    this.memberService.getCentersByBranch(branchId).subscribe({
+    this.centerService.loadCenters(branchId);
+    const sub = this.centerService.centers$.subscribe({
       next: (centers) => {
         const map: Record<number, string> = {};
         (centers || []).forEach(center => {
@@ -229,6 +212,7 @@ export class PocsComponent implements OnInit, ViewWillEnter {
         }
       }
     });
+    this.subscriptions.add(sub);
   }
 
   getCenterName(centerId?: number): string {
@@ -285,8 +269,8 @@ export class PocsComponent implements OnInit, ViewWillEnter {
     }
   }
 
-  editPoc(poc: Poc): void {
-    this.openEditPocModal(poc);
+  async editPoc(poc: Poc): Promise<void> {
+    await this.openEditPocModal(poc);
   }
 
   async openEditPocModal(poc: Poc): Promise<void> {
@@ -322,20 +306,13 @@ export class PocsComponent implements OnInit, ViewWillEnter {
               this.showToast('Invalid POC ID', 'danger');
               return;
             }
-            const loading = await this.loadingController.create({ 
-              message: 'Deleting...', 
-              spinner: 'crescent' 
-            });
-            await loading.present();
             this.pocService.deletePoc(poc.id).subscribe({
               next: async () => {
-                await loading.dismiss();
-                this.showToast('POC deleted successfully', 'success');
+                this.showToast('POC set inactive successfully', 'success');
                 this.loadPocs();
               },
               error: async (err: Error) => {
-                await loading.dismiss();
-                this.showToast('Failed to delete POC: ' + err.message, 'danger');
+                this.showToast('Failed to inactivate POC: ' + err.message, 'danger');
               }
             });
           }

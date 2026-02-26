@@ -9,14 +9,8 @@ import { MasterLookup } from '../../models/master-data.models';
 import { UserService } from '../../services/user.service';
 import { OrganizationService } from '../../services/organization.service';
 import { User } from '../../models/user.models';
-
-export interface Center {
-  id: number;
-  name: string;
-  code?: string;
-  address?: string;
-  branchId?: number;
-}
+import { CenterService } from 'src/app/services/center.service';
+import { Center } from 'src/app/models/center.models';
 
 @Component({
   selector: 'app-add-poc-modal',
@@ -28,7 +22,7 @@ export class AddPocModalComponent implements OnInit {
   @Input() editingPocId: number | null = null;
   @Input() branchId: number | null = null;
   @ViewChild(IonContent) ionContent!: IonContent;
-  
+
   pocForm: FormGroup;
   submitted: boolean = false;
   centers: Center[] = [];
@@ -44,7 +38,7 @@ export class AddPocModalComponent implements OnInit {
     private modalController: ModalController,
     private userContext: UserContextService,
     private pocService: PocService,
-    private memberService: MemberService,
+    private centerService: CenterService,
     private masterDataService: MasterDataService,
     private userService: UserService,
     private organizationService: OrganizationService,
@@ -119,11 +113,9 @@ export class AddPocModalComponent implements OnInit {
     });
     await loading.present();
 
-    // Using getPocs() and filtering, since there's no getPocById in the service
-    this.pocService.getPocs().subscribe({
-      next: (pocs) => {
+    this.pocService.getPocById(pocId).subscribe({
+      next: (poc) => {
         loading.dismiss();
-        const poc = pocs.find(p => p.id === pocId);
         if (poc) {
           this.pocForm.patchValue({
             firstName: poc.firstName,
@@ -134,7 +126,7 @@ export class AddPocModalComponent implements OnInit {
             address2: poc.address2 || '',
             city: poc.city || '',
             state: poc.state || '',
-            pinCode: poc.pinCode || '',
+            pinCode: poc.zipCode || '',
             centerId: poc.centerId,
             collectionFrequency: poc.collectionFrequency || 'Weekly',
             collectionDay: poc.collectionDay || '',
@@ -145,9 +137,8 @@ export class AddPocModalComponent implements OnInit {
           this.closeModal();
         }
       },
-      error: (error) => {
+      error: () => {
         loading.dismiss();
-        console.error('Error loading POC data:', error);
         this.showToast('Failed to load POC data', 'danger');
         this.closeModal();
       }
@@ -230,16 +221,12 @@ export class AddPocModalComponent implements OnInit {
       control.setValue(truncated);
     }
   }
-  async loadCenters(branchId: number): Promise<void> {
+  loadCenters(branchId: number): void {
     this.isLoadingCenters = true;
-    
-    this.memberService.getCentersByBranch(branchId).subscribe({
+
+    this.centerService.centers$.subscribe({
       next: (centers) => {
-        this.centers = centers.map(center => ({
-          id: center.id,
-          name: center.name,
-          branchId: center.branchId
-        }));
+        this.centers = centers;
         this.isLoadingCenters = false;
       },
       error: (error) => {
@@ -251,9 +238,9 @@ export class AddPocModalComponent implements OnInit {
     });
   }
 
-  async loadUsers(): Promise<void> {
+  loadUsers(): void {
     this.isLoadingUsers = true;
-    
+
     this.userService.getUsers().subscribe({
       next: (users) => {
         // Filter for active users only - you can adjust the filter criteria as needed
@@ -271,7 +258,7 @@ export class AddPocModalComponent implements OnInit {
 
   async onSubmit(): Promise<void> {
     this.submitted = true;
-    
+
     // Mark all fields as touched to show validation errors
     Object.keys(this.pocForm.controls).forEach(key => {
       this.pocForm.get(key)?.markAsTouched();
@@ -298,7 +285,7 @@ export class AddPocModalComponent implements OnInit {
       address2: this.pocForm.value.address2?.trim() || '',
       city: this.pocForm.value.city?.trim() || '',
       state: this.pocForm.value.state?.trim() || '',
-      pinCode: this.pocForm.value.pinCode?.trim() || '',
+      zipCode: this.pocForm.value.pinCode?.trim() || '',
       centerId: this.pocForm.value.centerId,
       collectionFrequency: this.pocForm.value.collectionFrequency || 'Weekly',
       collectionDay: this.pocForm.value.collectionDay || '',
@@ -333,7 +320,7 @@ export class AddPocModalComponent implements OnInit {
 
   focusOnFirstInvalidField(): void {
     const fieldOrder = ['firstName', 'lastName', 'phoneNumber', 'altPhone', 'address1', 'address2', 'city', 'state', 'pinCode', 'centerId'];
-    
+
     for (const fieldName of fieldOrder) {
       const control = this.pocForm.get(fieldName);
       if (control && control.invalid) {

@@ -1,48 +1,39 @@
-<app-header-menu 
-  [activeMenu]="activeMenu"
-  (menuChange)="onMenuChange($event)"
-  (branchChange)="onBranchChange($event)">
+<app-header-menu [activeMenu]="activeMenu" (menuChange)="onMenuChange($event)" (branchChange)="onBranchChange($event)">
   <ion-content [fullscreen]="true" class="ion-padding">
-  <div class="pocs-list-container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h2>Points of Contact (POCs)</h2>
-      <ion-button (click)="openAddPocModal()" [disabled]="!selectedBranch">
-        <ion-icon name="add-outline" slot="start"></ion-icon>
-        Add POC
-      </ion-button>
-    </div>
-    
-    <div *ngIf="!selectedBranch" class="info-message">
-      <ion-icon name="information-circle-outline" size="large"></ion-icon>
-      <p>Please select a branch from the header to view POCs</p>
-    </div>
+    <div class="pocs-list-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2>Points of Contact (POCs)</h2>
+        <ion-button (click)="openAddPocModal()" [disabled]="!selectedBranch">
+          <ion-icon name="add-outline" slot="start"></ion-icon>
+          Add POC
+        </ion-button>
+      </div>
 
-    <div *ngIf="isLoading" style="text-align: center; padding: 20px;">
-      <ion-spinner></ion-spinner>
-      <p>Loading POCs...</p>
+      <div *ngIf="!selectedBranch" class="info-message">
+        <ion-icon name="information-circle-outline" size="large"></ion-icon>
+        <p>Please select a branch from the header to view POCs</p>
+      </div>
+
+      <div *ngIf="isLoading" style="text-align: center; padding: 20px;">
+        <ion-spinner></ion-spinner>
+        <p>Loading POCs...</p>
+      </div>
+
+      <div *ngIf="!isLoading && rowData.length === 0" class="empty-state">
+        <ion-icon name="call-outline" size="large"></ion-icon>
+        <p>No POCs found</p>
+        <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
+          Click "Add POC" to create a new point of contact
+        </p>
+      </div>
+
+      <div *ngIf="!isLoading && rowData.length > 0" class="pocs-grid">
+        <ag-grid-angular class="ag-theme-alpine" style="width: 100%; height: 60vh;" [rowData]="rowData"
+          [columnDefs]="columnDefs" [gridOptions]="gridOptions" [defaultColDef]="defaultColDef"
+          [pagination]="pagination" [paginationPageSize]="paginationPageSize"
+          [paginationPageSizeSelector]="paginationPageSizeSelector">
+        </ag-grid-angular>
+      </div>
     </div>
-    
-    <div *ngIf="!isLoading && selectedBranch && pocs.length === 0" class="empty-state">
-      <ion-icon name="call-outline" size="large"></ion-icon>
-      <p>No POCs found</p>
-      <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
-        Click "Add POC" to create a new point of contact
-      </p>
-    </div>
-    
-    <div *ngIf="!isLoading && selectedBranch && pocs.length > 0" class="pocs-grid">
-      <ag-grid-angular
-        class="ag-theme-alpine"
-        style="width: 100%; height: 60vh;"
-        [rowData]="rowData"
-        [columnDefs]="columnDefs"
-        [gridOptions]="gridOptions"
-        [defaultColDef]="defaultColDef"
-        [pagination]="pagination"
-        [paginationPageSize]="paginationPageSize"
-        [paginationPageSizeSelector]="paginationPageSizeSelector">
-      </ag-grid-angular>
-    </div>
-  </div>
   </ion-content>
 </app-header-menu>

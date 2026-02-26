@@ -1,21 +1,20 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   ViewWillEnter,
   ModalController,
-  ToastController
+  ToastController,
+  AlertController
 } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
-import { BranchService } from '../../services/branch.service';
 import { Branch } from '../../models/branch.models';
 import { CenterService } from '../../services/center.service';
 import { Center } from '../../models/center.models';
-import { UserContextService } from '../../services/user-context.service';
-import { AddCenterModalComponent } from './add-center-modal.component';
-import { EditCenterModalComponent } from './edit-center-modal.component';
-import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { Subscription } from 'rxjs';
 import { ColDef, GridApi, GridOptions, GridReadyEvent, ICellRendererParams } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
+import { AddCenterModalComponent } from './add-center-modal.component';
+
 
 
 @Component({
@@ -23,116 +22,94 @@ import { agGridTheme } from '../../ag-grid-theme';
   templateUrl: './centers.page.html'
 })
 // eslint-disable-next-line @angular-eslint/component-class-suffix
-export class CentersPage implements OnInit, ViewWillEnter {
+export class CentersPage implements OnInit, OnDestroy, ViewWillEnter {
   activeMenu: string = 'Centers';
-  centers: Center[] = [];
   rowData: Center[] = [];
   isLoading = false;
+  private subscriptions = new Subscription();
 
   selectedBranchId: number | null = null;
-  selectedBranchName: string = '';
 
   // AG Grid
-  columnDefs: ColDef<Center>[] = [];
+  columnDefs: ColDef<Center>[] = [
+    {
+      headerName: 'Id',
+      field: 'id',
+      width: 70,
+      minWidth: 70,
+      maxWidth: 70,
+      suppressSizeToFit: true,
+    },
+    {
+      headerName: 'Center Name',
+      field: 'name',
+      width: 200,
+      minWidth: 200,
+      maxWidth: 300,
+      resizable: true,
+    },
+    {
+      headerName: 'Address',
+      field: 'centerAddress',
+      width: 500,
+      minWidth: 300,
+      maxWidth: 600,
+      resizable: true,
+      suppressSizeToFit: true,
+      valueGetter: (p) => this.buildDisplayAddress(p.data?.centerAddress, p.data?.city),
+      tooltipValueGetter: (p) => this.buildDisplayAddress(p.data?.centerAddress, p.data?.city),
+      cellClass: 'truncate'
+    },
+    {
+      headerName: 'Actions',
+      colId: 'actions',
+      width: 200,
+      minWidth: 200,
+      maxWidth: 200,
+      suppressSizeToFit: true,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: ICellRendererParams<Center>) => {
+        const container = document.createElement('div');
+        container.className = 'actions-cell';
+        container.innerHTML = `
+            <button class="ag-btn ag-edit">Edit</button>
+            <button class="ag-btn ag-delete">Inactive</button>
+          `;
+
+        const editBtn = container.querySelector('.ag-edit');
+        const delBtn = container.querySelector('.ag-delete');
+        if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editCenter(params.data));
+        if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.deleteCenter(params.data));
+        return container;
+      }
+    }
+  ];
   defaultColDef: ColDef = {
     sortable: true,
     resizable: true,
     filter: true,
     floatingFilter: false
   };
-
   pagination: boolean = true;
   paginationPageSize: number = 20;
   paginationPageSizeSelector: number[] = [10, 20, 50, 100];
-
-  paginationPageSize_old = 5;
-  paginatorLength = 0;
-  paginatorPageIndex = 0;
-
-  // Dynamic grid height (shrinks when pageSize is small)
-  private readonly gridRowHeightPx = 44;
-  private readonly gridHeaderHeightPx = 44;
-  gridHeightPx = 320;
-
-  private gridApi?: GridApi<Center>;
-  private lastColumnState: unknown = null;
-
-  gridOptions: GridOptions<Center> = {
-    theme: agGridTheme,
-    context: { componentParent: this },
-    suppressPaginationPanel: false,
-
-    // Lock table adjustments from the UI
-    suppressMovableColumns: true,
-    suppressDragLeaveHidesColumns: true,
-    suppressColumnMoveAnimation: true,
-
-    // Keep consistent sizing so we can compute the grid height.
-    rowHeight: 44,
-    headerHeight: 44
-  };
-
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
+  gridOptions: GridOptions;
+  gridApi!: GridApi;
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private centerService: CenterService,
-    private branchService: BranchService,
-    private userContext: UserContextService,
     private modalController: ModalController,
-    private toastController: ToastController
-  ) { }
-
-  private buildDisplayAddress(centerAddress: unknown, city: unknown): string {
-    const addr = (centerAddress ?? '').toString().trim();
-    const c = (city ?? '').toString().trim();
-    return [addr, c].filter(Boolean).join(', ');
+    private toastController: ToastController,
+    private alertController: AlertController
+  ) {
+    this.gridOptions = {
+      theme: agGridTheme,
+      context: { componentParent: this }
+    } as GridOptions;
   }
-
-  private normalizeCenter(raw: unknown, branchName: string, branchId?: number): Center {
-    const rec = (raw ?? {}) as Record<string, unknown>;
-    const idNum = Number(rec['id'] ?? rec['Id'] ?? (raw as any)?.id ?? 0);
-    const id = Number.isFinite(idNum) && idNum > 0 ? idNum : undefined;
-
-    const centerName = (
-      rec['centerName'] ?? rec['CenterName'] ?? rec['name'] ?? rec['Name'] ?? (raw as any)?.centerName ?? (raw as any)?.name ?? ''
-    ).toString();
-
-    // Keep these as separate fields for Edit.
-    // We will combine them only for display in the grid column.
-    const centerAddress = (
-      rec['centerAddress'] ?? rec['CenterAddress'] ?? rec['address'] ?? rec['Address'] ?? (raw as any)?.centerAddress ?? ''
-    ).toString().trim();
-
-    const city = (
-      rec['city'] ?? rec['City'] ?? (raw as any)?.city ?? ''
-    ).toString().trim();
-
-    return {
-      id,
-      centerName,
-      centerAddress,
-      city,
-      branchName: (branchName ?? '').toString(),
-      branchId
-    };
-  }
-
-  private getSelectedBranchId(): number | null {
-    const fromContext = this.userContext.branchId;
-    if (fromContext != null) return fromContext;
-
-    try {
-      const raw = localStorage.getItem('selected_branch_id');
-      if (!raw) return null;
-      const num = Number(raw);
-      return Number.isNaN(num) ? null : num;
-    } catch {
-      return null;
-    }
-  }
-
 
   ngOnInit(): void {
     if (!this.authService.isAuthenticated()) {
@@ -140,253 +117,36 @@ export class CentersPage implements OnInit, ViewWillEnter {
       return;
     }
 
-    this.columnDefs = [
-      // Explicitly define these as hidden so they never show up as extra columns.
-      {
-        headerName: 'Id',
-        field: 'id',
-        hide: false,
-        width: 70,
-        minWidth: 70,
-        maxWidth: 70,    
-        suppressSizeToFit: true,       
-      },
-      { field: 'branchId', hide: true },
-      {
-        headerName: 'Center Name',
-        field: 'centerName',
-         width:200,
-        minWidth: 200,
-        maxWidth: 300,
-        resizable: true,
-        
-      },
-      {
-        headerName: 'Address',
-        field: 'centerAddress',
-        width:728,
-        minWidth: 300,
-        maxWidth: 800,
-        resizable: true,
-        suppressSizeToFit: true,
-        valueGetter: (p) => this.buildDisplayAddress(p.data?.centerAddress, p.data?.city),
-        tooltipValueGetter: (p) => this.buildDisplayAddress(p.data?.centerAddress, p.data?.city),
-        cellClass: 'truncate'    
-      },
-      // {
-      //   headerName: 'City',
-      //   field: 'city',
-       
-      //   hide: true
-      // },
-      // {
-      //   headerName: 'Branch Name',
-      //   field: 'branchName',
-      //   flex: 1,
-      //   hide: true
-      // },
-      {
-        headerName: 'Actions',
-        colId: 'actions',
-        width: 200,
-        minWidth: 200,
-        maxWidth: 200,
-        suppressSizeToFit: true,
-        sortable: false,
-        filter: false,
-        //resizable: false,
-        cellRenderer: (params: ICellRendererParams<Center>) => {
-          const container = document.createElement('div');
-          container.className = 'actions-cell';
-          container.innerHTML = `
-            <button class="ag-btn ag-edit">Edit</button>
-            <button class="ag-btn ag-delete">Inactive</button>
-          `;
+    // Use authService.getBranchId() — returns number
+    this.selectedBranchId = this.authService.getBranchId();
 
-          const editBtn = container.querySelector('.ag-edit');
-          const delBtn = container.querySelector('.ag-delete');
-          if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editCenter(params.data));
-          if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.deleteCenter(params.data));
-          return container;
-        }
-      }
-    ];
+    // ✅ Subscribe to centers$ so rowData stays in sync with every load
+    const centersSub = this.centerService.centers$.subscribe((centers) => {
+      this.rowData = centers;
+      this.isLoading = false;
+    });
+    this.subscriptions.add(centersSub);
+
+    // ✅ Trigger initial load only when a valid branchId is available
+    if (this.selectedBranchId !== null) {
+      this.isLoading = true;
+      this.centerService.loadCenters(this.selectedBranchId);
+    }
   }
 
-  // ViewChild setters handle paginator/sort wiring even when the table is created via *ngIf.
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
 
   ionViewWillEnter(): void {
-    // Reload data when page becomes active
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
     }
-    // Auto-load filtered centers when user navigates to Centers
-    // (e.g. after clicking Navigate on a branch)
-    void this.loadCenters();
   }
 
-  onGridReady(event: GridReadyEvent<Center>): void {
-    this.gridApi = event.api;
-    // Force column definitions to avoid any auto-generated columns.
-    this.gridApi.setGridOption('columnDefs', this.columnDefs);
-    this.gridApi.setGridOption('rowData', this.rowData);
-    this.gridApi.setGridOption('paginationPageSize', this.paginationPageSize);
-    this.gridApi.paginationGoToPage(this.paginatorPageIndex);
-    setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
-    this.syncPaginatorFromGrid();
-    this.updateGridHeight();
-  }
-
-  onSortChanged(): void {
-    if (!this.gridApi) return;
-    this.lastColumnState = this.gridApi.getColumnState();
-    this.syncPaginatorFromGrid();
-  }
-
-  onPageChanged(event: PageEvent): void {
-    this.paginationPageSize = event.pageSize;
-    this.paginatorPageIndex = event.pageIndex;
-    if (!this.gridApi) return;
-
-    const pageSizeChanged = this.gridApi.paginationGetPageSize() !== event.pageSize;
-    if (pageSizeChanged) {
-      this.gridApi.setGridOption('paginationPageSize', event.pageSize);
-      this.paginatorPageIndex = 0;
-      this.gridApi.paginationGoToFirstPage();
-    } else {
-      this.gridApi.paginationGoToPage(event.pageIndex);
-    }
-
-    this.syncPaginatorFromGrid();
-    this.updateGridHeight();
-  }
-
-
-  private syncPaginatorFromGrid(): void {
-    if (!this.gridApi) {
-      this.paginatorLength = this.rowData.length;
-      return;
-    }
-    this.paginatorLength = this.gridApi.getDisplayedRowCount();
-    this.paginatorPageIndex = this.gridApi.paginationGetCurrentPage();
-  }
-
-  private updateGridHeight(): void {
-    const total = this.gridApi ? this.gridApi.getDisplayedRowCount() : this.rowData.length;
-    const pageSize = this.paginationPageSize;
-    const pageIndex = this.gridApi ? this.gridApi.paginationGetCurrentPage() : this.paginatorPageIndex;
-
-    const start = pageIndex * pageSize;
-    const remaining = Math.max(total - start, 0);
-    const rowsOnPage = Math.max(1, Math.min(pageSize, remaining || pageSize));
-
-    const base = this.gridHeaderHeightPx + 2; // +2 for borders
-    const height = base + rowsOnPage * this.gridRowHeightPx;
-    this.gridHeightPx = Math.max(220, height);
-  }
-
-  private getPrintableRows(): Center[] {
-    if (!this.gridApi) {
-      return this.rowData;
-    }
-    const rows: Center[] = [];
-    this.gridApi.forEachNodeAfterFilterAndSort(node => {
-      if (node.data) rows.push(node.data);
-    });
-    return rows;
-  }
-
-  exportCentersToCSV(): void {
-    const exportableColumns = ['centerName', 'centerAddress', 'branchName'];
-
-    if (this.gridApi) {
-      this.gridApi.exportDataAsCsv({
-        fileName: 'centers.csv',
-        columnKeys: exportableColumns
-      });
-      return;
-    }
-
-    // Fallback (should rarely happen, e.g. if grid not ready yet)
-    const rows = this.rowData;
-    const headers = exportableColumns;
-    const csv = [headers.join(',')]
-      .concat(
-        rows.map(row =>
-          headers
-            .map(h => {
-              let value = (row as unknown as Record<string, unknown>)[h] ?? '';
-              if (h === 'centerAddress') {
-                value = this.buildDisplayAddress(row.centerAddress, row.city);
-              }
-              return '"' + value.toString().replace(/"/g, '""') + '"';
-            })
-            .join(',')
-        )
-      )
-      .join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'centers.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  }
-
-  printCentersTable(): void {
-    const rows = this.getPrintableRows();
-    const printableFields: Array<keyof Center> = ['centerName', 'centerAddress', 'branchName'];
-    const columns = printableFields.map(field => {
-      const def = this.columnDefs.find(c => c.field === field);
-      return {
-        field: field as string,
-        header: (def?.headerName ?? field).toString()
-      };
-    });
-
-    let html = '<table border="1" style="border-collapse:collapse;width:100%">';
-    html += '<thead><tr>' + columns.map(c => `<th style="padding:4px 8px">${c.header}</th>`).join('') + '</tr></thead>';
-    html +=
-      '<tbody>' +
-      rows
-        .map(
-          row =>
-            '<tr>' +
-            columns
-              .map(c => {
-                let value = (row as unknown as Record<string, unknown>)[c.field] ?? '';
-                if (c.field === 'centerAddress') {
-                  value = this.buildDisplayAddress(row.centerAddress, row.city);
-                }
-                return `<td style="padding:4px 8px">${value.toString()}</td>`;
-              })
-              .join('') +
-            '</tr>'
-        )
-        .join('') +
-      '</tbody></table>';
-    const win = window.open('', '', 'width=900,height=700');
-    win!.document.write('<html><head><title>Centers Table</title></head><body>' + html + '</body></html>');
-    win!.print();
-    win!.close();
-  }
-
-  // Centers are auto-loaded on enter; keep filter fields intact between navigations.
-
-  async openAddCenterModal(): Promise<void> {
-    const modal = await this.modalController.create({
-      component: AddCenterModalComponent,
-      cssClass: 'add-center-modal'
-    });
-    await modal.present();
-
-    const { data } = await modal.onWillDismiss();
-    if (data && data.created) {
-      await this.loadCenters(true);
-      await this.showToast('Center created successfully', 'success');
-    }
+  onGridReady(params: GridReadyEvent): void {
+    this.gridApi = params.api;
   }
 
   onMenuChange(menu: string): void {
@@ -394,161 +154,78 @@ export class CentersPage implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(branch: Branch): void {
-    void branch;
+    this.selectedBranchId = branch.id;
   }
 
-  private async loadCenters(forceRefresh: boolean = false): Promise<void> {
-    if (this.isLoading) return;
-
-    const selectedBranchId = this.getSelectedBranchId();
-    if (!forceRefresh && this.rowData.length > 0 && this.selectedBranchId === selectedBranchId) {
-      return;
-    }
-
-    this.isLoading = true;
-    this.selectedBranchId = selectedBranchId;
-    this.selectedBranchName = '';
-
-    // Use branches$ for local copy and auto-updates
-    this.centerService.getAllCenters().subscribe({
-      next: async (centers) => {
-        this.branchService.branches$.subscribe(branches => {
-          const branchMap = new Map(branches.map(b => [Number(b.id), b.name]));
-          const selectedBranchName = selectedBranchId != null ? (branchMap.get(Number(selectedBranchId)) || '') : '';
-          this.selectedBranchName = selectedBranchName;
-
-          const mapped = (centers ?? []).map(center => {
-            const centerRec = center as unknown as Record<string, unknown>;
-            const bIdNum = Number(centerRec['branchId'] ?? centerRec['BranchId'] ?? (center as any)?.branchId ?? 0);
-            const branchId = Number.isFinite(bIdNum) && bIdNum > 0 ? bIdNum : undefined;
-            const branchName = branchMap.get(Number(branchId ?? 0)) || (center as any)?.branchName || '';
-            return this.normalizeCenter(center, branchName, branchId);
-          });
-
-          this.centers = selectedBranchId != null
-            ? mapped.filter(c => Number(c.branchId) === Number(selectedBranchId) || (!!selectedBranchName && c.branchName === selectedBranchName))
-            : mapped;
-
-          this.rowData = [...this.centers];
-          if (this.gridApi) {
-            this.gridApi.setGridOption('rowData', this.rowData);
-            this.gridApi.paginationGoToFirstPage();
-            this.paginatorPageIndex = 0;
-          }
-          this.syncPaginatorFromGrid();
-          this.updateGridHeight();
-          this.isLoading = false;
-        });
-      },
-      error: async () => {
-        this.centers = [];
-        this.rowData = [];
-        if (this.gridApi) {
-          this.gridApi.setGridOption('rowData', this.rowData);
-          this.gridApi.paginationGoToFirstPage();
-          this.paginatorPageIndex = 0;
-        }
-        this.syncPaginatorFromGrid();
-        this.updateGridHeight();
-        this.isLoading = false;
-        await this.showToast('Failed to load centers.', 'danger');
-      }
-    });
+  buildDisplayAddress(address?: string, city?: string): string {
+    return [address, city].filter(Boolean).join(', ');
   }
-  async editCenter(row: Center): Promise<void> {
+
+  async openAddCenterModal(): Promise<void> {
     const modal = await this.modalController.create({
-      component: EditCenterModalComponent,
-      componentProps: { center: { ...row } },
-      cssClass: 'edit-center-modal'
+      component: AddCenterModalComponent,
+      componentProps: {
+        isEditing: false,
+        branchId: this.selectedBranchId
+      }
     });
     await modal.present();
-    const { data } = await modal.onWillDismiss();
-    if (data && data.updated && data.center) {
-      // Update the row in the table
-      const idx = this.centers.findIndex(c => c.id === data.center.id);
-      if (idx > -1) {
-        this.centers[idx] = data.center;
-        this.rowData = [...this.centers];
-        if (this.gridApi) {
-          this.gridApi.setGridOption('rowData', this.rowData);
-        }
-        await this.showToast('Center updated successfully', 'success');
+    const { data } = await modal.onDidDismiss();
+    if (data?.success) {
+      await this.showToast('Center created successfully!', 'success');
+    }
+  }
 
-        // Fallback: reload from API so table matches server-calculated values
-        // (and ensures we keep branch mapping in sync).
-        try {
-          const existingColumnState = this.gridApi?.getColumnState() ?? this.lastColumnState;
-          await this.loadCenters(true);
-          if (this.gridApi && Array.isArray(existingColumnState)) {
-            this.gridApi.applyColumnState({
-              state: existingColumnState as any,
-              defaultState: { sort: null }
+  async editCenter(center: Center | undefined): Promise<void> {
+    if (!center?.id) return;
+    const modal = await this.modalController.create({
+      component: AddCenterModalComponent,
+      componentProps: {
+        isEditing: true,
+        editingCenterId: center.id,
+        branchId: this.selectedBranchId
+      }
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data?.success) {
+      await this.showToast('Center updated successfully!', 'success');
+    }
+  }
+
+  async deleteCenter(center: Center | undefined): Promise<void> {
+    if (!center?.id) return;
+
+    const alert = await this.alertController.create({
+      header: 'Confirm Inactive',
+      message: `Are you sure you want to set center "${center.name}" as inactive?`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Inactive',
+          handler: async () => {
+            this.centerService.deleteCenter(center.id!).subscribe({
+              next: async () => {
+                await this.showToast('Center set inactive successfully', 'success');
+              },
+              error: async (err: Error) => {
+                await this.showToast('Failed to inactivate center: ' + err.message, 'danger');
+              }
             });
           }
-          this.syncPaginatorFromGrid();
-        } catch {
-          // Ignore reload errors; the optimistic UI update already shows new values.
         }
-      }
-    }
-  }
-
-  async deleteCenter(row: Center): Promise<void> {
-    const confirmed = await this.showConfirmDialog(`Are you sure you want to delete center "${row.centerName}"?`);
-    if (!confirmed) return;
-    this.isLoading = true;
-    try {
-      await new Promise((resolve, reject) => {
-        this.centerService.deleteCenter(row.id!).subscribe({
-          next: () => resolve(true),
-          error: (err: unknown) => reject(err)
-        });
-      });
-      this.centers = this.centers.filter(c => c.id !== row.id);
-      this.rowData = [...this.centers];
-      if (this.gridApi) {
-        this.gridApi.setGridOption('rowData', this.rowData);
-        this.gridApi.paginationGoToPage(Math.min(this.paginatorPageIndex, Math.max(this.gridApi.paginationGetTotalPages() - 1, 0)));
-      }
-      this.syncPaginatorFromGrid();
-      await this.showToast('Center deleted successfully', 'success');
-    } catch (err) {
-      await this.showToast('Failed to delete center', 'danger');
-    } finally {
-      this.isLoading = false;
-    }
-  }
-
-  private async showConfirmDialog(message: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      const alert = document.createElement('ion-alert');
-      alert.header = 'Confirm Delete';
-      alert.message = message;
-      alert.buttons = [
-        {
-          text: 'Cancel',
-          role: 'cancel',
-          handler: () => resolve(false)
-        },
-        {
-          text: 'Delete',
-          role: 'destructive',
-          handler: () => resolve(true)
-        }
-      ];
-      document.body.appendChild(alert);
-      void alert.present();
+      ]
     });
+    await alert.present();
   }
 
-  private async showToast(message: string, color: string): Promise<void> {
+  async showToast(message: string, color: string): Promise<void> {
     const toast = await this.toastController.create({
       message,
-      duration: 2500,
+      duration: 3000,
       color,
       position: 'top'
     });
     await toast.present();
   }
 }
-
