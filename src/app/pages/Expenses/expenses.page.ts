@@ -7,29 +7,27 @@ import { agGridTheme } from '../../ag-grid-theme';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { ModalController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
+import { ExpensesService } from '../../services/expenses.service';
+import { AddExpensesComponent } from './add-expense.component';
 import { forkJoin } from 'rxjs';
-import { UserTransactions } from 'src/app/models/user-transactions.models';
-import { UserTransactionsService } from '../../services/user-transactions.service';
-import { ActivatedRoute } from '@angular/router';
-import { NgZone, ApplicationRef } from '@angular/core';
+import { Expenses } from 'src/app/models/expenses.models';
 
 @Component({
-  selector: 'app-user-transactions',
-  templateUrl: './user-transactions.page.html',
-  styleUrls: ['./user-transactions.page.scss']
+  selector: 'app-expenses',
+  templateUrl: './expenses.page.html',
+  styleUrls: ['./expenses.page.scss']
 })
-export class UserTransactionsComponent implements OnInit, ViewWillEnter {
-  activeMenu: string = 'Ledger Balances';
+export class ExpensesComponent implements OnInit, ViewWillEnter {
+  activeMenu: string = 'Expenses';
 
-  userTransactions: UserTransactions[] = [];
-  rowData: UserTransactions[] = [];
+  expenses: Expenses[] = [];
+  rowData: Expenses[] = [];
   columnDefs: ColDef[] = [];
   defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
   pagination: boolean = true;
   paginationPageSize: number = 20;
   paginationPageSizeSelector: number[] = [10, 20, 50, 100];
   isLoading: boolean = false;
-  transactionUserId: number | null = null;
   
     private gridApi?: GridApi;
     gridOptions = { theme: agGridTheme, context: { componentParent: this } };
@@ -40,14 +38,10 @@ export class UserTransactionsComponent implements OnInit, ViewWillEnter {
     private toastController: ToastController,
     private loadingController: LoadingController,
     private modalController: ModalController,
-    private userService: UserService,
-    private userTransactionsService: UserTransactionsService,
-    private ngZone: NgZone,
-    private appRef: ApplicationRef,
-    private route: ActivatedRoute
+    private expensesService: ExpensesService ,
+    private userService: UserService
   ) {
-    const URLUserId = this.route.snapshot.paramMap.get('id');
-    this.transactionUserId = URLUserId ? +URLUserId : null;
+    
   }
 
   ngOnInit(): void {
@@ -57,18 +51,16 @@ export class UserTransactionsComponent implements OnInit, ViewWillEnter {
     }
 
     this.columnDefs = [
-      { headerName: 'Sender Name', field: 'paidfromUserName', width: 150, sortable: true, filter: true },
-      { headerName: 'Receiver Name', field: 'paidtoUserName', width: 150, sortable: true, filter: true },
-      { headerName: 'Transaction Type', field: 'transactionType', width: 150, sortable: true, filter: true },
+      { headerName: 'User Name', field: 'paidfromUserName', width: 150, sortable: true, filter: true },
       { headerName: 'Amount', field: 'amount', width: 100, sortable: true, filter: true },
-      { headerName: 'Created By', field: 'createdBy', width: 150, sortable: true, filter: true },
-      { headerName: 'Payment Date', field: 'paymentDate', width: 150, sortable: true, filter: true, 
+      { headerName: 'Description', field: 'comments', width: 200, sortable: true, filter: true },
+      { headerName: 'Expense Date', field: 'paymentDate', width: 100, sortable: true, filter: true, 
         valueFormatter: (params) => {
         if (!params.value) return '';
         return new Date(params.value).toLocaleDateString();
         }
       },
-      { headerName: 'created Date', field: 'createdDate', width: 150, sortable: true, filter: true, 
+      { headerName: 'Entered Date', field: 'createdDate', width: 100, sortable: true, filter: true, 
         valueFormatter: (params) => {
         if (!params.value) return '';
         return new Date(params.value).toLocaleDateString();
@@ -79,38 +71,38 @@ export class UserTransactionsComponent implements OnInit, ViewWillEnter {
 
   ionViewWillEnter(): void {
     if (this.authService.isAuthenticated()) {
-      this.loadUserTransactions();
+      this.loadExpenses();
     }
   }
 
-  async loadUserTransactions(): Promise<void> {
+  async loadExpenses(): Promise<void> {
   this.isLoading = true;
   const loading = await this.loadingController.create({
-    message: 'Loading user transactions...',
+    message: 'Loading expenses...',
     spinner: 'crescent'
   });
   await loading.present();
 
-  // Fetch both user transactions and all users in parallel
+  // Fetch both expenses and all users in parallel
   forkJoin([
-    this.userTransactionsService.getUserTransactions(this.transactionUserId || 0),
+    this.expensesService.getExpenses(),
     this.userService.getUsers()
   ]).subscribe({
-    next: ([userTransactions, users]) => {
-      this.userTransactions = userTransactions || [];
+    next: ([expenses, users]) => {
+      this.expenses = expenses || [];
 
-      // Create user map with full name (single map, reuse for all user transactions)
+      console.log('Fetched expenses:', this.expenses);
+
+      // Create user map with full name (single map, reuse for all expenses)
       const userMap = new Map();
       users.forEach(user => {
         userMap.set(user.id, `${user.firstName} ${user.lastName}`);
       });
 
-      // Map user transactions with userName
-      this.rowData = this.userTransactions.map(ut => ({
-        ...ut,
-        paidfromUserName: userMap.get(ut.paidFromUserId) || 'Unknown',
-        paidtoUserName: userMap.get(ut.paidToUserId) || 'Unknown',
-        createdBy: userMap.get(ut.createdBy) || 'Unknown'
+      // Map expenses with userName
+      this.rowData = this.expenses.map(exp => ({
+        ...exp,
+        paidfromUserName: userMap.get(exp.paidFromUserId) || 'Unknown'
       }));
 
       // Update grid
@@ -127,11 +119,11 @@ export class UserTransactionsComponent implements OnInit, ViewWillEnter {
     error: (error) => {
       loading.dismiss();
       this.isLoading = false;
-      this.userTransactions = [];
+      this.expenses = [];
       this.rowData = [];
       console.error('Error loading data:', error);
       if (error.status !== 404) {
-        this.showToast('Error loading user transactions: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
+        this.showToast('Error loading expenses: ' + (error.error?.message || error.message || 'Unknown error'), 'danger');
       }
     }
   });
@@ -159,21 +151,24 @@ export class UserTransactionsComponent implements OnInit, ViewWillEnter {
     }, 100);
   }
 
+  async openAddExpenseModal(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: AddExpensesComponent,
+      cssClass: 'add-expense-modal'
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onWillDismiss();
+    if (data && data.success) {
+      // Refresh expenses list after successful save
+      this.loadExpenses();
+    }
+  }
 
   onMenuChange(menu: string): void {
     this.activeMenu = menu;
   }
-
-  navigateToLedgerBalance(): void {
-    this.ngZone.run(() => {
-      this.router.navigate(['/ledger-balances'], { replaceUrl: true }).then((success) => {
-        if (success) {
-          this.ngZone.run(() => this.appRef.tick());
-        }
-      });
-    });;
-  }
-
 
 }
 

@@ -48,6 +48,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/ledger-balance/ledger-balance.module').then(m => m.LedgerBalanceModule)
   },
   {
+    path: 'expenses',
+    loadChildren: () => import('./pages/Expenses/expenses.module').then(m => m.ExpensesPageModule)
+  },
+  {
     path: 'user-transactions/:id',
     loadChildren: () => import('./pages/user-transactions/user-transactions.module').then(m => m.UserTransactionsPageModule)
   },

@@ -1,6 +1,6 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Create Fund Transfer</ion-title>
+    <ion-title>Add Investment</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="closeModal()">
         <ion-icon name="close-outline" slot="icon-only"></ion-icon>
@@ -9,30 +9,18 @@
   </ion-toolbar>
 </ion-header>
 <ion-content>
-  <form [formGroup]="fundTransferForm" (ngSubmit)="onSubmit()">
-    <ion-item [class.ion-invalid]="isFieldInvalid('fromInvestorName')">
-      <ion-label position="stacked">Sender Name <span class="required">*</span></ion-label>
+  <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()">
+    <ion-item [class.ion-invalid]="isFieldInvalid('investorName')">
+      <ion-label position="stacked">User Name <span class="required">*</span></ion-label>
       <ion-select
-        formControlName="fromInvestorName"
-        placeholder="Select Sender Name"
+        formControlName="userName"
+        placeholder="Select User"
         interface="popover">
         <ion-select-option *ngFor="let user of users" [value]="user.id">
           {{ user.firstName }} {{ user.lastName }}
         </ion-select-option>
       </ion-select>
-      <ion-note slot="error">{{ getFieldError('fromInvestorName') }}</ion-note>
-    </ion-item>
-    <ion-item [class.ion-invalid]="isFieldInvalid('toInvestorName')">
-      <ion-label position="stacked">Recipient Name <span class="required">*</span></ion-label>
-      <ion-select
-        formControlName="toInvestorName"
-        placeholder="Select Recipient Name"
-        interface="popover">
-        <ion-select-option *ngFor="let user of users" [value]="user.id">
-          {{ user.firstName }} {{ user.lastName }}
-        </ion-select-option>
-      </ion-select>
-      <ion-note slot="error">{{ getFieldError('toInvestorName') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('investorName') }}</ion-note>
     </ion-item>
     <ion-item [class.ion-invalid]="isFieldInvalid('amount')">
       <ion-label position="stacked">Amount <span class="required">*</span></ion-label>
@@ -44,15 +32,15 @@
       </ion-input>
       <ion-note slot="error">{{ getFieldError('amount') }}</ion-note>
     </ion-item>
-    <ion-item [class.ion-invalid]="isFieldInvalid('investmentDate')">
+    <ion-item [class.ion-invalid]="isFieldInvalid('expenseDate')">
       <ion-label position="stacked">Select date <span class="required">*</span></ion-label>
       <ion-input
-        value="{{ date | date: 'dd.MM.yyyy' }}"
-        formControlName="investmentDate"
+        value="{{ date | date: 'dd/MM/yyyy' }}"
+        formControlName="expenseDate"
         id="date"
         class="ion-text-end"
       ></ion-input>
-      <ion-note slot="error">{{ getFieldError('investmentDate') }}</ion-note>
+      <ion-note slot="error">{{ getFieldError('expenseDate') }}</ion-note>
       <ion-popover #datePopover trigger="date">
         <ng-template>
           <ion-datetime
@@ -64,6 +52,16 @@
         </ng-template>
       </ion-popover>
     </ion-item>
+    <ion-item [class.ion-invalid]="isFieldInvalid('comment')">
+      <ion-label position="stacked">Description <span class="required">*</span></ion-label>
+      <ion-input
+        formControlName="comment"
+        placeholder="Enter Description"
+        type="text"
+        inputmode="text">
+      </ion-input>
+      <ion-note slot="error">{{ getFieldError('comment') }}</ion-note>
+    </ion-item>
 
   </form>
 </ion-content>
@@ -73,8 +71,8 @@
     <div class="action-row footer-row">
       <ion-button
         type="button"
-        [disabled]="fundTransferForm.invalid && submitted"
         (click)="onSubmit()"
+        [disabled]="expenseForm.invalid && submitted"
         class="save-button">
         Save
       </ion-button>

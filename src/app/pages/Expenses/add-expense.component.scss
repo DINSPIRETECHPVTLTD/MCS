@@ -29,10 +29,6 @@ form {
     }
   }
 
-  ion-select::part(placeholder), ion-select::part(text), ion-select::part(icon) {
-      padding: 8px;
-    }
-
   .required {
     color: var(--ion-color-danger);
   }
@@ -43,9 +39,9 @@ form {
     display: block;
   }
 
-  .date-popover {
-  --width: auto;
-}
+  ion-select::part(placeholder), ion-select::part(text), ion-select::part(icon) {
+      padding: 8px;
+    }
 
   .save-button {
     --border-radius: 8px;
