@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, LoadingController, ToastController } from '@ionic/angular';
 import { UserService } from '../../services/user.service';
 import { UserContextService } from '../../services/user-context.service';
+import { OrganizationService } from '../../services/organization.service';
 import { CreateUserRequest } from 'src/app/models/user.models';
 import { MasterDataService } from '../../services/master-data.service';
 import { MasterLookup, LookupKeys } from 'src/app/models/master-data.models';
@@ -27,6 +28,7 @@ export class AddUserModalComponent implements OnInit {
     private modalController: ModalController,
     private userService: UserService,
     private userContext: UserContextService,
+    private organizationService: OrganizationService,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private masterDataService: MasterDataService
@@ -56,7 +58,7 @@ export class AddUserModalComponent implements OnInit {
     }
 
     // Load organization state (if available) from stored organization info
-    this.loadOrganizationStateFromStorage();
+    this.loadOrganizationState();
 
     // Load state lookups from master data
     this.loadStates();
@@ -73,22 +75,22 @@ export class AddUserModalComponent implements OnInit {
     }
   }
 
-  private loadOrganizationStateFromStorage(): void {
-    const stored = localStorage.getItem('organization_info');
-    if (!stored) {
+  private loadOrganizationState(): void {
+    const organizationId = this.userContext.organizationId;
+    if (!organizationId) {
       return;
     }
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const org: any = JSON.parse(stored);
-      const state: unknown = org?.state;
-      if (state && typeof state === 'string' && state.trim().length > 0) {
-        this.organizationStateName = state.trim();
+
+    this.organizationService.getOrganization(organizationId).subscribe({
+      next: (org) => {
+        const state = (org?.state ?? '').toString().trim();
+        this.organizationStateName = state.length > 0 ? state : null;
+        this.applyOrgStateDefaultIfNeeded();
+      },
+      error: () => {
+        this.organizationStateName = null;
       }
-    } catch {
-      // Ignore parsing errors and proceed without default state
-      this.organizationStateName = null;
-    }
+    });
   }
 
   private applyOrgStateDefaultIfNeeded(): void {

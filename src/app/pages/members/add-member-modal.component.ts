@@ -7,6 +7,7 @@ import { MemberService } from '../../services/member.service';
 import { UserService } from '../../services/user.service';
 import { UserContextService } from '../../services/user-context.service';
 import { MasterDataService } from '../../services/master-data.service';
+import { OrganizationService } from '../../services/organization.service';
 import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 import { CenterOption, POCOption } from '../../models/member.models';
 
@@ -22,7 +23,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
   memberForm: FormGroup;
   /** Relationship options from master data (RELATIONSHIP), with "Other" added if not present */
   relationships: MasterLookup[] = [];
-  /** Payment mode options from master data (PAYMENT_TYPE) */
+  /** Payment mode options from master data (PAYMENTMODE) */
   paymentModes: MasterLookup[] = [];
   isSubmitting = false;
   isLoading = false;
@@ -46,6 +47,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private userContext: UserContextService,
     private masterDataService: MasterDataService,
+    private organizationService: OrganizationService,
     private modalController: ModalController,
     private loadingController: LoadingController,
     private toastController: ToastController,
@@ -55,26 +57,26 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadOrganizationStateFromStorage();
+    this.loadOrganizationState();
     this.loadCentersForBranch();
-    this.loadStates();
-    this.loadRelationships();
-    this.loadPaymentModes();
+    this.loadLookupData();
     this.setupFormListeners();
   }
 
-  private loadOrganizationStateFromStorage(): void {
-    const stored = localStorage.getItem('organization_info');
-    if (!stored) return;
-    try {
-      const org: { state?: string } = JSON.parse(stored);
-      const state = org?.state;
-      if (state && typeof state === 'string' && state.trim().length > 0) {
-        this.organizationStateName = state.trim();
+  private loadOrganizationState(): void {
+    const organizationId = this.userContext.organizationId;
+    if (!organizationId) return;
+
+    this.organizationService.getOrganization(organizationId).subscribe({
+      next: (org) => {
+        const state = (org?.state ?? '').toString().trim();
+        this.organizationStateName = state.length > 0 ? state : null;
+        this.applyOrgStateDefaultIfNeeded();
+      },
+      error: () => {
+        this.organizationStateName = null;
       }
-    } catch {
-      this.organizationStateName = null;
-    }
+    });
   }
 
   private applyOrgStateDefaultIfNeeded(): void {
@@ -91,60 +93,52 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadRelationships(): void {
-    this.isLoadingRelationships = true;
-    this.masterDataService.getMasterData().subscribe({
-      next: (allLookups) => {
-        const list = allLookups
-          .filter(lookup => lookup.lookupKey === LookupKeys.Relationship)
-          .sort((a, b) => a.sortOrder - b.sortOrder);
-        const hasOther = list.some(l => (l.lookupValue || '').toLowerCase() === 'other');
-        this.relationships = hasOther ? list : [...list, { lookupKey: 'RELATIONSHIP', lookupCode: 'Other', lookupValue: 'Other', sortOrder: 9999, isActive: true } as MasterLookup];
-        this.isLoadingRelationships = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error loading relationships:', error);
-        this.relationships = [{ lookupKey: 'RELATIONSHIP', lookupCode: 'Other', lookupValue: 'Other', sortOrder: 0, isActive: true } as MasterLookup];
-        this.isLoadingRelationships = false;
-        this.cdr.detectChanges();
-      }
-    });
+  private normalizeLookupKey(value: string | undefined | null): string {
+    return (value ?? '').replace(/[\s_-]/g, '').toUpperCase();
   }
 
-  loadStates(): void {
+  private loadLookupData(): void {
     this.isLoadingStates = true;
+    this.isLoadingRelationships = true;
+    this.isLoadingPaymentModes = true;
+
+    const stateKey = this.normalizeLookupKey(LookupKeys.State);
+    const relationshipKey = this.normalizeLookupKey(LookupKeys.Relationship);
+    const paymentModeKey = this.normalizeLookupKey(LookupKeys.PaymentMode);
+
     this.masterDataService.getMasterData().subscribe({
       next: (allLookups) => {
-        this.states = allLookups
-          .filter(lookup => lookup.lookupKey === LookupKeys.State)
+        const lookups = allLookups ?? [];
+
+        this.states = lookups
+          .filter(lookup => this.normalizeLookupKey(lookup.lookupKey) === stateKey)
           .sort((a, b) => (a.lookupValue || '').localeCompare(b.lookupValue || '', undefined, { sensitivity: 'base' }));
+
+        const relationshipList = lookups
+          .filter(lookup => this.normalizeLookupKey(lookup.lookupKey) === relationshipKey)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+        const hasOther = relationshipList.some(l => (l.lookupValue || '').toLowerCase() === 'other');
+        this.relationships = hasOther
+          ? relationshipList
+          : [...relationshipList, { lookupKey: LookupKeys.Relationship, lookupCode: 'Other', lookupValue: 'Other', sortOrder: 9999, isActive: true } as MasterLookup];
+
+        this.paymentModes = lookups
+          .filter(lookup => this.normalizeLookupKey(lookup.lookupKey) === paymentModeKey)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+
         this.isLoadingStates = false;
+        this.isLoadingRelationships = false;
+        this.isLoadingPaymentModes = false;
         this.applyOrgStateDefaultIfNeeded();
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Error loading states:', error);
+        console.error('Error loading lookup data:', error);
         this.states = [];
-        this.isLoadingStates = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  loadPaymentModes(): void {
-    this.isLoadingPaymentModes = true;
-    this.masterDataService.getMasterData().subscribe({
-      next: (allLookups) => {
-        this.paymentModes = allLookups
-          .filter(lookup => lookup.lookupKey === LookupKeys.PaymentType)
-          .sort((a, b) => a.sortOrder - b.sortOrder);
-        this.isLoadingPaymentModes = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error loading payment modes:', error);
+        this.relationships = [{ lookupKey: LookupKeys.Relationship, lookupCode: 'Other', lookupValue: 'Other', sortOrder: 0, isActive: true } as MasterLookup];
         this.paymentModes = [];
+        this.isLoadingStates = false;
+        this.isLoadingRelationships = false;
         this.isLoadingPaymentModes = false;
         this.cdr.detectChanges();
       }

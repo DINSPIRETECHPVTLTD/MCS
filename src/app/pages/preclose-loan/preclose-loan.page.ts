@@ -167,6 +167,8 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
                 this.totalAmountPaid = 0;
                 this.remainingBalance = this.loan.totalAmount ?? 0;
               }
+              this.isLoading = false;
+              loading.dismiss().catch(() => {});
             },
             complete: () => {
               this.isLoading = false;

@@ -36,10 +36,28 @@
       </div>
 
       <!-- Loaded: summary + EMI table -->
-      <ng-container *ngIf="loanId != null && !isLoading && !loadError && loan">
+      <ng-container *ngIf="loanId != null && !isLoading && !loadError">
         <div class="summary-section">
-          <h3>Loan Summary</h3>
-          <p *ngIf="memberName" class="member-name">Member: {{ memberName }}</p>
+          <div class="summary-header">
+            <div class="summary-title">
+              <h3>Loan Summary</h3>
+              <p *ngIf="memberName" class="member-name">Member: {{ memberName }}</p>
+            </div>
+            <div class="summary-actions">
+              <ion-button
+                color="primary"
+                fill="solid"
+                [disabled]="!canSave || loanId == null || isLoading || !!loadError"
+                (click)="save()">
+                <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+                Save
+              </ion-button>
+              <ion-button color="medium" fill="solid" [disabled]="isLoading" (click)="cancel()">
+                <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+                Cancel
+              </ion-button>
+            </div>
+          </div>
           <div class="summary-grid">
             <div class="summary-item">
               <span class="label">Total Amount</span>
@@ -130,20 +148,6 @@
           <p *ngIf="emiRows.length === 0" class="no-rows">No schedule</p>
         </div>
 
-        <div class="action-bar">
-          <ion-button
-            color="primary"
-            fill="solid"
-            [disabled]="!canSave"
-            (click)="save()">
-            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-            Save
-          </ion-button>
-          <ion-button color="medium" fill="solid" (click)="cancel()">
-            <ion-icon name="close-circle-outline" slot="start"></ion-icon>
-            Cancel
-          </ion-button>
-        </div>
       </ng-container>
     </div>
   </ion-content>

@@ -82,17 +82,72 @@
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  h3 {
-    margin: 0 0 16px 0;
-    color: var(--ion-color-primary);
-    font-weight: 600;
-    font-size: 1.1rem;
+  .summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .summary-title {
+    h3 {
+      margin: 0 0 8px 0;
+      color: var(--ion-color-primary);
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
   }
 
   .member-name {
-    margin: 0 0 12px 0;
+    margin: 0;
     font-size: 0.95rem;
     color: var(--ion-color-dark);
+  }
+
+  .summary-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-left: auto;
+
+    ion-button {
+      --padding-start: 20px;
+      --padding-end: 20px;
+      font-weight: 600;
+      height: 40px;
+
+      &[color="primary"] {
+        --background: #3880ff !important;
+        --color: #ffffff !important;
+        --background-activated: #2d5aa0 !important;
+        --background-hover: #2d5aa0 !important;
+        --background-focused: #2d5aa0 !important;
+        color: #ffffff !important;
+        background-color: #3880ff !important;
+
+        ::ng-deep .button-native {
+          background-color: #3880ff !important;
+          color: #ffffff !important;
+        }
+      }
+
+      &[color="medium"] {
+        --background: #3880ff !important;
+        --color: #ffffff !important;
+        --background-activated: #2d5aa0 !important;
+        --background-hover: #2d5aa0 !important;
+        --background-focused: #2d5aa0 !important;
+        color: #ffffff !important;
+        background-color: #3880ff !important;
+
+        ::ng-deep .button-native {
+          background-color: #3880ff !important;
+          color: #ffffff !important;
+        }
+      }
+    }
   }
 
   .summary-grid {
@@ -199,10 +254,4 @@
     color: var(--ion-color-medium);
     font-size: 0.9rem;
   }
-}
-
-.action-bar {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
 }

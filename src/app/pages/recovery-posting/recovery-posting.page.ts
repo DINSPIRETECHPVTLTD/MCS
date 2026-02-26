@@ -62,6 +62,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
 
   /** Payment Mode options from Master Data (LookupKey = PAYMENTMODE); dropdown shows Lookup Value (e.g. Online, Cash). */
   paymentModeValues: string[] = ['Select'];
+  statusValues: string[] = ['Paid', 'Partial Paid', 'Not Paid'];
 
   // Date: ion-input type="date" (same as add loan popup)
   selectedDate: string = '';
@@ -83,11 +84,13 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     theme: agGridTheme,
     rowSelection: 'multiple',
     suppressRowClickSelection: true,
-    onCellValueChanged: (event) => this.onGridCellValueChanged(event)
+    onCellValueChanged: (event) => this.onGridCellValueChanged(event),
+    onSelectionChanged: () => this.updateTotalAmountCollected()
   };
 
   private gridApi?: GridApi;
   isLoading: boolean = false;
+  totalAmountCollected: number = 0;
 
   constructor(
     private authService: AuthService,
@@ -342,7 +345,10 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         width: 140,
         sortable: true,
         filter: false,
-        editable: true,
+        editable: (params) => {
+          const row = params.data as RecoveryPostingMemberRow | undefined;
+          return this.normalizeStatusValue(row?.status) !== 'Not Paid';
+        },
         cellEditor: 'agSelectCellEditor',
         cellEditorParams: { values: this.paymentModeValues?.length ? this.paymentModeValues : ['Select', 'Online', 'Cash'] }
       },
@@ -352,7 +358,9 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         width: 130,
         sortable: true,
         filter: false,
-        editable: false
+        editable: true,
+        cellEditor: 'agSelectCellEditor',
+        cellEditorParams: { values: this.statusValues }
       },
       {
         field: 'comments',
@@ -380,13 +388,33 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     const colId = event.column?.getColId();
     const row = event.data;
 
+    if (colId === 'status') {
+      const status = this.normalizeStatusValue(row.status);
+      if (status === 'Not Paid') {
+        row.paymentAmount = 0;
+        row.principalAmount = 0;
+        row.interestAmount = 0;
+        row.paymentMode = 'N/A';
+        this.updateTotalAmountCollected();
+        event.api.refreshCells({ rowNodes: [event.node], columns: ['paymentAmount', 'principalAmount', 'interestAmount', 'paymentMode', 'status'], force: true });
+      } else if ((row.paymentMode ?? '').trim().toUpperCase() === 'N/A') {
+        row.paymentMode = 'Select';
+        event.api.refreshCells({ rowNodes: [event.node], columns: ['paymentMode'], force: true });
+      }
+      return;
+    }
+
     if (colId !== 'paymentAmount') return;
 
     const payment = row.paymentAmount != null && !Number.isNaN(Number(row.paymentAmount)) ? Number(row.paymentAmount) : 0;
     if (payment <= 0) {
+      row.paymentAmount = 0;
       row.principalAmount = 0;
       row.interestAmount = 0;
-      event.api.refreshCells({ rowNodes: [event.node], columns: ['principalAmount', 'interestAmount'], force: true });
+      row.status = 'Not Paid';
+      row.paymentMode = 'N/A';
+      this.updateTotalAmountCollected();
+      event.api.refreshCells({ rowNodes: [event.node], columns: ['paymentAmount', 'principalAmount', 'interestAmount', 'paymentMode', 'status'], force: true });
       return;
     }
 
@@ -394,7 +422,16 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     row.principalAmount = principalAmount;
     row.interestAmount = interestAmount;
     row.status = this.deriveStatusFromAmounts(row);
+    this.updateTotalAmountCollected();
     event.api.refreshCells({ rowNodes: [event.node], columns: ['principalAmount', 'interestAmount', 'status'], force: true });
+  }
+
+  private updateTotalAmountCollected(): void {
+    const selectedRows = this.gridApi?.getSelectedRows() ?? [];
+    this.totalAmountCollected = selectedRows.reduce((sum, row) => {
+      const amount = row.paymentAmount != null ? Number(row.paymentAmount) : 0;
+      return sum + (Number.isNaN(amount) ? 0 : amount);
+    }, 0);
   }
 
   /**
@@ -409,8 +446,16 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     const actualEmi = row.actualEmiAmount != null && !Number.isNaN(Number(row.actualEmiAmount))
       ? Number(row.actualEmiAmount)
       : 0;
-    if (payment <= 0 || actualEmi <= 0) return 'Partial Paid';
+    if (payment <= 0) return 'Not Paid';
+    if (actualEmi <= 0) return 'Partial Paid';
     return Math.abs(payment - actualEmi) <= 0.01 ? 'Paid' : 'Partial Paid';
+  }
+
+  private normalizeStatusValue(status: string | null | undefined): 'Paid' | 'Partial Paid' | 'Not Paid' {
+    const normalized = (status ?? '').toString().trim().toLowerCase();
+    if (normalized === 'paid') return 'Paid';
+    if (normalized === 'partial' || normalized === 'partial paid' || normalized === 'partialpaid') return 'Partial Paid';
+    return 'Not Paid';
   }
 
   /**
@@ -454,6 +499,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     if (!this.selectedDate || this.selectedDate.trim() === '') {
       this.rowData = [];
       this.isLoading = false;
+      this.totalAmountCollected = 0;
       if (this.gridApi) {
         this.gridApi.setGridOption('rowData', this.rowData);
       }
@@ -480,6 +526,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         });
         this.rowData = filteredItems.map(dto => this.mapDtoToRow(dto));
         this.isLoading = false;
+        this.totalAmountCollected = 0;
         if (this.gridApi) {
           this.gridApi.setGridOption('rowData', this.rowData);
           setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
@@ -488,6 +535,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       error: () => {
         this.rowData = [];
         this.isLoading = false;
+        this.totalAmountCollected = 0;
         if (this.gridApi) this.gridApi.setGridOption('rowData', this.rowData);
         this.showToast('Failed to load recovery posting data. Please try again.', 'danger');
       }
@@ -495,12 +543,15 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   }
 
   private mapDtoToRow(dto: LoanSchedulerRecoveryDto): RecoveryPostingMemberRow {
-    return {
+    const actualEmiAmount = dto.actualEmiAmount ?? 0;
+    const actualPrincipalAmount = dto.actualPrincipalAmount ?? 0;
+    const actualInterestAmount = dto.actualInterestAmount ?? 0;
+    const row: RecoveryPostingMemberRow = {
       loanSchedulerId: dto.loanSchedulerId,
       loanId: dto.loanId,
       installmentNo: dto.installmentNo,
-      interestAmount: 0,
-      principalAmount: 0,
+      interestAmount: actualInterestAmount,
+      principalAmount: actualPrincipalAmount,
       parentPocName: dto.parentPocName ?? '',
       centerName: dto.centerName ?? '',
       memberId: dto.memberId != null ? String(dto.memberId) : '',
@@ -509,12 +560,16 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       actualInterestAmount: dto.actualInterestAmount ?? null,
       actualPrincipalAmount: dto.actualPrincipalAmount ?? null,
       comments: dto.comments ?? null,
-      paymentAmount: 0,
+      paymentAmount: actualEmiAmount,
       paymentMode: 'Select',
-      status: dto.status === 'Partial' ? 'Partial Paid' : (dto.status ?? null),
+      status: null,
       principalPercentage: dto.principalPercentage ?? undefined,
       interestPercentage: dto.interestPercentage ?? undefined
     };
+
+    // Initial UI status should reflect the prefilled amounts on load.
+    row.status = this.deriveStatusFromAmounts(row);
+    return row;
   }
 
   onGridReady(params: GridReadyEvent): void {
@@ -522,6 +577,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     if (this.rowData && this.rowData.length > 0) {
       this.gridApi.setGridOption('rowData', this.rowData);
     }
+    this.updateTotalAmountCollected();
     setTimeout(() => {
       this.gridApi?.sizeColumnsToFit();
     }, 100);
@@ -543,19 +599,22 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       return;
     }
 
-    // All mandatory: Payment Amount, Principal Amount, Interest Amount, Payment Mode, Status, Comments
+    // Mandatory fields for posting.
     const missingInRows = new Set<string>();
     for (const row of selectedRows) {
       if (row.loanSchedulerId == null) continue;
+      const status = this.normalizeStatusValue(row.status);
       if (row.paymentAmount == null || row.paymentAmount < 0 || Number.isNaN(Number(row.paymentAmount)))
         missingInRows.add('Payment Amount');
       if (row.principalAmount == null || row.principalAmount < 0 || Number.isNaN(Number(row.principalAmount)))
         missingInRows.add('Principal Amount');
       if (row.interestAmount == null || row.interestAmount < 0 || Number.isNaN(Number(row.interestAmount)))
         missingInRows.add('Interest Amount');
-      if (!row.paymentMode || row.paymentMode === 'Select') missingInRows.add('Payment Mode');
+      if (status !== 'Not Paid' && (!row.paymentMode || row.paymentMode === 'Select')) missingInRows.add('Payment Mode');
       if (!row.status || String(row.status).trim() === '') missingInRows.add('Status');
-      if (row.comments == null || String(row.comments).trim() === '') missingInRows.add('Comments');
+      if (status === 'Not Paid' && (!row.comments || String(row.comments).trim() === '')) {
+        missingInRows.add('Comments (mandatory for Not Paid)');
+      }
     }
 
     if (missingInRows.size > 0) {
@@ -566,6 +625,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
 
     // Sanity: principal + interest should equal payment (within rounding)
     const sumMismatch = selectedRows.filter(row => {
+      if (this.normalizeStatusValue(row.status) === 'Not Paid') return false;
       const payment = row.paymentAmount ?? 0;
       const sum = (row.principalAmount ?? 0) + (row.interestAmount ?? 0);
       return Math.abs(payment - sum) > 0.02;
@@ -601,15 +661,16 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       }
       // Post to DB: PaymentAmount, PrincipalAmount, InterestAmount (Actual* columns are not updated on post)
       const payload: LoanSchedulerSaveRequest[] = selectedRows.map(row => {
-        const derivedStatus = this.deriveStatusFromAmounts(row);
+        const selectedStatus = this.normalizeStatusValue(row.status);
+        const isNotPaid = selectedStatus === 'Not Paid';
         return ({
         loanSchedulerId: row.loanSchedulerId,
         // Backend expects lookup VALUE (e.g. Cash / Online), not the code.
-        paymentMode: (row.paymentMode === 'Select' || !row.paymentMode) ? '' : row.paymentMode,
-        status: derivedStatus === 'Paid' ? 'Paid' : 'Partial',
-        paymentAmount: row.paymentAmount ?? 0,
-        principalAmount: row.principalAmount ?? 0,
-        interestAmount: row.interestAmount ?? 0,
+        paymentMode: isNotPaid ? 'N/A' : ((row.paymentMode === 'Select' || !row.paymentMode) ? '' : row.paymentMode),
+        status: selectedStatus === 'Paid' ? 'Paid' : (selectedStatus === 'Not Paid' ? 'Not Paid' : 'Partial'),
+        paymentAmount: isNotPaid ? 0 : (row.paymentAmount ?? 0),
+        principalAmount: isNotPaid ? 0 : (row.principalAmount ?? 0),
+        interestAmount: isNotPaid ? 0 : (row.interestAmount ?? 0),
         comments: row.comments ?? '',
         collectedBy: Number.isNaN(collectedByIdNumber) ? undefined : collectedByIdNumber
       });
@@ -637,7 +698,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     }
   }
 
-  /** Map API error to user-friendly message; show "Comment is required" for Comments validation. */
+  /** Map API error to user-friendly message. */
   private getPostErrorMessage(err: {
     error?: { message?: string; errors?: Record<string, string[]>; title?: string } | string;
     message?: string;
@@ -651,9 +712,6 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     const errors = errorObj?.errors;
     if (errors && typeof errors === 'object') {
       const keys = Object.keys(errors);
-      if (keys.some(k => /Comments/i.test(k))) {
-        return 'Comment is required.';
-      }
       const firstKey = keys[0];
       const firstMsg = firstKey && Array.isArray(errors[firstKey]) ? errors[firstKey][0] : null;
       if (firstMsg) return firstMsg;

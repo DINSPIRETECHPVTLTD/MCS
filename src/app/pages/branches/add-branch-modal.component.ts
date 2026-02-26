@@ -5,6 +5,7 @@ import { BranchService } from '../../services/branch.service';
 import { CreateBranchRequest } from '../../models/branch.models';
 import { UserContextService } from '../../services/user-context.service';
 import { MasterDataService } from '../../services/master-data.service';
+import { OrganizationService } from '../../services/organization.service';
 import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 
 
@@ -29,6 +30,7 @@ export class AddBranchModalComponent implements OnInit {
     private modalController: ModalController,
     private branchService: BranchService,
     private userContext: UserContextService,
+    private organizationService: OrganizationService,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private masterDataService: MasterDataService
@@ -49,18 +51,38 @@ export class AddBranchModalComponent implements OnInit {
   }
 
 ngOnInit(): void {
-  // Load states from master data (LookupKey = STATE)
- 
+  const organizationId = this.userContext.organizationId;
+  if (organizationId) {
+    this.branchForm.patchValue({ organizationId });
+  }
 
-  
+  this.loadOrganizationState();
 
   // If editing, load the branch details
   if (this.isEditing && this.editingBranchId) {
     this.loadBranchDetails(this.editingBranchId);
-    
   }
-   this.loadStates();
+
+  this.loadStates();
 }
+
+  private loadOrganizationState(): void {
+    const organizationId = this.userContext.organizationId;
+    if (!organizationId) {
+      return;
+    }
+
+    this.organizationService.getOrganization(organizationId).subscribe({
+      next: (org) => {
+        const state = (org?.state ?? '').toString().trim();
+        this.organizationStateName = state.length > 0 ? state : null;
+        this.applyOrgStateDefaultIfNeeded();
+      },
+      error: () => {
+        this.organizationStateName = null;
+      }
+    });
+  }
 
   private applyOrgStateDefaultIfNeeded(): void {
     if (this.isEditing) return;

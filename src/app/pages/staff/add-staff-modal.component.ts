@@ -4,6 +4,7 @@ import { ModalController, LoadingController, ToastController } from '@ionic/angu
 import { UserService } from '../../services/user.service';
 import { UserContextService } from '../../services/user-context.service';
 import { MasterDataService } from '../../services/master-data.service';
+import { OrganizationService } from '../../services/organization.service';
 import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 
 @Component({
@@ -27,6 +28,7 @@ export class AddStaffModalComponent implements OnInit {
     private modalController: ModalController,
     private userService: UserService,
     private userContext: UserContextService,
+    private organizationService: OrganizationService,
     private masterDataService: MasterDataService,
     private loadingController: LoadingController,
     private toastController: ToastController
@@ -116,18 +118,20 @@ export class AddStaffModalComponent implements OnInit {
     }
   }
 
-  private loadOrganizationStateFromStorage(): void {
-    const stored = localStorage.getItem('organization_info');
-    if (!stored) return;
-    try {
-      const org: { state?: string } = JSON.parse(stored);
-      const state = org?.state;
-      if (state && typeof state === 'string' && state.trim().length > 0) {
-        this.organizationStateName = state.trim();
+  private loadOrganizationState(): void {
+    const organizationId = this.userContext.organizationId;
+    if (!organizationId) return;
+
+    this.organizationService.getOrganization(organizationId).subscribe({
+      next: (org) => {
+        const state = (org?.state ?? '').toString().trim();
+        this.organizationStateName = state.length > 0 ? state : null;
+        this.applyOrgStateDefaultIfNeeded();
+      },
+      error: () => {
+        this.organizationStateName = null;
       }
-    } catch {
-      this.organizationStateName = null;
-    }
+    });
   }
 
   private applyOrgStateDefaultIfNeeded(): void {
@@ -180,7 +184,7 @@ export class AddStaffModalComponent implements OnInit {
       console.warn('No branch ID available for staff creation');
     }
 
-    this.loadOrganizationStateFromStorage();
+    this.loadOrganizationState();
     this.loadStates();
 
     // If editing, make password optional and load existing user data
