@@ -70,7 +70,7 @@ export class HeaderMenuComponent implements OnInit {
     }
 
     // Show Funds submenu if active menu is related to Funds (Org Mode)
-    if (this.activeMenu === 'Investments' || this.activeMenu === 'Ledger Balances') {
+    if (this.activeMenu === 'Investments' || this.activeMenu === 'Ledger Balances' || this.activeMenu === 'Expenses') {
       this.showFundsSubmenu = true;
     }
   }
@@ -345,7 +345,7 @@ export class HeaderMenuComponent implements OnInit {
       this.showMasterSubmenu = false;
     }
     // Keep Funds submenu open when selecting its items (Org Mode)
-    if (submenu === 'Investments' || submenu === 'Ledger Balances') {
+    if (submenu === 'Investments' || submenu === 'Ledger Balances' || submenu === 'Expenses') {
       this.showFundsSubmenu = true;
     } else {
       this.showFundsSubmenu = false;
@@ -394,6 +394,8 @@ export class HeaderMenuComponent implements OnInit {
       route = '/investments';
     } else if (submenu === 'Ledger Balances') {
       route = '/ledger-balances';
+    } else if (submenu === 'Expenses') {
+      route = '/expenses';
     }
     
     if (route) {

@@ -5,25 +5,28 @@
   <!-- Users List -->
   <div class="users-list-container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h2>All User Transactions</h2>
-      <ion-button (click)="navigateToLedgerBalance()">
-        <ion-icon name="arrow-back-outline" slot="start"></ion-icon>
-        Back to Ledger Balance
+      <h2>All Expenses</h2>
+      <ion-button (click)="openAddExpenseModal()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Add Expense
       </ion-button>
     </div>
     
     <!-- AG Grid -->
     <div *ngIf="isLoading" style="text-align: center; padding: 20px;">
       <ion-spinner></ion-spinner>
-      <p>Loading user transactions...</p>
+      <p>Loading expenses...</p>
     </div>
     
-    <div *ngIf="!isLoading && userTransactions.length === 0" class="empty-state">
+    <div *ngIf="!isLoading && expenses.length === 0" class="empty-state">
       <ion-icon name="people-outline" size="large"></ion-icon>
-      <p>No user transactions found</p>
+      <p>No expenses found</p>
+      <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
+        Click "Add Expense" to create a new expense
+      </p>
     </div>
     
-    <div *ngIf="!isLoading && userTransactions.length > 0" class="users-grid">
+    <div *ngIf="!isLoading && expenses.length > 0" class="users-grid">
       <ag-grid-angular
         class="ag-theme-alpine"
         style="width: 100%; height: 60vh;"

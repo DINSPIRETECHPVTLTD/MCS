@@ -9,6 +9,7 @@ import { ApiInterceptor } from './interceptors/api.interceptor';
 import { 
   personCircleOutline, 
   addOutline, 
+  arrowBackOutline,
   peopleOutline, 
   callOutline, 
   locationOutline, 
@@ -30,6 +31,7 @@ import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 addIcons({
   'person-circle-outline': personCircleOutline,
   'add-outline': addOutline,
+  'arrow-back-outline': arrowBackOutline,
   'people-outline': peopleOutline,
   'call-outline': callOutline,
   'location-outline': locationOutline,
