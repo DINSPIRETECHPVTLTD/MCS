@@ -9,6 +9,7 @@ import { UserContextService } from '../../services/user-context.service';
 import { MasterDataService } from '../../services/master-data.service';
 import { MasterLookup, LookupKeys } from '../../models/master-data.models';
 import { CenterOption, POCOption } from '../../models/member.models';
+import { CenterService } from '../../services/center.service';
 
 @Component({
   selector: 'app-add-member-modal',
@@ -45,6 +46,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     private memberService: MemberService,
     private userService: UserService,
     private userContext: UserContextService,
+    private centerService: CenterService,
     private masterDataService: MasterDataService,
     private modalController: ModalController,
     private loadingController: LoadingController,
@@ -198,7 +200,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Load centers for the current branch
+  // Load centers from CenterService cache — no extra HTTP call
   loadCentersForBranch(): void {
     const branchId = this.userContext.branchId;
     if (!branchId) {
@@ -206,19 +208,14 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
       return;
     }
     this.isLoading = true;
-    this.memberService.getCentersByBranch(branchId).subscribe({
-      next: (centers: CenterOption[]) => {
-        this.centers = centers ?? [];
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error loading centers:', error);
-        this.centers = [];
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
+    // If the cache is already loaded for this branch, use it immediately
+    this.centerService.centers$.pipe(takeUntil(this.destroy$)).subscribe(centers => {
+      this.centers = (centers ?? []).map(c => ({ id: c.id!, name: c.name, branchId: c.branchId ?? 0 }));
+      this.isLoading = false;
+      this.cdr.detectChanges();
     });
+    // Ensure centers are loaded for this branch
+    this.centerService.loadCenters(branchId);
   }
 
   // Load all centers from service (kept for backward compatibility)
@@ -332,7 +329,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
                 name: (poc.name || [poc.firstName, poc.middleName, poc.lastName].filter(Boolean).join(' ')).trim()
               }));
           });
-          
+
           // Fetch collectors (users) for the selected center's branch
           this.loadCollectorsForCenter(selectedCenterId);
         } else {
@@ -480,186 +477,186 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
   // onSave(), onCancel(), onClear(), isFieldInvalid(), getFieldError(), etc.
   // setupFormListeners(), setupAadhaarValidation(), calculateAge(), etc.
 
-    async onSave(): Promise<void> {
-      this.submitted = true;
-      if (this.memberForm.invalid) {
-        this.memberForm.markAllAsTouched();
-        this.scrollToFirstInvalidField();
+  async onSave(): Promise<void> {
+    this.submitted = true;
+    if (this.memberForm.invalid) {
+      this.memberForm.markAllAsTouched();
+      this.scrollToFirstInvalidField();
 
+      const toast = await this.toastController.create({
+        message: 'Please fill details.',
+        duration: 1500,
+        color: 'success',
+        position: 'top',
+        icon: 'alert-circle-outline',
+        cssClass: 'app-toast app-toast--cleared'
+      });
+      await toast.present();
+      return;
+    }
+    this.isSubmitting = true;
+    const loading = await this.loadingController.create({ message: 'Saving member...' });
+    await loading.present();
+    try {
+      const raw = this.memberForm.getRawValue();
+
+      const selectedCenterId = Number(raw.centerId);
+      const selectedCenter = this.centers.find(c => Number(c.id) === selectedCenterId);
+      if (!selectedCenter) {
+        await loading.dismiss();
         const toast = await this.toastController.create({
-          message: 'Please fill details.',
-          duration: 1500,
-          color: 'success',
-          position: 'top',
-          icon: 'alert-circle-outline',
-          cssClass: 'app-toast app-toast--cleared'
+          message: 'Please select a valid center.',
+          duration: 2000,
+          color: 'warning'
         });
         await toast.present();
         return;
       }
-      this.isSubmitting = true;
-      const loading = await this.loadingController.create({ message: 'Saving member...' });
-      await loading.present();
-      try {
-        const raw = this.memberForm.getRawValue();
 
-        const selectedCenterId = Number(raw.centerId);
-        const selectedCenter = this.centers.find(c => Number(c.id) === selectedCenterId);
-        if (!selectedCenter) {
-          await loading.dismiss();
-          const toast = await this.toastController.create({
-            message: 'Please select a valid center.',
-            duration: 2000,
-            color: 'warning'
-          });
-          await toast.present();
-          return;
-        }
+      const ageValue = raw.age ? Number(raw.age) : this.calculateAge(raw.dateOfBirth);
+      const guardianPhone = (raw.guardianPhone ?? '').toString().trim() || '-';
+      const relationshipSelection = (raw.guardianRelationship ?? '').toString();
+      const guardianRelationship =
+        relationshipSelection === 'Other'
+          ? (raw.guardianRelationshipOther ?? '').toString().trim()
+          : relationshipSelection;
 
-        const ageValue = raw.age ? Number(raw.age) : this.calculateAge(raw.dateOfBirth);
-        const guardianPhone = (raw.guardianPhone ?? '').toString().trim() || '-';
-        const relationshipSelection = (raw.guardianRelationship ?? '').toString();
-        const guardianRelationship =
-          relationshipSelection === 'Other'
-            ? (raw.guardianRelationshipOther ?? '').toString().trim()
-            : relationshipSelection;
+      const payload = {
+        firstName: (raw.firstName ?? '').toString().trim(),
+        middleName: (raw.middleName ?? '').toString().trim() || null,
+        lastName: (raw.lastName ?? '').toString().trim(),
+        phoneNumber: (raw.phoneNumber ?? '').toString(),
+        altPhone: (raw.altPhone ?? '').toString() || null,
+        address1: (raw.address1 ?? '').toString() || null,
+        address2: (raw.address2 ?? '').toString() || null,
+        city: (raw.city ?? '').toString() || null,
+        state: (raw.state ?? '').toString() || null,
+        zipCode: (raw.zipCode ?? '').toString() || null,
+        aadhaar: (raw.aadhaar ?? '').toString() || null,
+        dob: raw.dateOfBirth ? this.formatDateForApi(raw.dateOfBirth) : null,
+        age: ageValue,
+        guardianFirstName: (raw.guardianFirstName ?? '').toString().trim(),
+        guardianMiddleName: (raw.guardianMiddleName ?? '').toString().trim() || null,
+        guardianLastName: (raw.guardianLastName ?? '').toString().trim(),
+        guardianPhone,
+        guardianDOB: raw.guardianDOB ? this.formatDateForApi(raw.guardianDOB) : null,
+        guardianAge: Number(raw.guardianAge),
+        guardianRelationship: guardianRelationship || null,
+        centerId: selectedCenterId,
+        pocId: Number(raw.pocId),
+        occupation: (raw.occupation ?? '').toString().trim(),
+        paymentMode: (raw.paymentMode ?? '').toString() || null,
+        paymentAmount: raw.paymentAmount ? Number(raw.paymentAmount) : null,
+        paymentDate: raw.paymentDate ? this.formatDateForApi(raw.paymentDate) : null,
+        collectedBy: raw.collectedBy ? Number(raw.collectedBy) : null,
+        paymentComments: (raw.paymentComments ?? '').toString().trim() || null
+      };
 
-        const payload = {
-          firstName: (raw.firstName ?? '').toString().trim(),
-          middleName: (raw.middleName ?? '').toString().trim() || null,
-          lastName: (raw.lastName ?? '').toString().trim(),
-          phoneNumber: (raw.phoneNumber ?? '').toString(),
-          altPhone: (raw.altPhone ?? '').toString() || null,
-          address1: (raw.address1 ?? '').toString() || null,
-          address2: (raw.address2 ?? '').toString() || null,
-          city: (raw.city ?? '').toString() || null,
-          state: (raw.state ?? '').toString() || null,
-          zipCode: (raw.zipCode ?? '').toString() || null,
-          aadhaar: (raw.aadhaar ?? '').toString() || null,
-          dob: raw.dateOfBirth ? this.formatDateForApi(raw.dateOfBirth) : null,
-          age: ageValue,
-          guardianFirstName: (raw.guardianFirstName ?? '').toString().trim(),
-          guardianMiddleName: (raw.guardianMiddleName ?? '').toString().trim() || null,
-          guardianLastName: (raw.guardianLastName ?? '').toString().trim(),
-          guardianPhone,
-          guardianDOB: raw.guardianDOB ? this.formatDateForApi(raw.guardianDOB) : null,
-          guardianAge: Number(raw.guardianAge),
-          guardianRelationship: guardianRelationship || null,
-          centerId: selectedCenterId,
-          pocId: Number(raw.pocId),
-          occupation: (raw.occupation ?? '').toString().trim(),
-          paymentMode: (raw.paymentMode ?? '').toString() || null,
-          paymentAmount: raw.paymentAmount ? Number(raw.paymentAmount) : null,
-          paymentDate: raw.paymentDate ? this.formatDateForApi(raw.paymentDate) : null,
-          collectedBy: raw.collectedBy ? Number(raw.collectedBy) : null,
-          paymentComments: (raw.paymentComments ?? '').toString().trim() || null
-        };
+      const created = await firstValueFrom(this.memberService.createMember(payload as any));
+      await loading.dismiss();
+      const toast = await this.toastController.create({
+        message: 'Member has been successfully registered.',
+        duration: 2500,
+        color: 'success',
+        position: 'top',
+        icon: 'checkmark-circle-outline',
+        cssClass: 'app-toast app-toast--success'
+      });
+      await toast.present();
+      this.modalController.dismiss({ success: true, member: created });
+    } catch (error) {
+      console.error('Failed to create member', error);
+      await loading.dismiss();
 
-        const created = await firstValueFrom(this.memberService.createMember(payload as any));
-        await loading.dismiss();
-        const toast = await this.toastController.create({
-          message: 'Member has been successfully registered.',
-          duration: 2500,
-          color: 'success',
-          position: 'top',
-          icon: 'checkmark-circle-outline',
-          cssClass: 'app-toast app-toast--success'
-        });
-        await toast.present();
-        this.modalController.dismiss({ success: true, member: created });
-      } catch (error) {
-        console.error('Failed to create member', error);
-        await loading.dismiss();
+      const err: any = error as any;
+      let errorMessage = '';
 
-        const err: any = error as any;
-        let errorMessage = '';
-
-        // Try to get detailed validation errors from backend
-        if (err?.error?.errors && typeof err.error.errors === 'object') {
-          // ASP.NET Core validation errors format
-          const fieldErrors = Object.entries(err.error.errors)
-            .map(([field, messages]: any) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
-            .join('\n');
-          errorMessage = fieldErrors;
-        } else {
-          // Fallback to generic error messages
-          errorMessage =
-            err?.error?.message ||
-            err?.error?.title ||
-            (typeof err?.error === 'string' ? err.error : '') ||
-            '';
-        }
-
-        console.log('Validation errors:', err?.error?.errors);
-
-        const toast = await this.toastController.create({
-          message: errorMessage
-            ? `Failed to add member:\n${errorMessage}`
-            : 'Failed to add member. One or more validation errors occurred.',
-          duration: 3500,
-          color: 'danger',
-          position: 'top',
-          icon: 'close-circle-outline',
-          cssClass: 'app-toast app-toast--danger'
-        });
-        await toast.present();
-      } finally {
-        this.isSubmitting = false;
+      // Try to get detailed validation errors from backend
+      if (err?.error?.errors && typeof err.error.errors === 'object') {
+        // ASP.NET Core validation errors format
+        const fieldErrors = Object.entries(err.error.errors)
+          .map(([field, messages]: any) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+          .join('\n');
+        errorMessage = fieldErrors;
+      } else {
+        // Fallback to generic error messages
+        errorMessage =
+          err?.error?.message ||
+          err?.error?.title ||
+          (typeof err?.error === 'string' ? err.error : '') ||
+          '';
       }
+
+      console.log('Validation errors:', err?.error?.errors);
+
+      const toast = await this.toastController.create({
+        message: errorMessage
+          ? `Failed to add member:\n${errorMessage}`
+          : 'Failed to add member. One or more validation errors occurred.',
+        duration: 3500,
+        color: 'danger',
+        position: 'top',
+        icon: 'close-circle-outline',
+        cssClass: 'app-toast app-toast--danger'
+      });
+      await toast.present();
+    } finally {
+      this.isSubmitting = false;
     }
+  }
 
-    private scrollToFirstInvalidField(): void {
-      setTimeout(() => {
-        const invalid = document.querySelector('.add-member-content .ion-invalid, .add-member-content .ng-invalid') as HTMLElement | null;
-        if (!invalid) return;
+  private scrollToFirstInvalidField(): void {
+    setTimeout(() => {
+      const invalid = document.querySelector('.add-member-content .ion-invalid, .add-member-content .ng-invalid') as HTMLElement | null;
+      if (!invalid) return;
 
-        const field = invalid.closest('ion-item') ?? invalid;
-        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 0);
+      const field = invalid.closest('ion-item') ?? invalid;
+      field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 0);
+  }
+
+  async onCancel(): Promise<void> {
+    await this.modalController.dismiss(false);
+  }
+
+
+  isFieldInvalid(field: string): boolean {
+    const control = this.memberForm.get(field);
+    return !!(control && control.invalid && (control.dirty || control.touched || this.submitted));
+  }
+
+  getFieldError(field: string): string {
+    const control = this.memberForm.get(field);
+    if (!control || !control.errors) return '';
+    if (!(control.dirty || control.touched || this.submitted)) return '';
+    if (control.errors['required']) return 'This field is required.';
+    if (control.errors['maxlength']) return `Maximum length is ${control.errors['maxlength'].requiredLength}.`;
+    if (control.errors['phoneNotUnique']) return 'Phone numbers must be different.';
+    if (control.errors['sameAsPrimary']) return 'Alternate phone cannot be same as phone number.';
+    if (control.errors['pattern']) {
+      if (field === 'phoneNumber') return 'Phone number must be exactly 10 digits.';
+      if (field === 'altPhone') return 'Alternate phone must be exactly 10 digits.';
+      if (field === 'guardianPhone') return 'Guardian phone must be exactly 10 digits.';
+      if (field === 'aadhaar') return 'Aadhaar must be exactly 12 digits.';
+      if (field === 'zipCode') return 'Zip code must be exactly 6 digits.';
+      return 'Invalid format.';
     }
+    if (control.errors['alphanumeric']) return 'Only letters and spaces allowed.';
+    if (control.errors['futureDate']) return 'Date cannot be in the future.';
+    if (control.errors['minAge']) return 'Minimum age required.';
+    if (control.errors['min']) return `Minimum value is ${control.errors['min'].min}.`;
+    if (control.errors['max']) return `Maximum value is ${control.errors['max'].max}.`;
+    return 'Invalid field.';
+  }
 
-    async onCancel(): Promise<void> {
-      await this.modalController.dismiss(false);
-    }
-
-
-    isFieldInvalid(field: string): boolean {
-      const control = this.memberForm.get(field);
-      return !!(control && control.invalid && (control.dirty || control.touched || this.submitted));
-    }
-
-    getFieldError(field: string): string {
-      const control = this.memberForm.get(field);
-      if (!control || !control.errors) return '';
-      if (!(control.dirty || control.touched || this.submitted)) return '';
-      if (control.errors['required']) return 'This field is required.';
-      if (control.errors['maxlength']) return `Maximum length is ${control.errors['maxlength'].requiredLength}.`;
-      if (control.errors['phoneNotUnique']) return 'Phone numbers must be different.';
-      if (control.errors['sameAsPrimary']) return 'Alternate phone cannot be same as phone number.';
-      if (control.errors['pattern']) {
-        if (field === 'phoneNumber') return 'Phone number must be exactly 10 digits.';
-        if (field === 'altPhone') return 'Alternate phone must be exactly 10 digits.';
-        if (field === 'guardianPhone') return 'Guardian phone must be exactly 10 digits.';
-        if (field === 'aadhaar') return 'Aadhaar must be exactly 12 digits.';
-        if (field === 'zipCode') return 'Zip code must be exactly 6 digits.';
-        return 'Invalid format.';
-      }
-      if (control.errors['alphanumeric']) return 'Only letters and spaces allowed.';
-      if (control.errors['futureDate']) return 'Date cannot be in the future.';
-      if (control.errors['minAge']) return 'Minimum age required.';
-      if (control.errors['min']) return `Minimum value is ${control.errors['min'].min}.`;
-      if (control.errors['max']) return `Maximum value is ${control.errors['max'].max}.`;
-      return 'Invalid field.';
-    }
-
-    private formatDateForApi(value: any): string | null {
-      if (!value) return null;
-      const date = value instanceof Date ? value : new Date(value);
-      if (Number.isNaN(date.getTime())) return value?.toString?.() ?? null;
-      const yyyy = date.getFullYear();
-      const mm = `${date.getMonth() + 1}`.padStart(2, '0');
-      const dd = `${date.getDate()}`.padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
-    }
+  private formatDateForApi(value: any): string | null {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return value?.toString?.() ?? null;
+    const yyyy = date.getFullYear();
+    const mm = `${date.getMonth() + 1}`.padStart(2, '0');
+    const dd = `${date.getDate()}`.padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 
 }
