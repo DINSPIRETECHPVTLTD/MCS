@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { CentersPageRoutingModule } from './centers-routing.module';
 import { CentersPage } from './centers.page';
+import { AddCenterModalComponent } from './add-center-modal.component';
 import { HeaderMenuComponent } from '../../components/header-menu/header-menu.component';
 import { AgGridModule } from 'ag-grid-angular';
 
@@ -17,7 +18,8 @@ import { AgGridModule } from 'ag-grid-angular';
     HeaderMenuComponent,
     AgGridModule
   ],
-  declarations: [CentersPage]
+  declarations: [CentersPage, AddCenterModalComponent]
 })
 export class CentersPageModule { }
+
 

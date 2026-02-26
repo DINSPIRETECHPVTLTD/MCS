@@ -43,6 +43,12 @@ export class CenterService {
     });
   }
 
+  getCenterById(id: number): Observable<Center> {
+    return this.http.get<Center>(`${this.apiUrl}/detail/${id}`, {
+      headers: this.getHeaders()
+    });
+  }
+
   /**
    * Update a center by ID (PUT: api/Centers/{id})
    */

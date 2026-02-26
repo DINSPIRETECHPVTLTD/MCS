@@ -13,6 +13,8 @@ import { Center } from '../../models/center.models';
 import { Subscription } from 'rxjs';
 import { ColDef, GridApi, GridOptions, GridReadyEvent, ICellRendererParams } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
+import { AddCenterModalComponent } from './add-center-modal.component';
+
 
 
 @Component({
@@ -99,6 +101,7 @@ export class CentersPage implements OnInit, OnDestroy, ViewWillEnter {
     private authService: AuthService,
     private router: Router,
     private centerService: CenterService,
+    private modalController: ModalController,
     private toastController: ToastController,
     private alertController: AlertController
   ) {
@@ -159,14 +162,35 @@ export class CentersPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   async openAddCenterModal(): Promise<void> {
-    // TODO: wire up AddCenterModalComponent when available
-    await this.showToast('Add Center modal coming soon', 'primary');
+    const modal = await this.modalController.create({
+      component: AddCenterModalComponent,
+      componentProps: {
+        isEditing: false,
+        branchId: this.selectedBranchId
+      }
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data?.success) {
+      await this.showToast('Center created successfully!', 'success');
+    }
   }
 
-  editCenter(center: Center | undefined): void {
-    if (!center) return;
-    // TODO: wire up EditCenterModalComponent when available
-    void this.showToast(`Edit center: ${center.name}`, 'primary');
+  async editCenter(center: Center | undefined): Promise<void> {
+    if (!center?.id) return;
+    const modal = await this.modalController.create({
+      component: AddCenterModalComponent,
+      componentProps: {
+        isEditing: true,
+        editingCenterId: center.id,
+        branchId: this.selectedBranchId
+      }
+    });
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+    if (data?.success) {
+      await this.showToast('Center updated successfully!', 'success');
+    }
   }
 
   async deleteCenter(center: Center | undefined): Promise<void> {
