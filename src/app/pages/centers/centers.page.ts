@@ -29,7 +29,60 @@ export class CentersPage implements OnInit, OnDestroy, ViewWillEnter {
   selectedBranchId: number | null = null;
 
   // AG Grid
-  columnDefs: ColDef<Center>[] = [];
+  columnDefs: ColDef<Center>[] = [
+    {
+      headerName: 'Id',
+      field: 'id',
+      width: 70,
+      minWidth: 70,
+      maxWidth: 70,
+      suppressSizeToFit: true,
+    },
+    {
+      headerName: 'Center Name',
+      field: 'name',
+      width: 200,
+      minWidth: 200,
+      maxWidth: 300,
+      resizable: true,
+    },
+    {
+      headerName: 'Address',
+      field: 'centerAddress',
+      width: 500,
+      minWidth: 300,
+      maxWidth: 600,
+      resizable: true,
+      suppressSizeToFit: true,
+      valueGetter: (p) => this.buildDisplayAddress(p.data?.centerAddress, p.data?.city),
+      tooltipValueGetter: (p) => this.buildDisplayAddress(p.data?.centerAddress, p.data?.city),
+      cellClass: 'truncate'
+    },
+    {
+      headerName: 'Actions',
+      colId: 'actions',
+      width: 200,
+      minWidth: 200,
+      maxWidth: 200,
+      suppressSizeToFit: true,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: ICellRendererParams<Center>) => {
+        const container = document.createElement('div');
+        container.className = 'actions-cell';
+        container.innerHTML = `
+            <button class="ag-btn ag-edit">Edit</button>
+            <button class="ag-btn ag-delete">Inactive</button>
+          `;
+
+        const editBtn = container.querySelector('.ag-edit');
+        const delBtn = container.querySelector('.ag-delete');
+        if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editCenter(params.data));
+        if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.deleteCenter(params.data));
+        return container;
+      }
+    }
+  ];
   defaultColDef: ColDef = {
     sortable: true,
     resizable: true,
@@ -61,67 +114,10 @@ export class CentersPage implements OnInit, OnDestroy, ViewWillEnter {
       return;
     }
 
-    this.columnDefs = [
-      {
-        headerName: 'Id',
-        field: 'id',
-        width: 70,
-        minWidth: 70,
-        maxWidth: 70,
-        suppressSizeToFit: true,
-      },
-      {
-        headerName: 'Center Name',
-        field: 'name',
-        width: 200,
-        minWidth: 200,
-        maxWidth: 300,
-        resizable: true,
-      },
-      {
-        headerName: 'Address',
-        field: 'centerAddress',
-        width: 500,
-        minWidth: 300,
-        maxWidth: 600,
-        resizable: true,
-        suppressSizeToFit: true,
-        valueGetter: (p) => this.buildDisplayAddress(p.data?.centerAddress, p.data?.city),
-        tooltipValueGetter: (p) => this.buildDisplayAddress(p.data?.centerAddress, p.data?.city),
-        cellClass: 'truncate'
-      },
-      {
-        headerName: 'Actions',
-        colId: 'actions',
-        width: 200,
-        minWidth: 200,
-        maxWidth: 200,
-        suppressSizeToFit: true,
-        sortable: false,
-        filter: false,
-        cellRenderer: (params: ICellRendererParams<Center>) => {
-          const container = document.createElement('div');
-          container.className = 'actions-cell';
-          container.innerHTML = `
-            <button class="ag-btn ag-edit">Edit</button>
-            <button class="ag-btn ag-delete">Inactive</button>
-          `;
-
-          const editBtn = container.querySelector('.ag-edit');
-          const delBtn = container.querySelector('.ag-delete');
-          if (editBtn) editBtn.addEventListener('click', () => params.context.componentParent.editCenter(params.data));
-          if (delBtn) delBtn.addEventListener('click', () => params.context.componentParent.deleteCenter(params.data));
-          return container;
-        }
-      }
-    ];
-
     // Use authService.getBranchId() — returns number
     this.selectedBranchId = this.authService.getBranchId();
 
     // ✅ Subscribe to centers$ so rowData stays in sync with every load
-    // Note: no manual loadCenters() here — HeaderMenuComponent emits branchChange
-    // on startup (in setSelectedBranch), which triggers onBranchChange() below.
     const centersSub = this.centerService.centers$.subscribe((centers) => {
       this.rowData = centers;
       this.isLoading = false;

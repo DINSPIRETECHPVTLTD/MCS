@@ -1,6 +1,6 @@
 export interface Center {
   id?: number;
-  centerName: string;
+  name: string;
   centerAddress: string;
   branchName: string;
   branchId?: number;
