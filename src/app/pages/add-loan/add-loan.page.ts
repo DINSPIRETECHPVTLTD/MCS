@@ -1,8 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { ModalController, ToastController, LoadingController } from '@ionic/angular';
+import { Subject, firstValueFrom } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { MemberService } from '../../services/member.service';
+import { CenterService } from '../../services/center.service';
+import { PocService } from '../../services/poc.service';
 import { Member } from '../../models/member.models';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
@@ -14,22 +18,22 @@ import { AddLoanModalComponent } from './add-loan-modal.component';
   templateUrl: './add-loan.page.html',
   styleUrls: ['./add-loan.page.scss']
 })
-export class AddLoanComponent implements OnInit {
+export class AddLoanComponent implements OnInit, OnDestroy {
   activeMenu: string = 'Add Loan';
-  
-  // Member search (first name, last name, member ID)
+
+  // Member search
   searchFirstName: string = '';
   searchLastName: string = '';
   searchMemberId: string = '';
   searchResults: Member[] = [];
   isSearching: boolean = false;
   showMemberGrid: boolean = false;
-  
-  // Lookup maps for center and POC names
+
+  // Lookup maps for center and POC names — built from BehaviorSubject caches
   centerMap: Map<number, string> = new Map();
   pocMap: Map<number, string> = new Map();
-  
-  // AG Grid configuration
+
+  // AG Grid
   rowData: Member[] = [];
   columnDefs: ColDef[] = [
     {
@@ -38,21 +42,15 @@ export class AddLoanComponent implements OnInit {
         const data = params.data as Member;
         return data?.memberId ?? data?.id ?? '';
       },
-      width: 120,
-      sortable: true,
-      filter: true
+      width: 120, sortable: true, filter: true
     },
     {
       headerName: 'Full Name',
       valueGetter: (params) => {
         const data = params.data as Member;
-        const firstName = data?.firstName ?? '';
-        const lastName = data?.lastName ?? '';
-        return `${firstName} ${lastName}`.trim() || 'N/A';
+        return `${data?.firstName ?? ''} ${data?.lastName ?? ''}`.trim() || 'N/A';
       },
-      width: 200,
-      sortable: true,
-      filter: true
+      width: 200, sortable: true, filter: true
     },
     {
       headerName: 'Center Name',
@@ -62,9 +60,7 @@ export class AddLoanComponent implements OnInit {
         const centerId = data?.centerId;
         return centerId && comp ? (comp.centerMap.get(centerId) ?? `Center ${centerId}`) : 'N/A';
       },
-      width: 180,
-      sortable: true,
-      filter: true
+      width: 180, sortable: true, filter: true
     },
     {
       headerName: 'POC Name',
@@ -74,9 +70,7 @@ export class AddLoanComponent implements OnInit {
         const pocId = data?.pocId;
         return pocId && comp ? (comp.pocMap.get(pocId) ?? `POC ${pocId}`) : 'N/A';
       },
-      width: 180,
-      sortable: true,
-      filter: true
+      width: 180, sortable: true, filter: true
     },
     {
       headerName: 'Select',
@@ -93,25 +87,25 @@ export class AddLoanComponent implements OnInit {
       }
     }
   ];
-  defaultColDef: ColDef = {
-    resizable: true,
-    sortable: true,
-    filter: true
-  };
+  defaultColDef: ColDef = { resizable: true, sortable: true, filter: true };
   pagination: boolean = true;
   paginationPageSize: number = 20;
 
   private gridApi?: GridApi;
   gridOptions = { theme: agGridTheme };
-  /** Passed to AG Grid so Select button can call back into this component */
+
   get gridContext(): { component: AddLoanComponent } {
     return { component: this };
   }
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private memberService: MemberService,
+    private centerService: CenterService,
+    private pocService: PocService,
     private toastController: ToastController,
     private loadingController: LoadingController,
     private modalController: ModalController,
@@ -123,60 +117,61 @@ export class AddLoanComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    // Load lookup data and then recent members
-    this.loadLookupsAndMembers();
+
+    const branchId = this.authService.getBranchId();
+
+    // ✅ Build centerMap from CenterService.centers$ — no extra HTTP call
+    this.centerService.centers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(centers => {
+        this.centerMap.clear();
+        (centers ?? []).forEach(c => {
+          if (c.id != null) this.centerMap.set(c.id, c.name);
+        });
+        this.gridApi?.refreshCells({ force: true });
+      });
+
+    // ✅ Build pocMap from PocService.pocs$ — no extra HTTP call
+    this.pocService.pocs$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(pocs => {
+        this.pocMap.clear();
+        (pocs ?? []).forEach(p => {
+          if (p.id != null) {
+            const name = [p.firstName, p.lastName].filter(Boolean).join(' ').trim();
+            this.pocMap.set(p.id, name || `POC ${p.id}`);
+          }
+        });
+        this.gridApi?.refreshCells({ force: true });
+      });
+
+    // ✅ Trigger loads only if caches are empty (avoids duplicate calls if already loaded)
+    if (branchId) {
+      if ((this.centerService as any).centersSubject?.getValue?.()?.length === 0) {
+        this.centerService.loadCenters(branchId);
+      }
+      if ((this.pocService as any).pocsSubject?.getValue?.()?.length === 0) {
+        this.pocService.loadPocsByBranch(branchId);
+      }
+    }
+
+    this.loadRecentMembers();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onMenuChange(menu: string): void {
     this.activeMenu = menu;
   }
 
-  onBranchChange(_branch: Branch): void {
-    // Handle branch change if needed
-    // Reload recent members for the new branch
-
-  }
-
-  async loadLookupsAndMembers(): Promise<void> {
-    await this.loadLookups();
-    await this.loadRecentMembers();
-  }
-
-  async loadLookups(): Promise<void> {
-    const branchId = this.authService.getBranchId();
-    if (!branchId) {
-      return;
-    }
-
-    try {
-      // Load centers
-      const centers = await this.memberService.getAllCenters().toPromise();
-      if (centers) {
-        this.centerMap.clear();
-        centers.forEach(center => {
-          this.centerMap.set(center.id, center.name);
-        });
-      }
-
-      // Load POCs
-      const pocs = await this.memberService.getAllPOCs().toPromise();
-      if (pocs) {
-        this.pocMap.clear();
-        pocs.forEach(poc => {
-          const pocName = poc.name || `${poc.firstName || ''} ${poc.lastName || ''}`.trim();
-          this.pocMap.set(poc.id, pocName);
-        });
-      }
-    } catch (error) {
-      console.error('Error loading lookups:', error);
-    }
-  }
+  onBranchChange(_branch: Branch): void { }
 
   async loadRecentMembers(): Promise<void> {
     const branchId = this.authService.getBranchId();
-    if (!branchId) {
-      return;
-    }
+    if (!branchId) return;
 
     const loading = await this.loadingController.create({
       message: 'Loading recent members...',
@@ -186,14 +181,13 @@ export class AddLoanComponent implements OnInit {
 
     this.memberService.getMembersByBranch(branchId).subscribe({
       next: (members: Member[]) => {
-        // Filter members created in the last 10 days
+        // Show members created in the last 10 days
         const tenDaysAgo = new Date();
         tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-        
+
         const recentMembers = members.filter(member => {
           if (member.createdAt) {
-            const createdDate = new Date(member.createdAt);
-            return createdDate >= tenDaysAgo;
+            return new Date(member.createdAt) >= tenDaysAgo;
           }
           return false;
         });
@@ -201,7 +195,6 @@ export class AddLoanComponent implements OnInit {
         this.rowData = recentMembers;
         this.searchResults = recentMembers;
         this.showMemberGrid = recentMembers.length > 0;
-        
         loading.dismiss();
 
         if (recentMembers.length > 0) {
@@ -211,15 +204,12 @@ export class AddLoanComponent implements OnInit {
           }, 100);
         }
       },
-      error: (error: unknown) => {
-        console.error('Error loading recent members:', error);
+      error: () => {
         loading.dismiss();
         this.toastController.create({
           message: 'Error loading recent members. Use search to find members.',
-          duration: 3000,
-          color: 'warning',
-          position: 'top'
-        }).then(toast => toast.present());
+          duration: 3000, color: 'warning', position: 'top'
+        }).then(t => t.present());
       }
     });
   }
@@ -228,12 +218,11 @@ export class AddLoanComponent implements OnInit {
     const first = this.searchFirstName?.trim() ?? '';
     const last = this.searchLastName?.trim() ?? '';
     const id = this.searchMemberId?.trim() ?? '';
+
     if (!first && !last && !id) {
       const toast = await this.toastController.create({
         message: 'Enter at least one search: First Name, Last Name, or Member ID',
-        duration: 2000,
-        color: 'warning',
-        position: 'top'
+        duration: 2000, color: 'warning', position: 'top'
       });
       await toast.present();
       return;
@@ -241,76 +230,66 @@ export class AddLoanComponent implements OnInit {
 
     this.isSearching = true;
     const loading = await this.loadingController.create({
-      message: 'Searching members...',
-      spinner: 'crescent'
+      message: 'Searching members...', spinner: 'crescent'
     });
     await loading.present();
 
-    // Ensure lookups are loaded
-    if (this.centerMap.size === 0 || this.pocMap.size === 0) {
-      await this.loadLookups();
-    }
+    try {
+      const branchId = this.authService.getBranchId();
+      // ✅ Get all members for branch from MemberService, then filter client-side
+      const all = await firstValueFrom(this.memberService.getMembersByBranch(branchId!));
+      const q = { first: first.toLowerCase(), last: last.toLowerCase(), id: id.toLowerCase() };
 
-    this.memberService.searchMembersByCriteria({
-      firstName: first || undefined,
-      lastName: last || undefined,
-      memberId: id || undefined
-    }).subscribe({
-      next: (members: Member[]) => {
-        this.searchResults = members;
-        this.rowData = members;
-        this.showMemberGrid = true;
-        loading.dismiss();
-        this.isSearching = false;
+      const matched = (all ?? []).filter(m => {
+        const mFirst = (m.firstName ?? '').toLowerCase();
+        const mLast = (m.lastName ?? '').toLowerCase();
+        const mId = String(m.id ?? m.memberId ?? '');
+        const matchFirst = !q.first || mFirst.includes(q.first);
+        const matchLast = !q.last || mLast.includes(q.last);
+        const matchId = !q.id || mId.includes(q.id);
+        return matchFirst && matchLast && matchId;
+      });
 
-        if (members.length === 0) {
-          this.toastController.create({
-            message: 'No members found',
-            duration: 2000,
-            color: 'warning',
-            position: 'top'
-          }).then(toast => toast.present());
-        } else {
-          setTimeout(() => {
-            this.gridApi?.sizeColumnsToFit();
-            this.gridApi?.refreshCells({ force: true });
-          }, 100);
-        }
-      },
-      error: (error: unknown) => {
-        console.error('Error searching members:', error);
-        loading.dismiss();
-        this.isSearching = false;
+      this.searchResults = matched;
+      this.rowData = matched;
+      this.showMemberGrid = true;
+      loading.dismiss();
+      this.isSearching = false;
+
+      if (matched.length === 0) {
         this.toastController.create({
-          message: 'Error searching members. Please try again.',
-          duration: 3000,
-          color: 'danger',
-          position: 'top'
-        }).then(toast => toast.present());
+          message: 'No members found',
+          duration: 2000, color: 'warning', position: 'top'
+        }).then(t => t.present());
+      } else {
+        setTimeout(() => {
+          this.gridApi?.sizeColumnsToFit();
+          this.gridApi?.refreshCells({ force: true });
+        }, 100);
       }
-    });
+    } catch {
+      loading.dismiss();
+      this.isSearching = false;
+      this.toastController.create({
+        message: 'Error searching members. Please try again.',
+        duration: 3000, color: 'danger', position: 'top'
+      }).then(t => t.present());
+    }
   }
 
-  /** Called when user clicks Select on a row; opens loan modal */
   async selectMemberFromGrid(member: Member): Promise<void> {
     const modal = await this.modalController.create({
       component: AddLoanModalComponent,
-      componentProps: {
-        selectedMember: member
-      },
+      componentProps: { selectedMember: member },
       cssClass: 'loan-modal'
     });
-
     await modal.present();
-    
+
     const { data, role } = await modal.onWillDismiss();
-    
-    if (role === 'success' && data && data.reset) {
-      // Reset search fields and reload recent members
+    if (role === 'success' && data?.reset) {
       this.searchFirstName = '';
       this.searchLastName = '';
       this.searchMemberId = '';
-      // Reload recent members to refresh the list
       await this.loadRecentMembers();
     }
   }
@@ -318,17 +297,13 @@ export class AddLoanComponent implements OnInit {
   onGridReady(params: GridReadyEvent): void {
     this.gridApi = params.api;
     this.gridApi.setGridOption('context', { component: this });
-    if (this.rowData && this.rowData.length > 0) {
+    if (this.rowData?.length > 0) {
       this.gridApi.setGridOption('rowData', this.rowData);
     }
-    setTimeout(() => {
-      this.gridApi?.sizeColumnsToFit();
-    }, 100);
+    setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
   }
 
   onSearchKeyPress(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      this.searchMembers();
-    }
+    if (event.key === 'Enter') this.searchMembers();
   }
 }

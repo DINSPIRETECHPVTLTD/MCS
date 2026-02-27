@@ -1,17 +1,22 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController, ToastController, LoadingController } from '@ionic/angular';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { MemberService } from '../../services/member.service';
+import { CenterService } from '../../services/center.service';
+import { PocService, Poc } from '../../services/poc.service';
 import { MasterDataService } from '../../services/master-data.service';
 import { MasterLookup, LookupKeys } from '../../models/master-data.models';
-import { Member, CenterOption, POCOption } from '../../models/member.models';
+import { Member } from '../../models/member.models';
+import { Center } from '../../models/center.models';
 
 @Component({
   selector: 'app-edit-member-modal',
   templateUrl: './edit-member-modal.component.html',
   styleUrls: ['./edit-member-modal.component.scss']
 })
-export class EditMemberModalComponent implements OnInit {
+export class EditMemberModalComponent implements OnInit, OnDestroy {
   @Input() memberData: Record<string, unknown> | null = null;
   @Input() memberId: number | null = null;
 
@@ -22,14 +27,18 @@ export class EditMemberModalComponent implements OnInit {
   isLoadingStates = false;
   todayString: string = new Date().toISOString().split('T')[0];
 
-  centers: CenterOption[] = [];
-  pocs: POCOption[] = [];
-  
+  centers: Center[] = [];
+  pocs: Poc[] = [];
+
   private currentMember: Member | null = null;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private formBuilder: FormBuilder,
     private memberService: MemberService,
+    private centerService: CenterService,
+    private pocService: PocService,
     private masterDataService: MasterDataService,
     private modalController: ModalController,
     private toastController: ToastController,
@@ -40,31 +49,25 @@ export class EditMemberModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadStates();
-    // Load centers and POCs
-    this.memberService.getAllCenters().subscribe({
-      next: (centers: CenterOption[]) => {
-        this.centers = centers ?? [];
-      },
-      error: (_error: unknown) => {
-        // Failed to load centers - continue with empty list
-      }
-    });
 
-    this.memberService.getAllPOCs().subscribe({
-      next: (pocs: POCOption[]) => {
+    // ✅ Subscribe to centers$ from CenterService — no extra HTTP call
+    this.centerService.centers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(centers => {
+        this.centers = centers ?? [];
+      });
+
+    // ✅ Subscribe to pocs$ from PocService — no extra HTTP call
+    this.pocService.pocs$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(pocs => {
         this.pocs = pocs ?? [];
-      },
-      error: (_error: unknown) => {
-        // Failed to load POCs - continue with empty list
-      }
-    });
+      });
 
     // memberData is passed via componentProps from members page (grid row data)
     if (this.memberData) {
-      // Extract member ID from grid row data
       const memberId = this.memberData['memberId'];
       this.isLoading = true;
-      // Fetch full member details from API using member ID
       this.memberService.getMemberById(Number(memberId)).subscribe({
         next: (memberDetails: Member) => {
           this.currentMember = memberDetails;
@@ -72,12 +75,16 @@ export class EditMemberModalComponent implements OnInit {
           this.isLoading = false;
         },
         error: (_error: unknown) => {
-          // Fallback: use grid data if API fails
           this.populateFormWithMemberData();
           this.isLoading = false;
         }
       });
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadStates(): void {
@@ -129,7 +136,7 @@ export class EditMemberModalComponent implements OnInit {
     }
 
     const m = memberToUse as Record<string, unknown>;
-    
+
     this.memberForm.patchValue({
       memberId: m['id'] || '',
       centerId: m['centerId'] || '',

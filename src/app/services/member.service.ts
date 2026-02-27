@@ -1,18 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { environment } from '../../environments/environment';
-import { Observable, catchError, of } from 'rxjs';
+import { Observable, BehaviorSubject, tap, catchError, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import {
   Member,
   CreateMemberRequest,
-  BranchOption,
-  CenterOption,
-  POCOption,
   AadhaarValidationResponse
 } from '../models/member.models';
-import { Branch } from '../models/branch.models';
 
 export type { Member } from '../models/member.models';
 
@@ -22,6 +17,13 @@ export type { Member } from '../models/member.models';
 })
 export class MemberService {
   private apiUrl = '/api/Members';
+
+  // ✅ BehaviorSubject holds current members state
+  private membersSubject = new BehaviorSubject<Member[]>([]);
+  public members$ = this.membersSubject.asObservable();
+
+  // Track current branchId for auto-reloads after create/update/inactivate
+  private currentBranchId: number | null = null;
 
   constructor(
     private http: HttpClient,
@@ -36,152 +38,16 @@ export class MemberService {
     });
   }
 
-  private normalizePOC(raw: any): POCOption {
-    const firstName = raw?.firstName ?? raw?.FirstName ?? '';
-    const middleName = raw?.middleName ?? raw?.MiddleName ?? '';
-    const lastName = raw?.lastName ?? raw?.LastName ?? '';
-
-    const nameFromParts = [firstName, middleName, lastName].filter(Boolean).join(' ').trim();
-    const name = (
-      raw?.name ??
-      raw?.Name ??
-      raw?.poc ??
-      raw?.POC ??
-      raw?.fullName ??
-      raw?.FullName ??
-      nameFromParts ??
-      ''
-    ).toString().trim();
-
-    const contact =
-      raw?.phoneNumber ??
-      raw?.PhoneNumber ??
-      raw?.contactNumber ??
-      raw?.ContactNumber ??
-      raw?.mobileNumber ??
-      raw?.MobileNumber ??
-      raw?.phone ??
-      raw?.Phone ??
-      '';
-
-    return {
-      id: Number(raw?.id ?? raw?.pocId ?? raw?.POCId ?? 0),
-      branchId: Number(raw?.branchId ?? raw?.BranchId ?? 0),
-      centerId: Number(raw?.centerId ?? raw?.CenterId ?? raw?.centerID ?? raw?.CenterID ?? 0),
-      contactNumber: (raw?.contactNumber ?? raw?.ContactNumber ?? contact ?? '').toString(),
-      phoneNumber: (raw?.phoneNumber ?? raw?.PhoneNumber ?? contact ?? '').toString(),
-      email: raw?.email ?? raw?.Email,
-      firstName: firstName?.toString() ?? '',
-      middleName: middleName?.toString() ?? '',
-      lastName: lastName?.toString() ?? '',
-      name
-    };
-  }
-
-  /**
-   * Get all branches for dropdown
-   */
-  getBranchOptions(): Observable<BranchOption[]> {
-    return this.http.get<{ $values?: Branch[] } | Branch[]>('/Branches', {
-      headers: this.getHeaders()
-    }).pipe(
-      map(response => {
-        const branches = '$values' in response && response.$values ? response.$values : response as Branch[];
-        return branches.map((branch: Branch) => ({
-          id: branch.id,
-          name: branch.name
-        }));
-      })
-    );
-  }
-
-  /**
-   * Get all centers from database
-   */
-  getAllCenters(): Observable<CenterOption[]> {
-  return this.http.get<any>('/Centers', {
-    headers: this.getHeaders()
-  }).pipe(
-    map((response: any) => {
-      const centersRaw =
-        response?.$values ??
-        response?.data?.$values ??
-        response?.data ??
-        response?.data?.centers ??
-        response?.centers ??
-        response?.items?.$values ??
-        response?.items ??
-        response;
-
-      const centers = Array.isArray(centersRaw)
-        ? centersRaw
-        : Array.isArray(centersRaw?.$values)
-          ? centersRaw.$values
-          : [];
-
-      return centers
-        .filter((center: any) => {
-          if (!center) return false;
-          const isDeleted = center?.isDeleted ?? center?.IsDeleted ?? false;
-          const id = Number(center?.id ?? center?.Id ?? 0);
-          const name = (center?.name ?? center?.Name ?? center?.centerName ?? center?.CenterName ?? '').toString().trim();
-          return !isDeleted && id > 0 && !!name;
-        })
-        .map((center: any) => ({
-          id: Number(center?.id ?? center?.Id ?? 0),
-          name: (center?.name ?? center?.Name ?? center?.centerName ?? center?.CenterName ?? '').toString().trim(),
-          branchId: Number(center?.branchId ?? center?.BranchId ?? 0)
-        }));
-    })
-  );
-}
-
-
-  /**
-   * Get centers by branch - filters from all centers
-   */
-  getCentersByBranch(branchId: number): Observable<CenterOption[]> {
-    return this.http.get<any[]>('/Centers', {
-      headers: this.getHeaders()
-    }).pipe(
-      map(data => {
-        // Map API response to CenterOption interface
-        return data
-          .filter(center => center.branchId === branchId)
-          .map(center => ({
-            id: center.id,
-            name: center.name || center.centerName || '',
-            branchId: center.branchId || 0
-          }));
-      })
-    );
-  }
-
-  /**
-   * Get POCs by branch and center
-   */
-  getPOCsByBranchAndCenter(branchId: number, centerId: number): Observable<POCOption[]> {
-    return this.http.get<any>(
-      `${environment.apiUrl}/pocs/branch/${branchId}/center/${centerId}`,
-      { headers: this.getHeaders() }
-    ).pipe(
-      map(response => {
-        const items = response?.$values ?? response;
-        const list = Array.isArray(items) ? items : [];
-        return list.map(poc => this.normalizePOC(poc));
-      })
-    );
-}
-
-  /**
-   * Get POC details by ID
-   */
-  getPOCById(pocId: number): Observable<POCOption> {
-    return this.http.get<any>(`/api/pocs/${pocId}`, {
-      headers: this.getHeaders()
-    }).pipe(
-      map(response => this.normalizePOC(response))
-    );
+  // ✅ Load members for a branch and broadcast via BehaviorSubject
+  loadMembers(branchId: number): void {
+    this.currentBranchId = branchId;
+    this.http.get<Member[]>(`${this.apiUrl}/branch/${branchId}`, { headers: this.getHeaders() }).subscribe({
+      next: (members) => this.membersSubject.next(members),
+      error: (err) => {
+        console.error('Error loading members:', err);
+        this.membersSubject.next([]);
+      }
+    });
   }
 
   /**
@@ -195,21 +61,29 @@ export class MemberService {
   }
 
   /**
-   * Create new member
+   * Create new member — auto-reloads members$ after success
    */
   createMember(memberData: CreateMemberRequest): Observable<Member> {
     return this.http.post<Member>(this.apiUrl, memberData, {
       headers: this.getHeaders()
-    });
+    }).pipe(
+      tap(() => {
+        if (this.currentBranchId != null) this.loadMembers(this.currentBranchId); // ✅ Auto-reload after create
+      })
+    );
   }
 
   /**
-   * Update existing member
+   * Update existing member — auto-reloads members$ after success
    */
   updateMember(memberId: number, memberData: CreateMemberRequest): Observable<Member> {
     return this.http.put<Member>(`${this.apiUrl}/${memberId}`, memberData, {
       headers: this.getHeaders()
-    });
+    }).pipe(
+      tap(() => {
+        if (this.currentBranchId != null) this.loadMembers(this.currentBranchId); // ✅ Auto-reload after update
+      })
+    );
   }
 
   /**
@@ -230,99 +104,6 @@ export class MemberService {
     });
   }
 
-  /**
-   * Get all members
-   */
-  getAllMembers(): Observable<Member[]> {
-    return this.http.get<Member[]>(this.apiUrl, {
-      headers: this.getHeaders()
-    });
-  }
-
-  /**
-   * Search members by a free-text term.
-   * Attempts a backend search endpoint first, then falls back to client-side filtering.
-   */
-  searchMembers(term: string): Observable<Member[]> {
-    const query = (term ?? '').trim();
-    if (!query) return of([]);
-
-    const q = query.toLowerCase();
-
-    // Best-effort server-side search (endpoint/param names can vary by backend)
-    return this.http.get<Member[]>(`${this.apiUrl}/search`, {
-      headers: this.getHeaders(),
-      params: { term: query }
-    }).pipe(
-      catchError(() =>
-        this.getAllMembers().pipe(
-          map((members) =>
-            (members ?? []).filter((m) => {
-              const id = String(m?.id ?? '');
-              const phone = String(m?.phoneNumber ?? '');
-              const firstName = String(m?.firstName ?? '').toLowerCase();
-              const middleName = String(m?.middleName ?? '').toLowerCase();
-              const lastName = String(m?.lastName ?? '').toLowerCase();
-              const fullName = `${firstName} ${middleName} ${lastName}`.replace(/\s+/g, ' ').trim();
-
-              return (
-                id.includes(query) ||
-                phone.includes(query) ||
-                firstName.includes(q) ||
-                middleName.includes(q) ||
-                lastName.includes(q) ||
-                fullName.includes(q)
-              );
-            })
-          )
-        )
-      )
-    );
-  }
-
-  /**
-   * Search members by first name, last name, and/or member ID.
-   * Builds a combined term for backend or filters client-side.
-   */
-  searchMembersByCriteria(criteria: { firstName?: string; lastName?: string; memberId?: string }): Observable<Member[]> {
-    const { firstName = '', lastName = '', memberId = '' } = criteria;
-    const first = (firstName ?? '').trim();
-    const last = (lastName ?? '').trim();
-    const id = (memberId ?? '').trim();
-
-    if (!first && !last && !id) return of([]);
-
-    const term = [first, last, id].filter(Boolean).join(' ');
-    return this.searchMembers(term).pipe(
-      map((members) => {
-        if (!first && !last) return members;
-        const qFirst = first.toLowerCase();
-        const qLast = last.toLowerCase();
-        return members.filter((m) => {
-          const mFirst = String(m?.firstName ?? '').toLowerCase();
-          const mLast = String(m?.lastName ?? '').toLowerCase();
-          const matchFirst = !qFirst || mFirst.includes(qFirst);
-          const matchLast = !qLast || mLast.includes(qLast);
-          return matchFirst && matchLast;
-        });
-      })
-    );
-  }
-
-  /**
-   * Get members using query params (some backends prefer this over /branch routes)
-   * Example: GET /api/Members?branchId=1&centerId=2
-   */
-  getMembersFiltered(filter: { branchId?: number; centerId?: number }): Observable<Member[]> {
-    const params: Record<string, string> = {};
-    if (filter.branchId) params['branchId'] = String(filter.branchId);
-    if (filter.centerId) params['centerId'] = String(filter.centerId);
-
-    return this.http.get<Member[]>(this.apiUrl, {
-      headers: this.getHeaders(),
-      params
-    });
-  }
 
   /**
    * Delete member
@@ -331,30 +112,5 @@ export class MemberService {
     return this.http.delete(`${this.apiUrl}/${memberId}`, {
       headers: this.getHeaders()
     });
-  }
-
-  /**
-   * Mark member as inactive
-   */
-  inactivateMember(memberId: number): Observable<unknown> {
-    return this.http.patch(`${this.apiUrl}/${memberId}/inactive`, {}, {
-      headers: this.getHeaders()
-    });
-  }
-
-  /**
-   * Get all POCs from API
-   */
-  getAllPOCs(): Observable<POCOption[]> {
-    return this.http.get<any>(
-      `${environment.apiUrl}/POCs`,
-      { headers: this.getHeaders() }
-    ).pipe(
-      map(response => {
-        const items = response?.$values ?? response;
-        const list = Array.isArray(items) ? items : [];
-        return list.map(poc => this.normalizePOC(poc));
-      })
-    );
   }
 }

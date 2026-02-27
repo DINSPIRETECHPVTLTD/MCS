@@ -1,12 +1,13 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ModalController, LoadingController, ToastController, AlertController } from '@ionic/angular';
-import { Member, CenterOption } from '../../models/member.models';
+import { Member } from '../../models/member.models';
+import { Center } from '../../models/center.models';
 import { CreateLoanRequest, Loan } from '../../models/loan.models';
 import { LoanService } from '../../services/loan.service';
 import { Poc, PocService } from '../../services/poc.service';
+import { CenterService } from '../../services/center.service';
 import { Payment } from '../../models/payment.models';
 import { PaymentsService } from '../../services/payments.service';
-import { MemberService } from '../../services/member.service';
 
 @Component({
   selector: 'app-add-loan-modal',
@@ -36,7 +37,7 @@ export class AddLoanModalComponent implements OnInit {
   paymentTerms: Payment[] = [];
   selectedPaymentTerm: Payment | null = null;
   selectedPaymentType: string = '';
-  memberCenter: CenterOption | null = null;
+  memberCenter: Center | null = null;
 
   constructor(
     private modalController: ModalController,
@@ -44,8 +45,8 @@ export class AddLoanModalComponent implements OnInit {
     private loadingController: LoadingController,
     private alertController: AlertController,
     private pocService: PocService,
-    private paymentsService: PaymentsService,
-    private memberService: MemberService
+    private centerService: CenterService,
+    private paymentsService: PaymentsService
   ) { }
 
   ngOnInit(): void {
@@ -97,15 +98,9 @@ export class AddLoanModalComponent implements OnInit {
 
   loadMemberCenter(): void {
     if (!this.selectedMember?.centerId) return;
-
-    this.memberService.getAllCenters().subscribe({
-      next: (centers: CenterOption[]) => {
-        this.memberCenter = centers.find(c => c.id === this.selectedMember.centerId) || null;
-      },
-      error: (err) => {
-        console.error('Error loading center:', err);
-        this.memberCenter = null;
-      }
+    // ✅ Use CenterService.centers$ cache — no extra HTTP call
+    this.centerService.centers$.subscribe(centers => {
+      this.memberCenter = (centers ?? []).find(c => c.id === this.selectedMember.centerId) || null;
     });
   }
 

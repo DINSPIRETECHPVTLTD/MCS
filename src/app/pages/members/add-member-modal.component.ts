@@ -9,8 +9,9 @@ import { UserContextService } from '../../services/user-context.service';
 import { MasterDataService } from '../../services/master-data.service';
 import { OrganizationService } from '../../services/organization.service';
 import { MasterLookup, LookupKeys } from '../../models/master-data.models';
-import { CenterOption, POCOption } from '../../models/member.models';
+import { PocService, Poc } from '../../services/poc.service';
 import { CenterService } from '../../services/center.service';
+import { Center } from '../../models/center.models';
 
 @Component({
   selector: 'app-add-member-modal',
@@ -31,8 +32,8 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
   submitted = false;
   todayString: string = new Date().toISOString().split('T')[0];
 
-  centers: CenterOption[] = [];
-  pocs: POCOption[] = [];
+  centers: Center[] = [];
+  pocs: Poc[] = [];
   collectors: any[] = [];
   states: MasterLookup[] = [];
   isLoadingStates = false;
@@ -48,6 +49,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private userContext: UserContextService,
     private centerService: CenterService,
+    private pocService: PocService,
     private masterDataService: MasterDataService,
     private organizationService: OrganizationService,
     private modalController: ModalController,
@@ -204,7 +206,7 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     // If the cache is already loaded for this branch, use it immediately
     this.centerService.centers$.pipe(takeUntil(this.destroy$)).subscribe(centers => {
-      this.centers = (centers ?? []).map(c => ({ id: c.id!, name: c.name, branchId: c.branchId ?? 0 }));
+      this.centers = centers ?? [];
       this.isLoading = false;
       this.cdr.detectChanges();
     });
@@ -313,18 +315,13 @@ export class AddMemberModalComponent implements OnInit, OnDestroy {
         const selectedCenterId = Number(centerId);
         if (selectedCenterId) {
           this.memberForm.patchValue({ pocId: '', collectedBy: '' });
-          // Fetch POCs for the selected center
-          this.memberService.getAllPOCs().subscribe(pocs => {
-            // Filter POCs by centerId if needed, or use API that supports centerId
-            this.pocs = pocs
-              .filter(poc => Number(poc.centerId) === selectedCenterId)
-              .map(poc => ({
-                ...poc,
-                name: (poc.name || [poc.firstName, poc.middleName, poc.lastName].filter(Boolean).join(' ')).trim()
-              }));
+
+          // ✅ Filter POCs from PocService cache — no extra HTTP call
+          this.pocService.pocs$.pipe(takeUntil(this.destroy$)).subscribe(allPocs => {
+            this.pocs = (allPocs ?? []).filter(poc => Number(poc.centerId) === selectedCenterId);
+            this.cdr.detectChanges();
           });
 
-          // Fetch collectors (users) for the selected center's branch
           this.loadCollectorsForCenter(selectedCenterId);
         } else {
           this.pocs = [];

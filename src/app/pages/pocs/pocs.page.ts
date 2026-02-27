@@ -18,6 +18,7 @@ import { Subscription } from 'rxjs';
 export class PocsComponent implements OnInit, OnDestroy, ViewWillEnter {
   activeMenu: string = 'POCs';
   selectedBranch: Branch | null = null;
+  selectedBranchId: number | null = null;
   isLoading: boolean = false;
   private subscriptions = new Subscription();
 
@@ -142,7 +143,7 @@ export class PocsComponent implements OnInit, OnDestroy, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
-
+    this.selectedBranchId = this.authService.getBranchId();
 
     // Subscribe once — all refreshes flow through here
     const sub = this.pocService.pocs$.subscribe(pocs => {
@@ -150,6 +151,13 @@ export class PocsComponent implements OnInit, OnDestroy, ViewWillEnter {
       this.isLoading = false;
     });
     this.subscriptions.add(sub);
+
+    // Load POCs data
+    if (this.selectedBranchId) {
+      this.loadCenters(this.selectedBranchId);
+      this.loadUsers();
+      this.loadPocs();
+    }
   }
 
   ngOnDestroy(): void {
@@ -162,12 +170,6 @@ export class PocsComponent implements OnInit, OnDestroy, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
-    // Load POCs data
-    if (this.selectedBranch) {
-      this.loadCenters(this.selectedBranch.id);
-      this.loadUsers();
-      this.loadPocs();
-    }
   }
 
   onGridReady(params: GridReadyEvent): void {
@@ -175,10 +177,10 @@ export class PocsComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   loadPocs(): void {
-    if (!this.selectedBranch) return;
+    if (!this.selectedBranchId) return;
     this.isLoading = true;
     // loadPocsByBranch pushes into pocs$ — our subscriber above handles the result
-    this.pocService.loadPocsByBranch(this.selectedBranch.id);
+    this.pocService.loadPocsByBranch(this.selectedBranchId);
   }
 
   onMenuChange(menu: string): void {

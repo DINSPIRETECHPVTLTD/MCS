@@ -1,16 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
-import { MemberService } from '../../services/member.service';
 import { UserService } from '../../services/user.service';
 import { UserContextService } from '../../services/user-context.service';
+import { CenterService } from '../../services/center.service';
+import { PocService, Poc } from '../../services/poc.service';
 import { User } from '../../models/user.models';
 import { CellValueChangedEvent, ColDef, GridApi, GridOptions, GridReadyEvent, RowSelectionOptions } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { Branch } from '../../models/branch.models';
-import { POCOption } from '../../models/member.models';
 import {
   LoanSchedulerRecoveryDto,
   LoanSchedulerSaveRequest
@@ -48,15 +50,17 @@ export interface RecoveryPostingMemberRow {
   templateUrl: './recovery-posting.page.html',
   styleUrls: ['./recovery-posting.page.scss']
 })
-export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
+export class RecoveryPostingComponent implements OnInit, OnDestroy, ViewWillEnter {
   activeMenu: string = 'Recovery Posting';
-  
+
   // Filters
   selectedBranch: Branch | null = null;
   selectedCenter: string = '';
   centers: { id: number; name: string; code?: string }[] = [];
   selectedPoc: string = '';
-  pocs: POCOption[] = [];
+  pocs: Poc[] = [];
+
+  private destroy$ = new Subject<void>();
   selectedCollectBy: string = '';
   users: User[] = [];
 
@@ -68,7 +72,7 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   selectedDate: string = '';
   selectedDateDisplay: string = '';
   todayDate: string = '';
-  
+
   // Grid data: one row per member (flattened from POC + members)
   rowData: RecoveryPostingMemberRow[] = [];
   columnDefs: ColDef[] = [];
@@ -97,18 +101,19 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     private router: Router,
     private toastController: ToastController,
     private loadingController: LoadingController,
-    private memberService: MemberService,
+    private centerService: CenterService,
+    private pocService: PocService,
     private userService: UserService,
     private userContext: UserContextService,
     private recoveryPostingService: RecoveryPostingService,
     private masterDataService: MasterDataService
   ) {
     const today = new Date();
-    this.todayDate = today.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    this.todayDate = today.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
     const y = today.getFullYear();
     const m = String(today.getMonth() + 1).padStart(2, '0');
@@ -664,16 +669,16 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         const selectedStatus = this.normalizeStatusValue(row.status);
         const isNotPaid = selectedStatus === 'Not Paid';
         return ({
-        loanSchedulerId: row.loanSchedulerId,
-        // Backend expects lookup VALUE (e.g. Cash / Online), not the code.
-        paymentMode: isNotPaid ? 'N/A' : ((row.paymentMode === 'Select' || !row.paymentMode) ? '' : row.paymentMode),
-        status: selectedStatus === 'Paid' ? 'Paid' : (selectedStatus === 'Not Paid' ? 'Not Paid' : 'Partial'),
-        paymentAmount: isNotPaid ? 0 : (row.paymentAmount ?? 0),
-        principalAmount: isNotPaid ? 0 : (row.principalAmount ?? 0),
-        interestAmount: isNotPaid ? 0 : (row.interestAmount ?? 0),
-        comments: row.comments ?? '',
-        collectedBy: Number.isNaN(collectedByIdNumber) ? undefined : collectedByIdNumber
-      });
+          loanSchedulerId: row.loanSchedulerId,
+          // Backend expects lookup VALUE (e.g. Cash / Online), not the code.
+          paymentMode: isNotPaid ? 'N/A' : ((row.paymentMode === 'Select' || !row.paymentMode) ? '' : row.paymentMode),
+          status: selectedStatus === 'Paid' ? 'Paid' : (selectedStatus === 'Not Paid' ? 'Not Paid' : 'Partial'),
+          paymentAmount: isNotPaid ? 0 : (row.paymentAmount ?? 0),
+          principalAmount: isNotPaid ? 0 : (row.principalAmount ?? 0),
+          interestAmount: isNotPaid ? 0 : (row.interestAmount ?? 0),
+          comments: row.comments ?? '',
+          collectedBy: Number.isNaN(collectedByIdNumber) ? undefined : collectedByIdNumber
+        });
       });
 
       await this.recoveryPostingService.save(payload).toPromise();
@@ -767,16 +772,17 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   }
 
   private loadCentersByBranch(branchId: number): void {
-    this.memberService.getCentersByBranch(branchId).subscribe({
-      next: (list) => {
+    // ✅ Subscribe to CenterService.centers$ — no extra HTTP call
+    this.centerService.centers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(list => {
         this.centers = (list || []).map(c => ({
-          id: c.id,
+          id: c.id!,
           name: c.name || '',
-          code: (c as { code?: string }).code
+          code: undefined
         }));
         this.pocs = [];
         this.selectedPoc = '';
-        // On page open: default select first center so grid loads with date + first center filter
         if (this.centers.length > 0) {
           this.selectedCenter = String(this.centers[0].id);
           this.loadPocsForCenter();
@@ -784,15 +790,9 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
           this.selectedCenter = '';
           this.loadData();
         }
-      },
-      error: () => {
-        this.centers = [];
-        this.selectedCenter = '';
-        this.pocs = [];
-        this.selectedPoc = '';
-        this.loadData();
-      }
-    });
+      });
+    // Trigger load for this branch
+    this.centerService.loadCenters(branchId);
   }
 
   private loadPocsForCenter(): void {
@@ -803,29 +803,23 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       this.loadData();
       return;
     }
-    // Same as Add Member: fetch all POCs and filter by selected center
-    this.memberService.getAllPOCs().subscribe({
-      next: (pocsList) => {
-        this.pocs = (pocsList || [])
-          .filter(poc => Number(poc.centerId) === centerId)
-          .map(poc => ({
-            ...poc,
-            name: (poc.name || [poc.firstName, poc.middleName, poc.lastName].filter(Boolean).join(' ')).trim()
-          }));
+    // ✅ Filter POCs from PocService.pocs$ cache — no extra HTTP call
+    this.pocService.pocs$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(allPocs => {
+        this.pocs = (allPocs || []).filter(poc => Number(poc.centerId) === centerId);
         this.selectedPoc = '';
         this.loadData();
-      },
-      error: () => {
-        this.pocs = [];
-        this.selectedPoc = '';
-        this.loadData();
-      }
-    });
+      });
   }
 
-  getPocDisplayName(poc: POCOption): string {
-    if (poc.name) return poc.name;
-    const parts = [poc.firstName, poc.middleName, poc.lastName].filter(Boolean);
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  getPocDisplayName(poc: Poc): string {
+    const parts = [poc.firstName, poc.lastName].filter(Boolean);
     return parts.join(' ').trim() || `POC ${poc.id}`;
   }
 

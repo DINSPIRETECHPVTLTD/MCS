@@ -1,15 +1,17 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ViewWillEnter, ModalController, ToastController, LoadingController, AlertController } from '@ionic/angular';
 import { ColDef, GridReadyEvent, GridOptions } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
 import { AuthService } from '../../services/auth.service';
-import { UserContextService } from '../../services/user-context.service';
 import { MemberService } from '../../services/member.service';
+import { CenterService } from '../../services/center.service';
+import { PocService, Poc } from '../../services/poc.service';
 import { Branch } from '../../models/branch.models';
-import { CenterOption, Member, POCOption } from '../../models/member.models';
-import { BranchService } from '../../services/branch.service';
+import { Member } from '../../models/member.models';
+import { Center } from '../../models/center.models';
 import { AddMemberModalComponent } from './add-member-modal.component';
 import { EditMemberModalComponent } from './edit-member-modal.component';
 import { AddLoanModalComponent } from '../add-loan/add-loan-modal.component';
@@ -19,20 +21,20 @@ import { AddLoanModalComponent } from '../add-loan/add-loan-modal.component';
   templateUrl: './members.page.html',
   styleUrls: ['./members.page.scss']
 })
-export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
+export class MembersComponent implements OnInit, OnDestroy, ViewWillEnter, AfterViewInit {
   activeMenu: string = 'Members';
   isLoading: boolean = false;
-  isLoadingMembers: boolean = false;
 
   selectedBranch: Branch | null = null;
   showSearch = true;
 
-  centers: CenterOption[] = [];
-  pocs: POCOption[] = [];
+  centers: Center[] = [];
+  pocs: Poc[] = [];
 
   // AG Grid
-  rowData: Array<Record<string, any>> = [];
-  originalRowData: Array<Record<string, any>> = [];
+  rowData: Member[] = [];
+  originalRowData: Member[] = [];
+
   columnDefs: ColDef[] = [
     { field: 'memberId', headerName: 'ID', width: 60, minWidth: 80 },
     {
@@ -83,27 +85,20 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
         return container;
       }
     },
-    
     { field: 'dobAge', headerName: 'DOB/Age' },
-    { field: 'center', headerName: 'Center'},
+    { field: 'center', headerName: 'Center' },
     {
       headerName: 'Address',
       flex: 2.5,
       minWidth: 320,
       cellRenderer: (params: any) => {
         const m = params.data;
-        const parts = [
-          m.addressLine1,
-          m.addressLine2,
-          m.city,
-          m.state,
-          m.pincode
-        ].filter(x => x && x.toString().trim() !== '');
-      return `<div class="address-cell">${parts.join(', ')}</div>`;
-    }
-  },
-
-    { field: 'poc', headerName: 'POC'},
+        const parts = [m.addressLine1, m.addressLine2, m.city, m.state, m.pincode]
+          .filter(x => x && x.toString().trim() !== '');
+        return `<div class="address-cell">${parts.join(', ')}</div>`;
+      }
+    },
+    { field: 'poc', headerName: 'POC' },
     {
       headerName: 'Actions',
       width: 300,
@@ -127,52 +122,41 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
         const loanBtn = document.createElement('button');
         loanBtn.textContent = 'Add/View Loan';
         loanBtn.className = 'ag-btn ag-loan';
-        
         loanBtn.addEventListener('click', async () => {
           if (params.data.loanId && params.data.loanId > 0) {
             this.openViewLoan(params.data);
           } else {
-              await this.openAddLoanModal(params.data);
+            await this.openAddLoanModal(params.data);
           }
         });
 
         container.appendChild(editBtn);
         container.appendChild(deleteBtn);
         container.appendChild(loanBtn);
-
         return container;
       }
     }
   ];
-  defaultColDef: ColDef = {
-    sortable: true,
-    filter: true,
-    resizable: true
-  };
+
+  defaultColDef: ColDef = { sortable: true, filter: true, resizable: true };
   paginationPageSize: number = 10;
-
-
-  branches: Branch[] = [];
-  branchMap: Map<number, string> = new Map();
+  selectedBranchId: number | null = null;
   gridApi: any = null;
+  gridOptions: GridOptions;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private authService: AuthService,
-    private userContext: UserContextService,
     private memberService: MemberService,
-    private branchService: BranchService,
+    private centerService: CenterService,
+    private pocService: PocService,
     private router: Router,
     private modalController: ModalController,
     private toastController: ToastController,
     private loadingController: LoadingController,
     private alertController: AlertController
   ) {
-    // Fetch all branches for mapping using branches$ observable
-    this.branchService.branches$.subscribe(branches => {
-      this.branches = branches ?? [];
-      this.branchMap = new Map(this.branches.map(b => [Number(b.id), b.name]));
-    });
-
     this.gridOptions = {
       theme: agGridTheme,
       context: { componentParent: this },
@@ -184,91 +168,120 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     };
   }
 
-  gridOptions: GridOptions;
-
   ngOnInit(): void {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
     }
 
-    console.log('Selected Branch:', this.selectedBranch);
+    this.selectedBranchId = this.authService.getBranchId();
+
+    // ✅ Subscribe to centers$ from CenterService
+    this.centerService.centers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(centers => {
+        this.centers = centers ?? [];
+        this.rebuildGrid();
+      });
+
+    // ✅ Subscribe to pocs$ from PocService
+    this.pocService.pocs$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(pocs => {
+        this.pocs = pocs ?? [];
+        this.rebuildGrid();
+      });
+
+    // ✅ Subscribe to members$ from MemberService
+    this.memberService.members$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(members => {
+        this.mapAndSetRows(members ?? []);
+      });
+
+    // ✅ Trigger initial load from respective services
+    if (this.selectedBranchId) {
+      this.memberService.loadMembers(this.selectedBranchId);
+      this.centerService.loadCenters(this.selectedBranchId);
+      this.pocService.loadPocsByBranch(this.selectedBranchId);
+    }
   }
 
   ionViewWillEnter(): void {
-    // Reload data when page becomes active
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
-      return;
-    }
-
-    const branchId = this.resolveSelectedBranchId();
-    if (branchId) {
-      // Ensure selectedBranch has at least an id (name can be resolved from branchMap).
-      if (!this.selectedBranch) {
-        const match = (this.branches ?? []).find(b => Number(b.id) === Number(branchId)) ?? null;
-        this.selectedBranch = match ?? ({ id: branchId } as any);
-      }
-      void this.refreshMembers();
-    } else {
-      // No branch selected yet.
-      this.rowData = [];
-      this.originalRowData = [];
     }
   }
 
-  ngAfterViewInit(): void {
+  ngAfterViewInit(): void { }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  
+  // Build center and POC lookup maps then re-map rows
+  private rebuildGrid(): void {
+    // Only rebuild if we already have members loaded
+    const current = (this.memberService as any).membersSubject?.getValue?.() ?? [];
+    if (current.length > 0) {
+      this.mapAndSetRows(current);
+    }
+  }
 
+  private mapAndSetRows(members: any[]): void {
+    const centerMap = new Map<number, string>(
+      this.centers.map(c => [Number(c.id), c.name])
+    );
+    const pocMap = new Map<number, string>(
+      this.pocs.map(p => [
+        Number(p.id),
+        [p.firstName, p.lastName].filter(Boolean).join(' ').trim()
+      ])
+    );
+
+    const raw = (members as any)?.$values ?? members;
+    const list: any[] = Array.isArray(raw) ? raw : [];
+
+    const mappedData = list.map(m => this.toGridRow(m, centerMap, pocMap));
+
+    // Deduplicate by memberId
+    const seenIds = new Set<number>();
+    const uniqueData = mappedData.filter(r => {
+      const id = Number((r as any)?.memberId ?? 0);
+      if (!id || Number.isNaN(id)) return true;
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    });
+
+    if (this.gridApi) {
+      this.gridApi.setRowData(uniqueData);
+    }
+  }
 
   onMenuChange(menu: string): void {
     this.activeMenu = menu;
   }
 
   onBranchChange(branch: Branch): void {
-    console.log('MembersPage: onBranchChange called with branch ->', branch);
     this.selectedBranch = branch;
-    this.rowData = [];
-    this.originalRowData = [];
-    void this.refreshMembers();
   }
 
   onFilterChange(event: any): void {
     const rawValue = (event?.target?.value ?? event?.detail?.value ?? '').toString();
     const searchValue = rawValue.trim().toLowerCase();
-    
-    if (!this.originalRowData || this.originalRowData.length === 0) {
-      console.log('No data to filter');
-      return;
-    }
 
-    // Define searchable fields
-    const searchFields = [
-      'memberId',
-      'memberFirstName',
-      'memberLastName',
-      'dobAge',
-      'address',
-      'memberPhone',
-      'center',
-      'poc'
-    ];
+    if (!this.originalRowData || this.originalRowData.length === 0) return;
 
-    if (searchValue === '') {
-      // If search is empty, show all data
-      this.rowData = [...this.originalRowData];
-    } else {
-      // Filter from original data and update rowData
-      this.rowData = this.originalRowData.filter(row =>
-        searchFields.some(field =>
-          String(row[field] || '').toLowerCase().includes(searchValue)
-        )
+    const searchFields = ['memberId', 'memberFirstName', 'memberLastName', 'dobAge', 'address', 'memberPhone', 'center', 'poc'];
+
+    this.rowData = searchValue === ''
+      ? [...this.originalRowData]
+      : this.originalRowData.filter(row =>
+        searchFields.some(field => String((row as any)[field] || '').toLowerCase().includes(searchValue))
       );
-    }
-    
-    // Update grid with filtered data
+
     if (this.gridApi) {
       this.gridApi.setRowData(this.rowData);
     }
@@ -276,143 +289,44 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
 
   onGridReady(params: GridReadyEvent): void {
     this.gridApi = params.api;
-    console.log('Grid API initialized');
   }
 
-
-  private resolveSelectedBranchId(): number | null {
-    const fromContext = this.userContext.branchId;
-    if (fromContext != null) {
-      const ctx = Number(fromContext);
-      return Number.isFinite(ctx) && ctx > 0 ? ctx : null;
-    }
-
-    const raw = localStorage.getItem('selected_branch_id');
-    const fromStorage = raw ? Number(raw) : null;
-    return fromStorage && Number.isFinite(fromStorage) && fromStorage > 0 ? fromStorage : null;
-  }
-
-  private async refreshMembers(): Promise<void> {
-    if (this.isLoadingMembers) {
-      return;
-    }
-
-    const branchId = Number(this.selectedBranch?.id ?? this.resolveSelectedBranchId() ?? 0);
-    console.log('MembersPage: refreshMembers branchId =', branchId);
-    if (!branchId || Number.isNaN(branchId)) {
-      this.rowData = [];
-      this.originalRowData = [];
-      return;
-    }
-
-    this.isLoadingMembers = true;
-    this.isLoading = true;
-
-    const loading = await this.loadingController.create({ message: 'Loading members...' });
-    await loading.present();
-
-    forkJoin({
-      centers: this.memberService.getAllCenters(),
-      pocs: this.memberService.getAllPOCs(),
-      members: this.memberService.getMembersByBranch(branchId)
-    }).subscribe({
-      next: ({ centers, pocs, members }) => {
-        loading.dismiss();
-        this.isLoadingMembers = false;
-        this.isLoading = false;
-
-        // Keep only this branch's centers for mapping CenterId -> CenterName.
-        this.centers = (centers ?? []).filter(c => Number((c as any).branchId) === Number(branchId));
-        this.pocs = pocs ?? [];
-
-        const centerMap = new Map<number, string>(this.centers.map(c => [Number(c.id), c.name]));
-        const pocMap = new Map<number, string>(
-          (this.pocs ?? []).map(p => {
-            const rawName = (p as any).name ?? (p as any).poc ?? (p as any).POC ?? '';
-            const name = this.normalizeDisplayName(rawName);
-            return [Number((p as any).id), name];
-          })
-        );
-
-        const raw = (members as any)?.$values ?? members;
-        const list: any[] = Array.isArray(raw) ? raw : [];
-
-        const mappedData = list.map(m => this.toGridRow(m as any, centerMap, pocMap, branchId));
-
-        // Defensive: prevent duplicate rows when backend returns duplicates.
-        const seenIds = new Set<number>();
-        const uniqueData = mappedData.filter(r => {
-          const id = Number((r as any)?.memberId ?? 0);
-          if (!id || Number.isNaN(id)) return true;
-          if (seenIds.has(id)) return false;
-          seenIds.add(id);
-          return true;
-        });
-
-        this.rowData = uniqueData;
-        console.log('Loaded members:', this.rowData);
-        this.originalRowData = [...uniqueData];  // Store original data for filtering
-      },
-      error: async () => {
-        await loading.dismiss();
-        this.isLoadingMembers = false;
-        this.isLoading = false;
-        this.rowData = [];
-        this.originalRowData = [];
-        const toast = await this.toastController.create({
-          message: 'Failed to load members.',
-          duration: 2000,
-          color: 'danger',
-          position: 'top'
-        });
-        await toast.present();
-      }
-    });
-  }
+  onCellClicked(_event: any): void { }
 
   private toGridRow(
-    member: Member,
+    member: any,
     centerMap: Map<number, string>,
-    pocMap: Map<number, string>,
-    branchId?: number
+    pocMap: Map<number, string>
   ): Record<string, any> {
-    const m: any = member as any;
+    const m: any = member;
 
-    // Backend DTO uses PascalCase (e.g., FirstName, DOB). Keep camelCase fallbacks too.
     const memberId = Number(m.id ?? m.Id ?? 0);
     const firstName = (m.firstName ?? m.FirstName ?? '').toString();
     const lastName = (m.lastName ?? m.LastName ?? '').toString();
     const dob = (m.dob ?? m.Dob ?? m.DOB ?? m.dateOfBirth ?? m.DateOfBirth ?? '').toString();
     const phoneNumber = (m.phoneNumber ?? m.PhoneNumber ?? '').toString();
     const guardianFirstName = (m.guardianFirstName ?? m.GuardianFirstName ?? '').toString();
-    const guardianLastName = (m.guardianLastName ?? m.GuardianLastName ?? '').toString(); 
+    const guardianLastName = (m.guardianLastName ?? m.GuardianLastName ?? '').toString();
     const guardianPhone = (m.guardianPhone ?? m.GuardianPhone ?? '').toString();
     const centerId = Number(m.centerId ?? m.CenterId ?? m.CenterID ?? 0);
-    
-
     const pocId = Number(m.pocId ?? m.POCId ?? 0);
+
     const pocDisplay = this.normalizeDisplayName(
-      this.resolvePocNameFromMember(m) ||
-      pocMap.get(pocId) ||
-      (pocId ? pocId : '')
+      this.resolvePocNameFromMember(m) || pocMap.get(pocId) || (pocId ? String(pocId) : '')
     );
 
     const dobDisplay = this.formatDate(dob);
     const ageValue = (m.age ?? m.Age ?? '').toString();
     const dobAge = dobDisplay && ageValue ? `${dobDisplay} / ${ageValue}` : (dobDisplay || ageValue || '');
+
     const addressLine1 = (m.addressLine1 ?? m.AddressLine1 ?? '').toString();
     const addressLine2 = (m.addressLine2 ?? m.AddressLine2 ?? '').toString();
-    const city         = (m.city ?? m.City ?? '').toString();
-    const state        = (m.state ?? m.State ?? '').toString();
-    const pincode      = (m.pincode ?? m.Pincode ?? m.ZipCode ?? '').toString();
+    const city = (m.city ?? m.City ?? '').toString();
+    const state = (m.state ?? m.State ?? '').toString();
+    const pincode = (m.pincode ?? m.Pincode ?? m.ZipCode ?? '').toString();
 
-    const combinedAddress = (this.formatAddress(m) || [
-      addressLine1,
-      addressLine2,
-      city,
-      state,
-      pincode
-    ].filter(x => x && x.toString().trim() !== '').join(', ')).toString();
+    const combinedAddress = (this.formatAddress(m) || [addressLine1, addressLine2, city, state, pincode]
+      .filter(x => x && x.toString().trim() !== '').join(', ')).toString();
 
     return {
       memberId,
@@ -429,39 +343,22 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       city,
       state,
       pincode,
-      branch: this.selectedBranch?.name ?? (branchId ? this.branchMap.get(Number(branchId)) : ''),
       center: centerMap.get(centerId) ?? '',
       poc: pocDisplay,
       loanId: m.loanId ?? null
     };
   }
 
-  onCellClicked(event: any) {
-    // Event handling is now done in cellRenderer with direct addEventListener
-    // This method is kept for potential future use
-  }
-
   private async deleteRow(row: any): Promise<void> {
-    console.log('Delete clicked:', row);
     const alert = await this.alertController.create({
       header: 'Mark as Inactive',
       message: `Are you sure you want to mark ${row.memberFirstName} ${row.memberLastName} as inactive?`,
       buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel',
-          cssClass: 'secondary',
-          handler: () => {
-            console.log('Delete cancelled');
-          }
-        },
+        { text: 'Cancel', role: 'cancel' },
         {
           text: 'Inactive',
           role: 'destructive',
-          handler: async () => {
-            console.log('Delete confirmed for:', row);
-            await this.confirmDeleteMember(row);
-          }
+          handler: async () => await this.confirmDeleteMember(row)
         }
       ]
     });
@@ -469,46 +366,25 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
   }
 
   private async confirmDeleteMember(row: any): Promise<void> {
-    const loading = await this.loadingController.create({
-      message: 'Marking member as inactive...'
-    });
+    const loading = await this.loadingController.create({ message: 'Marking member as inactive...' });
     await loading.present();
 
-    this.memberService.inactivateMember(row.memberId).subscribe({
+    // inactivateMember auto-reloads members$ via tap() in MemberService
+    this.memberService.deleteMember(row.memberId).subscribe({
       next: async () => {
         await loading.dismiss();
-        const toast = await this.toastController.create({
-          message: 'Member marked as inactive.',
-          duration: 2000,
-          color: 'success',
-          position: 'top'
-        });
-        await toast.present();
-        this.refreshMembers();
+        await this.showToast('Member marked as inactive.', 'success');
       },
-      error: async (error) => {
+      error: async () => {
         await loading.dismiss();
-        console.error('Error marking member as inactive:', error);
-        const toast = await this.toastController.create({
-          message: 'Unable to mark member as inactive.',
-          duration: 2000,
-          color: 'danger',
-          position: 'top'
-        });
-        await toast.present();
+        await this.showToast('Unable to mark member as inactive.', 'danger');
       }
     });
   }
 
   private formatAddress(m: any): string {
-    const parts = [
-      m.address1 ?? m.Address1,
-      m.address2 ?? m.Address2,
-      m.city ?? m.City,
-      m.state ?? m.State,
-      m.zipCode ?? m.ZipCode
-    ].filter(Boolean);
-    return parts.join(', ');
+    return [m.address1 ?? m.Address1, m.address2 ?? m.Address2, m.city ?? m.City, m.state ?? m.State, m.zipCode ?? m.ZipCode]
+      .filter(Boolean).join(', ');
   }
 
   private formatDate(value: any): string {
@@ -522,44 +398,32 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
     if (value == null) return '';
     if (typeof value === 'string') return value.trim();
     if (typeof value === 'number') return value.toString();
-    if (Array.isArray(value)) {
-      const first = value.find(v => v != null);
-      return this.normalizeDisplayName(first);
-    }
+    if (Array.isArray(value)) return this.normalizeDisplayName(value.find(v => v != null));
     if (typeof value === 'object') {
       const rawName = value.name ?? value.Name ?? value.fullName ?? value.FullName ?? '';
-      if (typeof rawName === 'string') {
-        const name = rawName.trim();
-        if (name) return name;
-      } else if (rawName && typeof rawName === 'object') {
-        const nested = this.normalizeDisplayName(rawName);
-        if (nested) return nested;
-      }
-
+      if (typeof rawName === 'string' && rawName.trim()) return rawName.trim();
       const first = (value.firstName ?? value.FirstName ?? '').toString().trim();
       const last = (value.lastName ?? value.LastName ?? '').toString().trim();
-      const full = [first, last].filter(Boolean).join(' ').trim();
-      return full || '';
+      return [first, last].filter(Boolean).join(' ').trim() || '';
     }
     return String(value).trim();
   }
 
   private resolvePocNameFromMember(member: any): string {
-    const fromDirect = this.normalizeDisplayName(member?.poc ?? member?.POC ?? member?.pocName ?? member?.PocName ?? '');
+    const fromDirect = this.normalizeDisplayName(member?.poc ?? member?.POC ?? member?.pocName ?? '');
     if (fromDirect) return fromDirect;
 
     const pocId = Number(member?.pocId ?? member?.POCId ?? 0);
-    const centerPocs = member?.center?.poCs ?? member?.center?.POCs ?? member?.Center?.poCs ?? [];
+    const centerPocs = member?.center?.poCs ?? member?.center?.POCs ?? [];
     if (pocId && Array.isArray(centerPocs)) {
       const match = centerPocs.find((p: any) => Number(p?.id ?? p?.Id ?? 0) === pocId);
       const fromCenter = this.normalizeDisplayName(match ?? '');
       if (fromCenter) return fromCenter;
     }
-
     return '';
   }
 
-  // ============= ADD MEMBER MODAL METHODS =============
+  // ============= MODAL METHODS =============
 
   async openAddMemberModal(): Promise<void> {
     const modal = await this.modalController.create({
@@ -568,66 +432,50 @@ export class MembersComponent implements OnInit, ViewWillEnter, AfterViewInit {
       breakpoints: [0, 0.5, 1],
       initialBreakpoint: 1
     });
-
     await modal.present();
 
     const { data } = await modal.onWillDismiss();
-    if (data && data.success) {
-      // Show success message
-      this.showToast('Member added successfully!', 'success');
-      // TODO: Reload members list when API is ready
+    if (data?.success) {
+      await this.showToast('Member added successfully!', 'success');
+      // members$ auto-refreshes via MemberService tap()
     }
   }
 
-  private async showToast(message: string, color: string): Promise<void> {
-    const toast = await this.toastController.create({
-      message,
-      duration: 3000,
-      color,
-      position: 'top'
-    });
-    await toast.present();
-  }
-
-  async openEditMemberModal(row: MembersComponent): Promise<void> {
+  async openEditMemberModal(row: any): Promise<void> {
     const modal = await this.modalController.create({
       component: EditMemberModalComponent,
       cssClass: 'edit-member-modal',
       breakpoints: [0, 0.5, 1],
       initialBreakpoint: 1,
-      componentProps: {
-        memberData: row
-      }
+      componentProps: { memberData: row }
     });
-
     await modal.present();
-
   }
+
   openViewLoan(member: any): void {
     if (!member || !member.loanId) return;
     this.router.navigate(['/view-loan', member.loanId]);
   }
-  
+
   async openAddLoanModal(member: any): Promise<void> {
     const modal = await this.modalController.create({
       component: AddLoanModalComponent,
       cssClass: 'add-loan-modal',
       breakpoints: [0, 0.5, 1],
       initialBreakpoint: 1,
-      componentProps: {
-        selectedMember: member
-      }
+      componentProps: { selectedMember: member }
     });
-    
     await modal.present();
 
     const { data } = await modal.onWillDismiss();
     if (data?.loan) {
-      this.showToast('Loan added successfully!', 'success');
-      await this.refreshMembers(); // refresh members so button changes to "View Loan"
+      await this.showToast('Loan added successfully!', 'success');
+      // members$ auto-refreshes via MemberService tap()
     }
   }
 
-
+  private async showToast(message: string, color: string): Promise<void> {
+    const toast = await this.toastController.create({ message, duration: 3000, color, position: 'top' });
+    await toast.present();
+  }
 }
-
