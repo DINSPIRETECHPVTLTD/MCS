@@ -71,7 +71,7 @@ export class MasterDataComponent implements OnInit, ViewWillEnter {
           const isInactive = (params.data as MasterLookup)?.isActive === false;
           container.innerHTML = `
             <button class="ag-btn ag-edit" title="Edit" style="background: var(--ion-color-primary); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 500; margin-right: 8px;">Edit</button>
-            <button class="ag-btn ag-delete" title="Deactivate" style="background: var(--ion-color-danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 500;">${isInactive ? 'Inactive' : 'Deactivate'}</button>
+            <button class="ag-btn ag-delete" title="Inactive" style="background: var(--ion-color-danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 500;">Inactive</button>
           `;
           const editBtn = container.querySelector('.ag-edit');
           const deleteBtn = container.querySelector('.ag-delete');
