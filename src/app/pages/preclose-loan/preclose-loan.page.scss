@@ -195,58 +195,10 @@
     color: var(--ion-color-medium-shade);
   }
 
-  .table-wrapper {
-    overflow-x: auto;
+  .ag-grid-wrapper {
     border: 1px solid var(--ion-color-medium);
     border-radius: 6px;
-  }
-
-  .schedule-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-
-    th,
-    td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--ion-color-light);
-    }
-
-    th {
-      background: var(--ion-color-light);
-      font-weight: 600;
-      color: var(--ion-color-dark);
-    }
-
-    .col-check {
-      width: 70px;
-      text-align: center;
-    }
-
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
-
-    tbody tr:hover {
-      background: var(--ion-color-light);
-    }
-
-    tbody tr.readonly-row {
-      background: var(--ion-color-light-tint);
-    }
-
-    ion-checkbox {
-      margin: 0;
-    }
-
-    ion-select,
-    ion-input {
-      --padding-start: 8px;
-      --padding-end: 8px;
-      min-width: 100px;
-      max-width: 180px;
-    }
+    overflow: hidden;
   }
 
   .no-rows {
@@ -254,4 +206,8 @@
     color: var(--ion-color-medium);
     font-size: 0.9rem;
   }
+}
+
+:host ::ng-deep .ag-theme-alpine .ag-row.readonly-row .ag-cell {
+  background: var(--ion-color-light-tint);
 }

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -11,12 +12,20 @@ import { MasterDataService } from '../../services/master-data.service';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { map, switchMap } from 'rxjs/operators';
 import { Loan } from '../../models/loan.models';
+import { firstValueFrom } from 'rxjs';
 import {
   LoanSchedulerRecoveryDto,
   LoanSchedulerSaveRequest
 } from '../../models/recovery-posting.models';
 import { LookupKeys } from '../../models/master-data.models';
 import { User } from '../../models/user.models';
+import {
+  ColDef,
+  GridApi,
+  GridOptions,
+  GridReadyEvent
+} from 'ag-grid-community';
+import { agGridTheme } from '../../ag-grid-theme';
 
 /** One row in the Prepayment EMI table. */
 export interface PrepaymentEmiRow {
@@ -53,11 +62,28 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
   totalAmountPaid = 0;
   remainingBalance = 0;
   isLoading = false;
+  isSaving = false;
   loadError: string | null = null;
 
   paymentModeValues: string[] = ['Select'];
-  private paymentModeValueToCode: Record<string, string> = {};
   users: User[] = [];
+  emiColumnDefs: ColDef[] = [];
+  emiDefaultColDef: ColDef = { sortable: true, filter: false, resizable: true };
+  emiGridOptions: GridOptions<PrepaymentEmiRow> = {
+    theme: agGridTheme,
+    rowSelection: 'multiple',
+    suppressRowClickSelection: true,
+    suppressMovableColumns: true,
+    rowClassRules: {
+      'readonly-row': (params) => !this.isNotPaid(params.data)
+    },
+    onSelectionChanged: () => this.onGridSelectionChanged(),
+    onCellValueChanged: () => this.onGridCellValueChanged()
+  };
+  emiPagination = true;
+  emiPaginationPageSize = 20;
+  emiPaginationPageSizeSelector: number[] = [10, 20, 50, 100];
+  private emiGridApi?: GridApi<PrepaymentEmiRow>;
 
   constructor(
     private authService: AuthService,
@@ -69,7 +95,8 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
     private userService: UserService,
     private masterDataService: MasterDataService,
     private toastController: ToastController,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -77,6 +104,7 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
       this.router.navigate(['/login']);
       return;
     }
+    this.initializeGrid();
     this.loadPaymentModes();
     this.loadUsers();
     const loanIdParam = this.route.snapshot.queryParamMap.get('loanId');
@@ -143,6 +171,9 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
                 return;
               }
               this.emiRows = this.mapSchedulersToEmiRows(schedulers);
+              if (this.emiGridApi) {
+                this.emiGridApi.setGridOption('rowData', this.emiRows);
+              }
               // Total Amount (Paid) = sum of PaymentAmount for rows with Status Paid or Partial/Partially Paid.
               this.totalAmountPaid = (schedulers || []).reduce(
                 (sum, s) => {
@@ -163,6 +194,9 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
               this.loadError = 'Failed to load prepayment data.';
               console.error(err);
               this.emiRows = [];
+              if (this.emiGridApi) {
+                this.emiGridApi.setGridOption('rowData', this.emiRows);
+              }
               if (this.loan) {
                 this.totalAmountPaid = 0;
                 this.remainingBalance = this.loan.totalAmount ?? 0;
@@ -268,12 +302,21 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
     return value != null ? Number(value).toFixed(2) : '0.00';
   }
 
-  isNotPaid(row: PrepaymentEmiRow): boolean {
-    return row.paymentStatus === 'Not Paid';
+  isNotPaid(row: PrepaymentEmiRow | null | undefined): boolean {
+    return !!row && row.paymentStatus === 'Not Paid';
+  }
+
+  private getSelectedNotPaidRows(): PrepaymentEmiRow[] {
+    if (this.emiGridApi) {
+      return this.emiGridApi
+        .getSelectedRows()
+        .filter((row) => this.isNotPaid(row));
+    }
+    return this.emiRows.filter((r) => r.selected && this.isNotPaid(r));
   }
 
   get canSave(): boolean {
-    const selected = this.emiRows.filter((r) => r.selected && this.isNotPaid(r));
+    const selected = this.getSelectedNotPaidRows();
     if (selected.length === 0) return false;
     for (const r of selected) {
       if (!r.paymentMode || r.paymentMode === 'Select') return false;
@@ -304,8 +347,6 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
               LookupKeys.PaymentMode
           )
           .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-        const getCode = (m: Record<string, unknown>) =>
-          String(m['lookupCode'] ?? m['LookupCode'] ?? '').trim();
         const getValue = (m: Record<string, unknown>) =>
           String(
             m['lookupValue'] ??
@@ -318,17 +359,17 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
           .map((m) => getValue(m as unknown as Record<string, unknown>))
           .filter(Boolean);
         this.paymentModeValues = ['Select', ...values];
-        this.paymentModeValueToCode = {};
-        filtered.forEach((m) => {
-          const r = m as unknown as Record<string, unknown>;
-          const v = getValue(r);
-          const c = getCode(r);
-          if (v && c) this.paymentModeValueToCode[v] = c;
+        this.emiGridApi?.refreshCells({
+          columns: ['paymentMode'],
+          force: true
         });
       },
       error: () => {
         this.paymentModeValues = ['Select', 'Online', 'Cash'];
-        this.paymentModeValueToCode = { Online: 'ON', Cash: 'CH' };
+        this.emiGridApi?.refreshCells({
+          columns: ['paymentMode'],
+          force: true
+        });
       }
     });
   }
@@ -342,6 +383,10 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
           if (row.collectedBy == null && currentUserId != null) {
             row.collectedBy = currentUserId;
           }
+        });
+        this.emiGridApi?.refreshCells({
+          columns: ['collectedBy'],
+          force: true
         });
       },
       error: () => {
@@ -383,7 +428,10 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
   }
 
   async save(): Promise<void> {
-    const selected = this.emiRows.filter((r) => r.selected && this.isNotPaid(r));
+    if (this.isSaving) return;
+    this.isSaving = true;
+    this.emiGridApi?.stopEditing();
+    const selected = this.getSelectedNotPaidRows();
     if (selected.length === 0) {
       await this.showToast('Select at least one row to pay.', 'warning');
       return;
@@ -401,6 +449,12 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
         await this.showToast('Please enter Reasons for all selected rows.', 'warning');
         return;
       }
+      // P0 hardening: outstanding must come from server schedule (ActualEmiAmount).
+      const scheduled = r.actualEmiAmount != null ? Number(r.actualEmiAmount) : NaN;
+      if (Number.isNaN(scheduled) || scheduled <= 0) {
+        await this.showToast('Scheduled outstanding amount is invalid. Cannot post payment.', 'warning');
+        return;
+      }
     }
 
     const payment =
@@ -412,33 +466,37 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
 
     try {
       const payload: LoanSchedulerSaveRequest[] = selected.map((row) => {
-        const paymentAmount = row.weeklyDue;
+        const paymentAmountRaw = row.actualEmiAmount != null ? Number(row.actualEmiAmount) : 0;
+        const paymentAmount = Math.round(paymentAmountRaw * 100) / 100;
+        if (paymentAmount <= 0) {
+          throw new Error('Payment amount must be greater than 0.');
+        }
         const { principalAmount, interestAmount } =
           this.calculatePrincipalInterest(row, paymentAmount);
-        const paymentModeCode =
-          this.paymentModeValueToCode[row.paymentMode] ?? row.paymentMode;
         return {
           loanSchedulerId: row.loanSchedulerId,
           status: 'Paid',
-          paymentMode: paymentModeCode,
+          // Keep consistent with Recovery Posting and backend expectations: send lookup VALUE (e.g. Cash / Online).
+          paymentMode: String(row.paymentMode ?? '').trim(),
           paymentAmount,
           principalAmount,
           interestAmount,
-          comments: row.reasons ?? '',
+          comments: String(row.reasons ?? '').trim(),
           collectedBy: row.collectedBy ?? undefined
         };
       });
-      await this.recoveryPostingService.save(payload).toPromise();
-      await payment.dismiss();
+      await firstValueFrom(this.recoveryPostingService.save(payload));
       await this.showToast('Prepayment saved successfully.', 'success');
       this.loadData();
     } catch (err: unknown) {
-      await payment.dismiss();
       const e = err as { error?: { message?: string }; message?: string };
       await this.showToast(
         e?.error?.message ?? e?.message ?? 'Failed to save prepayment.',
         'danger'
       );
+    } finally {
+      await payment.dismiss().catch(() => {});
+      this.isSaving = false;
     }
   }
 
@@ -468,4 +526,103 @@ export class PrecloseLoanComponent implements OnInit, ViewWillEnter {
   }
 
   onBranchChange(_branch: Branch): void {}
+
+  private initializeGrid(): void {
+    this.emiColumnDefs = [
+      {
+        headerName: 'Select',
+        width: 90,
+        minWidth: 90,
+        maxWidth: 90,
+        sortable: false,
+        filter: false,
+        resizable: false,
+        checkboxSelection: (params) => this.isNotPaid(params.data),
+        headerCheckboxSelection: false
+      },
+      { headerName: 'Week No', field: 'weekNo', width: 100 },
+      {
+        headerName: 'Collection Date',
+        field: 'collectionDate',
+        width: 150,
+        valueFormatter: (params) => this.formatDateDDMMYY(params.value)
+      },
+      {
+        headerName: 'Paid Date',
+        field: 'paidDate',
+        width: 130,
+        valueFormatter: (params) => this.formatDate(params.value)
+      },
+      { headerName: 'Payment Status', field: 'paymentStatus', width: 150 },
+      {
+        headerName: 'Paid Amount',
+        field: 'paidAmount',
+        width: 130,
+        valueFormatter: (params) => this.formatAmount(params.value)
+      },
+      {
+        headerName: 'Weekly Due (EMI)',
+        field: 'weeklyDue',
+        width: 150,
+        valueFormatter: (params) => this.formatAmount(params.value)
+      },
+      {
+        headerName: 'Payment Mode',
+        field: 'paymentMode',
+        width: 160,
+        editable: (params) => this.isNotPaid(params.data),
+        cellEditor: 'agSelectCellEditor',
+        cellEditorParams: () => ({ values: this.paymentModeValues })
+      },
+      {
+        headerName: 'Collected By',
+        field: 'collectedBy',
+        width: 190,
+        editable: (params) => this.isNotPaid(params.data),
+        cellEditor: 'agSelectCellEditor',
+        cellEditorParams: () => ({ values: this.getCollectedByOptionValues() }),
+        valueParser: (params) => {
+          if (params.newValue == null || params.newValue === '') return null;
+          const id = Number(params.newValue);
+          return Number.isNaN(id) ? null : id;
+        },
+        valueFormatter: (params) =>
+          this.getUserIdDisplayName(params.value != null ? Number(params.value) : null) || '–'
+      },
+      {
+        headerName: 'Reasons',
+        field: 'reasons',
+        minWidth: 220,
+        flex: 1,
+        editable: (params) => this.isNotPaid(params.data),
+        valueFormatter: (params) => params.value || '–'
+      }
+    ];
+  }
+
+  onEmiGridReady(event: GridReadyEvent<PrepaymentEmiRow>): void {
+    this.emiGridApi = event.api;
+    this.emiGridApi.setGridOption('rowData', this.emiRows);
+    setTimeout(() => this.emiGridApi?.sizeColumnsToFit(), 100);
+  }
+
+  private onGridSelectionChanged(): void {
+    const selectedIds = new Set(
+      (this.emiGridApi?.getSelectedRows() || []).map((row) => row.loanSchedulerId)
+    );
+    this.emiRows.forEach((row) => {
+      row.selected = selectedIds.has(row.loanSchedulerId);
+    });
+    this.ngZone.run(() => {});
+  }
+
+  private onGridCellValueChanged(): void {
+    this.ngZone.run(() => {});
+  }
+
+  private getCollectedByOptionValues(): string[] {
+    return this.users
+      .map((u) => (u.id != null ? String(u.id) : ''))
+      .filter((id) => id !== '');
+  }
 }

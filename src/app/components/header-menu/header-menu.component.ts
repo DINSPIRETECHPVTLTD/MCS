@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnDestroy, OnInit, Input, Output, EventEmitter, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ToastController, LoadingController } from '@ionic/angular';
@@ -9,6 +9,8 @@ import { OrganizationService } from '../../services/organization.service';
 import { BranchService } from '../../services/branch.service';
 import { Organization } from '../../models/organization.models';
 import { Branch } from '../../models/branch.models';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-header-menu',
@@ -17,7 +19,7 @@ import { Branch } from '../../models/branch.models';
   templateUrl: './header-menu.component.html',
   styleUrls: ['./header-menu.component.scss']
 })
-export class HeaderMenuComponent implements OnInit {
+export class HeaderMenuComponent implements OnInit, OnDestroy {
   @Input() activeMenu: string = 'Dashboard';
   @Output() menuChange = new EventEmitter<string>();
   @Output() branchChange = new EventEmitter<Branch>();
@@ -43,6 +45,7 @@ export class HeaderMenuComponent implements OnInit {
   isOrgMode: boolean = false;
   isBranchMode: boolean = false;
   showBranchDropdown: boolean = false;
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private authService: AuthService,
@@ -126,6 +129,7 @@ export class HeaderMenuComponent implements OnInit {
         localStorage.setItem('organization_info', JSON.stringify(org));
       },
       error: (error: string) => {
+        loading.dismiss().catch(() => {});
         console.error('Error loading organization:', error);
       }
     });
@@ -144,7 +148,7 @@ export class HeaderMenuComponent implements OnInit {
     }
     
     // Fallback: Fetch branches from API if not available from login
-      this.branchService.branches$.subscribe({
+      this.branchService.branches$.pipe(takeUntil(this.destroy$)).subscribe({
         next: (branches) => {
           this.branches = branches;
           this.setSelectedBranch(branches);
@@ -190,7 +194,6 @@ export class HeaderMenuComponent implements OnInit {
         // ignore storage errors
       }
       this.branchChange.emit(this.selectedBranch);
-      console.log('Selected Branch set to header:', this.selectedBranch);
     }
   }
 
@@ -439,5 +442,10 @@ export class HeaderMenuComponent implements OnInit {
       // Force navigation using window location as fallback
       window.location.href = '/login';
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

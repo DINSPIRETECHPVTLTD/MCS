@@ -46,29 +46,19 @@
         <!-- Week-wise Repayment Schedule (Read-Only Grid) -->
         <div class="schedule-section">
           <h3>Week-wise Repayment Schedule</h3>
-          <div class="table-wrapper">
-            <table class="schedule-table">
-              <thead>
-                <tr>
-                  <th>Week No</th>
-                  <th>Collection Date</th>
-                  <th>Paid Date</th>
-                  <th>Payment Status</th>
-                  <th>Paid Amount</th>
-                  <th>Reasons</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let row of scheduleRows">
-                  <td>{{ row.weekNo }}</td>
-                  <td>{{ formatDateDDMMYY(row.collectionDate) }}</td>
-                  <td>{{ formatDate(row.paidDate) }}</td>
-                  <td>{{ row.paymentStatus }}</td>
-                  <td>{{ formatAmount(row.paidAmount) }}</td>
-                  <td>{{ row.reasons || '' }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="ag-grid-wrapper" *ngIf="scheduleRows.length > 0">
+            <ag-grid-angular
+              class="ag-theme-alpine repayment-grid"
+              style="width: 100%; height: 56vh;"
+              [rowData]="scheduleRows"
+              [columnDefs]="columnDefs"
+              [defaultColDef]="defaultColDef"
+              [gridOptions]="gridOptions"
+              [pagination]="pagination"
+              [paginationPageSize]="paginationPageSize"
+              [paginationPageSizeSelector]="paginationPageSizeSelector"
+              (gridReady)="onGridReady($event)">
+            </ag-grid-angular>
           </div>
           <p *ngIf="scheduleRows.length === 0" class="no-rows">No Schedule</p>
         </div>

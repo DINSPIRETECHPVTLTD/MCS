@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { map, catchError, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
@@ -46,7 +46,7 @@ export class RecoveryPostingService {
       params
     }).pipe(
       timeout(15000),
-      catchError(() => of([]))
+      catchError((err) => throwError(() => err))
     );
   }
 
@@ -67,7 +67,7 @@ export class RecoveryPostingService {
           return (response as { $values: LoanSchedulerRecoveryDto[] }).$values;
         return [];
       }),
-      catchError(() => of([]))
+      catchError((err) => throwError(() => err))
     );
   }
 

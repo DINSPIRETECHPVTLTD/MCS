@@ -115,6 +115,20 @@
 }
 
 .loan-filter {
+  &.loan-filter-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .loan-filter-title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
   h2 {
     margin: 0;
     font-size: 22px;

@@ -47,12 +47,12 @@
               <ion-button
                 color="primary"
                 fill="solid"
-                [disabled]="!canSave || loanId == null || isLoading || !!loadError"
+                [disabled]="!canSave || loanId == null || isLoading || isSaving || !!loadError"
                 (click)="save()">
                 <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
                 Save
               </ion-button>
-              <ion-button color="medium" fill="solid" [disabled]="isLoading" (click)="cancel()">
+              <ion-button color="medium" fill="solid" [disabled]="isLoading || isSaving" (click)="cancel()">
                 <ion-icon name="close-circle-outline" slot="start"></ion-icon>
                 Cancel
               </ion-button>
@@ -73,77 +73,19 @@
         <div class="schedule-section">
           <h3>EMI Schedule – Part-Payment / Pre-Closure</h3>
           <p class="table-hint">Select Not Paid rows, set Payment Mode and Collected By, then click Save.</p>
-          <div class="table-wrapper">
-            <table class="schedule-table">
-              <thead>
-                <tr>
-                  <th class="col-check">Select</th>
-                  <th>Week No</th>
-                  <th>Collection Date</th>
-                  <th>Paid Date</th>
-                  <th>Payment Status</th>
-                  <th>Paid Amount</th>
-                  <th>Weekly Due (EMI)</th>
-                  <th>Payment Mode</th>
-                  <th>Collected By</th>
-                  <th>Reasons</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let row of emiRows" [class.readonly-row]="!isNotPaid(row)">
-                  <td class="col-check">
-                    <ion-checkbox
-                      *ngIf="isNotPaid(row)"
-                      [checked]="row.selected"
-                      (ionChange)="row.selected = $any($event).detail.checked">
-                    </ion-checkbox>
-                    <span *ngIf="!isNotPaid(row)">–</span>
-                  </td>
-                  <td>{{ row.weekNo }}</td>
-                  <td>{{ formatDateDDMMYY(row.collectionDate) }}</td>
-                  <td>{{ formatDate(row.paidDate) }}</td>
-                  <td>{{ row.paymentStatus }}</td>
-                  <td>{{ formatAmount(row.paidAmount) }}</td>
-                  <td>{{ formatAmount(row.weeklyDue) }}</td>
-                  <td>
-                    <ion-select
-                      *ngIf="isNotPaid(row)"
-                      [value]="row.paymentMode"
-                      (ionChange)="row.paymentMode = $any($event).detail.value"
-                      interface="popover"
-                      placeholder="Mode">
-                      <ion-select-option *ngFor="let opt of paymentModeValues" [value]="opt">
-                        {{ opt }}
-                      </ion-select-option>
-                    </ion-select>
-                    <span *ngIf="!isNotPaid(row)">{{ row.paymentMode === 'Select' ? '–' : row.paymentMode }}</span>
-                  </td>
-                  <td>
-                    <ion-select
-                      *ngIf="isNotPaid(row)"
-                      [value]="row.collectedBy"
-                      (ionChange)="row.collectedBy = $any($event).detail.value != null ? +$any($event).detail.value : null"
-                      interface="popover"
-                      placeholder="Collected By">
-                      <ion-select-option *ngFor="let u of users" [value]="u.id">
-                        {{ getUserIdDisplayName(u.id ?? null) }}
-                      </ion-select-option>
-                    </ion-select>
-                    <span *ngIf="!isNotPaid(row)">{{ getUserIdDisplayName(row.collectedBy) || '–' }}</span>
-                  </td>
-                  <td>
-                    <ion-input
-                      *ngIf="isNotPaid(row)"
-                      [value]="row.reasons"
-                      (ionInput)="row.reasons = $any($event).target?.value ?? ''"
-                      placeholder="Reasons"
-                      [maxlength]="100">
-                    </ion-input>
-                    <span *ngIf="!isNotPaid(row)">{{ row.reasons || '–' }}</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="ag-grid-wrapper" *ngIf="emiRows.length > 0">
+            <ag-grid-angular
+              class="ag-theme-alpine preclose-grid"
+              style="width: 100%; height: 56vh;"
+              [rowData]="emiRows"
+              [columnDefs]="emiColumnDefs"
+              [defaultColDef]="emiDefaultColDef"
+              [gridOptions]="emiGridOptions"
+              [pagination]="emiPagination"
+              [paginationPageSize]="emiPaginationPageSize"
+              [paginationPageSizeSelector]="emiPaginationPageSizeSelector"
+              (gridReady)="onEmiGridReady($event)">
+            </ag-grid-angular>
           </div>
           <p *ngIf="emiRows.length === 0" class="no-rows">No schedule</p>
         </div>

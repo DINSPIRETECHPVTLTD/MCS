@@ -77,36 +77,10 @@
     font-size: 1.1rem;
   }
 
-  .table-wrapper {
-    overflow-x: auto;
+  .ag-grid-wrapper {
     border: 1px solid var(--ion-color-medium);
     border-radius: 6px;
-  }
-
-  .schedule-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-
-    th, td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--ion-color-light);
-    }
-
-    th {
-      background: var(--ion-color-light);
-      font-weight: 600;
-      color: var(--ion-color-dark);
-    }
-
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
-
-    tbody tr:hover {
-      background: var(--ion-color-light);
-    }
+    overflow: hidden;
   }
 
   .no-rows {

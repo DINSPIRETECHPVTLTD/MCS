@@ -6,7 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { UserContextService } from '../../services/user-context.service';
 import { LoanService } from '../../services/loan.service';
 import { Branch } from '../../models/branch.models';
-import { Loan, ActiveLoanSummaryDto } from '../../models/loan.models';
+import { ActiveLoanSummaryDto } from '../../models/loan.models';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { agGridTheme } from '../../ag-grid-theme';
@@ -118,7 +118,6 @@ export class ManageLoanComponent implements OnInit, ViewWillEnter {
     private authService: AuthService,
     private router: Router,
     private ngZone: NgZone,
-    private userContext: UserContextService,
     private loanService: LoanService,
     private toastController: ToastController,
     private loadingController: LoadingController

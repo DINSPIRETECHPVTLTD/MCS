@@ -74,7 +74,7 @@
               <div class="total-label">Total Amount Collected</div>
               <div class="total-value">₹ {{ totalAmountCollected | number:'1.2-2' }}</div>
             </div>
-            <ion-button color="primary" fill="solid" (click)="postSelected()">
+            <ion-button color="primary" fill="solid" [disabled]="isLoading || isPosting" (click)="postSelected()">
               <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
               POST
             </ion-button>
@@ -98,7 +98,7 @@
       <div *ngIf="!isLoading && rowData.length === 0" class="empty-state">
         <ion-icon name="document-text-outline" size="large"></ion-icon>
         <p>No recovery posting data found</p>
-        <p style="font-size: 12px; margin-top: 8px; color: var(--ion-color-medium);">
+        <p class="empty-state-hint">
           Adjust filters or check back later
         </p>
       </div>

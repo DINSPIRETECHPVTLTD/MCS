@@ -6,8 +6,15 @@ import { AuthService } from '../../../services/auth.service';
 import { Loan, RepaymentScheduleRow } from '../../../models/loan.models';
 import { Branch } from '../../../models/branch.models';
 import { ToastController, LoadingController } from '@ionic/angular';
-import { map, switchMap } from 'rxjs/operators';
+import { finalize, map, switchMap } from 'rxjs/operators';
 import { LoanSchedulerRecoveryDto } from '../../../models/recovery-posting.models';
+import {
+  ColDef,
+  GridApi,
+  GridOptions,
+  GridReadyEvent
+} from 'ag-grid-community';
+import { agGridTheme } from '../../../ag-grid-theme';
 
 @Component({
   selector: 'app-loan-repayment-summary',
@@ -24,6 +31,50 @@ export class LoanRepaymentSummaryComponent implements OnInit {
   weeklyDue = 0;
   isLoading = true;
   loadError: string | null = null;
+  columnDefs: ColDef[] = [
+    { headerName: 'Week No', field: 'weekNo', width: 110, sortable: true },
+    {
+      headerName: 'Collection Date',
+      field: 'collectionDate',
+      width: 160,
+      sortable: true,
+      valueFormatter: (params) => this.formatDateDDMMYY(params.value)
+    },
+    {
+      headerName: 'Paid Date',
+      field: 'paidDate',
+      width: 150,
+      sortable: true,
+      valueFormatter: (params) => this.formatDate(params.value)
+    },
+    {
+      headerName: 'Payment Status',
+      field: 'paymentStatus',
+      width: 160,
+      sortable: true
+    },
+    {
+      headerName: 'Paid Amount',
+      field: 'paidAmount',
+      width: 150,
+      sortable: true,
+      valueFormatter: (params) => this.formatAmount(params.value)
+    },
+    { headerName: 'Reasons', field: 'reasons', flex: 1, minWidth: 200, sortable: true }
+  ];
+  defaultColDef: ColDef = {
+    sortable: true,
+    filter: false,
+    resizable: true
+  };
+  gridOptions: GridOptions<RepaymentScheduleRow> = {
+    theme: agGridTheme,
+    suppressMovableColumns: true
+  };
+  pagination = true;
+  paginationPageSize = 20;
+  paginationPageSizeSelector: number[] = [10, 20, 50, 100];
+  private gridApi?: GridApi<RepaymentScheduleRow>;
 
   constructor(
     private route: ActivatedRoute,
@@ -66,6 +117,10 @@ export class LoanRepaymentSummaryComponent implements OnInit {
           return this.recoveryPostingService.getSchedulersByLoanId(loanId).pipe(
             map(schedulers => ({ loan, schedulers }))
           );
+        }),
+        finalize(() => {
+          this.isLoading = false;
+          loading.dismiss().catch(() => {});
         })
       ).subscribe({
         next: ({ loan, schedulers }) => {
@@ -77,6 +132,9 @@ export class LoanRepaymentSummaryComponent implements OnInit {
           }
           const rows = this.mapSchedulersToScheduleRows(schedulers);
           this.scheduleRows = rows;
+          if (this.gridApi) {
+            this.gridApi.setGridOption('rowData', this.scheduleRows);
+          }
           // Total Amount = sum of Paid Amount for rows with Status Paid or Partial/Partially Paid.
           this.totalAmountPaid = (schedulers || []).reduce(
             (sum, s) => {
@@ -105,13 +163,15 @@ export class LoanRepaymentSummaryComponent implements OnInit {
             this.totalAmountPaid = 0;
             this.remainingBalance = this.loan.totalAmount ?? 0;
           }
-        },
-        complete: () => {
-          this.isLoading = false;
-          loading.dismiss().catch(() => {});
         }
       });
     });
+  }
+
+  onGridReady(event: GridReadyEvent<RepaymentScheduleRow>): void {
+    this.gridApi = event.api;
+    this.gridApi.setGridOption('rowData', this.scheduleRows);
+    setTimeout(() => this.gridApi?.sizeColumnsToFit(), 100);
   }
 
   /** Map GET api/LoanSchedulers/loan/{loanId} response to Week-wise Repayment Schedule rows. */

@@ -228,6 +228,12 @@
     margin: 8px 0;
     font-size: 14px;
   }
+
+  .empty-state-hint {
+    font-size: 12px;
+    margin-top: 8px;
+    color: var(--ion-color-medium);
+  }
 }
 
 .grid-wrapper {

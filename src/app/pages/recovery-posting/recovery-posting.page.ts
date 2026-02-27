@@ -11,6 +11,7 @@ import { agGridTheme } from '../../ag-grid-theme';
 import { ToastController, LoadingController } from '@ionic/angular';
 import { Branch } from '../../models/branch.models';
 import { POCOption } from '../../models/member.models';
+import { firstValueFrom } from 'rxjs';
 import {
   LoanSchedulerRecoveryDto,
   LoanSchedulerSaveRequest
@@ -90,7 +91,10 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
 
   private gridApi?: GridApi;
   isLoading: boolean = false;
+  isPosting: boolean = false;
   totalAmountCollected: number = 0;
+  private suppressCenterChange: boolean = false;
+  private suppressPocChange: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -124,8 +128,8 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     }
     this.initializeGrid();
     this.loadPaymentModes();
-    // Default branch from logged-in user, then stored selection (set in ionViewWillEnter before first load)
-    this.applyDefaultBranchAndLoad();
+    // Load users once for Collected By dropdown.
+    this.loadUsers();
   }
 
   ionViewWillEnter(): void {
@@ -161,7 +165,6 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       this.selectedPoc = '';
       this.loadData();
     }
-    this.loadUsers();
   }
 
   /** Load all users from system/DB for Collected By dropdown. */
@@ -584,107 +587,113 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   }
 
   async postSelected(): Promise<void> {
-    // Flush any pending cell edit (e.g. Status = Paid) so getSelectedRows() has latest values
-    this.gridApi?.stopEditing?.(false);
-    const selectedRows = this.gridApi?.getSelectedRows();
-    if (!selectedRows || selectedRows.length === 0) {
-      await this.showToast('Please select at least one row to post', 'warning');
-      return;
-    }
-
-    // Collected By is mandatory – show dedicated message if not selected
-    const collectedByValue = (this.selectedCollectBy ?? '').toString().trim();
-    if (!collectedByValue) {
-      await this.showToast('Cannot post. Please select Collected By.', 'warning');
-      return;
-    }
-
-    // Mandatory fields for posting.
-    const missingInRows = new Set<string>();
-    for (const row of selectedRows) {
-      if (row.loanSchedulerId == null) continue;
-      const status = this.normalizeStatusValue(row.status);
-      if (row.paymentAmount == null || row.paymentAmount < 0 || Number.isNaN(Number(row.paymentAmount)))
-        missingInRows.add('Payment Amount');
-      if (row.principalAmount == null || row.principalAmount < 0 || Number.isNaN(Number(row.principalAmount)))
-        missingInRows.add('Principal Amount');
-      if (row.interestAmount == null || row.interestAmount < 0 || Number.isNaN(Number(row.interestAmount)))
-        missingInRows.add('Interest Amount');
-      if (status !== 'Not Paid' && (!row.paymentMode || row.paymentMode === 'Select')) missingInRows.add('Payment Mode');
-      if (!row.status || String(row.status).trim() === '') missingInRows.add('Status');
-      if (status === 'Not Paid' && (!row.comments || String(row.comments).trim() === '')) {
-        missingInRows.add('Comments (mandatory for Not Paid)');
-      }
-    }
-
-    if (missingInRows.size > 0) {
-      const message = 'Cannot post. Please fill or select: ' + Array.from(missingInRows).join(', ') + '.';
-      await this.showToast(message, 'warning');
-      return;
-    }
-
-    // Sanity: principal + interest should equal payment (within rounding)
-    const sumMismatch = selectedRows.filter(row => {
-      if (this.normalizeStatusValue(row.status) === 'Not Paid') return false;
-      const payment = row.paymentAmount ?? 0;
-      const sum = (row.principalAmount ?? 0) + (row.interestAmount ?? 0);
-      return Math.abs(payment - sum) > 0.02;
-    });
-    if (sumMismatch.length > 0) {
-      await this.showToast('Principal + Interest must equal Payment Amount for selected row(s).', 'warning');
-      return;
-    }
-
-    // Payment Amount cannot exceed Actual EMI Amount.
-    const exceedsScheduled = selectedRows.filter(row => {
-      const payment = row.paymentAmount ?? 0;
-      const actualEmi = row.actualEmiAmount ?? 0;
-      return payment > actualEmi;
-    });
-    if (exceedsScheduled.length > 0) {
-      await this.showToast('Payment amount cannot exceed scheduled amount.', 'warning');
-      return;
-    }
-
-    const loading = await this.loadingController.create({
-      message: 'Posting selected entries...',
-      spinner: 'crescent'
-    });
-    await loading.present();
+    if (this.isPosting) return;
+    this.isPosting = true;
+    let loading: HTMLIonLoadingElement | null = null;
 
     try {
+      // Flush any pending cell edit (e.g. Status = Paid) so getSelectedRows() has latest values
+      this.gridApi?.stopEditing?.(false);
+      const selectedRows = this.gridApi?.getSelectedRows();
+      if (!selectedRows || selectedRows.length === 0) {
+        await this.showToast('Please select at least one row to post', 'warning');
+        return;
+      }
+
+      // Collected By is mandatory – show dedicated message if not selected
+      const collectedByValue = (this.selectedCollectBy ?? '').toString().trim();
+      if (!collectedByValue) {
+        await this.showToast('Cannot post. Please select Collected By.', 'warning');
+        return;
+      }
+
+      // Mandatory fields for posting.
+      const missingInRows = new Set<string>();
+      for (const row of selectedRows) {
+        if (row.loanSchedulerId == null) continue;
+        const status = this.normalizeStatusValue(row.status);
+        const paymentAmount = row.paymentAmount != null ? Number(row.paymentAmount) : 0;
+        if (row.paymentAmount == null || row.paymentAmount < 0 || Number.isNaN(Number(row.paymentAmount)))
+          missingInRows.add('Payment Amount');
+        if (status !== 'Not Paid' && (paymentAmount == null || Number.isNaN(paymentAmount) || paymentAmount <= 0)) {
+          missingInRows.add('Payment Amount (> 0 for Paid/Partial)');
+        }
+        if (row.principalAmount == null || row.principalAmount < 0 || Number.isNaN(Number(row.principalAmount)))
+          missingInRows.add('Principal Amount');
+        if (row.interestAmount == null || row.interestAmount < 0 || Number.isNaN(Number(row.interestAmount)))
+          missingInRows.add('Interest Amount');
+        if (status !== 'Not Paid' && (!row.paymentMode || row.paymentMode === 'Select')) missingInRows.add('Payment Mode');
+        if (!row.status || String(row.status).trim() === '') missingInRows.add('Status');
+        if (status === 'Not Paid' && (!row.comments || String(row.comments).trim() === '')) {
+          missingInRows.add('Comments (mandatory for Not Paid)');
+        }
+      }
+
+      if (missingInRows.size > 0) {
+        const message = 'Cannot post. Please fill or select: ' + Array.from(missingInRows).join(', ') + '.';
+        await this.showToast(message, 'warning');
+        return;
+      }
+
+      // Sanity: principal + interest should equal payment (within rounding)
+      const sumMismatch = selectedRows.filter(row => {
+        if (this.normalizeStatusValue(row.status) === 'Not Paid') return false;
+        const payment = row.paymentAmount ?? 0;
+        const sum = (row.principalAmount ?? 0) + (row.interestAmount ?? 0);
+        return Math.abs(payment - sum) > 0.02;
+      });
+      if (sumMismatch.length > 0) {
+        await this.showToast('Principal + Interest must equal Payment Amount for selected row(s).', 'warning');
+        return;
+      }
+
+      // Payment Amount cannot exceed Actual EMI Amount.
+      const exceedsScheduled = selectedRows.filter(row => {
+        const payment = row.paymentAmount ?? 0;
+        const actualEmi = row.actualEmiAmount ?? 0;
+        return payment > actualEmi;
+      });
+      if (exceedsScheduled.length > 0) {
+        await this.showToast('Payment amount cannot exceed scheduled amount.', 'warning');
+        return;
+      }
+
+      loading = await this.loadingController.create({
+        message: 'Posting selected entries...',
+        spinner: 'crescent'
+      });
+      await loading.present();
+
       const collectedByIdNumber = Number(this.selectedCollectBy);
       if (Number.isNaN(collectedByIdNumber)) {
-        loading.dismiss();
         await this.showToast('Collected By must be a valid user. Please select from the list.', 'danger');
         return;
       }
+
       // Post to DB: PaymentAmount, PrincipalAmount, InterestAmount (Actual* columns are not updated on post)
       const payload: LoanSchedulerSaveRequest[] = selectedRows.map(row => {
         const selectedStatus = this.normalizeStatusValue(row.status);
         const isNotPaid = selectedStatus === 'Not Paid';
         return ({
-        loanSchedulerId: row.loanSchedulerId,
-        // Backend expects lookup VALUE (e.g. Cash / Online), not the code.
-        paymentMode: isNotPaid ? 'N/A' : ((row.paymentMode === 'Select' || !row.paymentMode) ? '' : row.paymentMode),
-        status: selectedStatus === 'Paid' ? 'Paid' : (selectedStatus === 'Not Paid' ? 'Not Paid' : 'Partial'),
-        paymentAmount: isNotPaid ? 0 : (row.paymentAmount ?? 0),
-        principalAmount: isNotPaid ? 0 : (row.principalAmount ?? 0),
-        interestAmount: isNotPaid ? 0 : (row.interestAmount ?? 0),
-        comments: row.comments ?? '',
-        collectedBy: Number.isNaN(collectedByIdNumber) ? undefined : collectedByIdNumber
-      });
+          loanSchedulerId: row.loanSchedulerId,
+          // Backend expects lookup VALUE (e.g. Cash / Online), not the code.
+          paymentMode: isNotPaid ? 'N/A' : ((row.paymentMode === 'Select' || !row.paymentMode) ? '' : String(row.paymentMode).trim()),
+          status: selectedStatus === 'Paid' ? 'Paid' : (selectedStatus === 'Not Paid' ? 'Not Paid' : 'Partial'),
+          paymentAmount: isNotPaid ? 0 : (row.paymentAmount ?? 0),
+          principalAmount: isNotPaid ? 0 : (row.principalAmount ?? 0),
+          interestAmount: isNotPaid ? 0 : (row.interestAmount ?? 0),
+          comments: String(row.comments ?? '').trim(),
+          collectedBy: collectedByIdNumber
+        });
       });
 
-      await this.recoveryPostingService.save(payload).toPromise();
+      await firstValueFrom(this.recoveryPostingService.save(payload));
 
-      loading.dismiss();
       await this.showToast('Successful EMI Paid', 'success');
 
       // Reload data
       this.loadData();
     } catch (error: unknown) {
-      loading.dismiss();
       const err = error as {
         error?: {
           message?: string;
@@ -695,6 +704,11 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
       };
       const errorMessage = this.getPostErrorMessage(err);
       await this.showToast(errorMessage, 'danger');
+    } finally {
+      if (loading) {
+        await loading.dismiss().catch(() => {});
+      }
+      this.isPosting = false;
     }
   }
 
@@ -733,11 +747,19 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
   }
 
   onCenterChange(): void {
+    if (this.suppressCenterChange) {
+      this.suppressCenterChange = false;
+      return;
+    }
     this.selectedPoc = '';
     this.loadPocsForCenter();
   }
 
   onPocChange(): void {
+    if (this.suppressPocChange) {
+      this.suppressPocChange = false;
+      return;
+    }
     this.loadData();
   }
 
@@ -778,7 +800,10 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
         this.selectedPoc = '';
         // On page open: default select first center so grid loads with date + first center filter
         if (this.centers.length > 0) {
+          this.suppressCenterChange = true;
           this.selectedCenter = String(this.centers[0].id);
+          // Fallback reset in case ionChange doesn't fire for programmatic set.
+          setTimeout(() => { this.suppressCenterChange = false; }, 0);
           this.loadPocsForCenter();
         } else {
           this.selectedCenter = '';
@@ -799,7 +824,10 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
     const centerId = this.selectedCenter ? Number(this.selectedCenter) : null;
     if (centerId == null || centerId === 0) {
       this.pocs = [];
+      this.suppressPocChange = true;
       this.selectedPoc = '';
+      // Fallback reset in case ionChange doesn't fire for programmatic set.
+      setTimeout(() => { this.suppressPocChange = false; }, 0);
       this.loadData();
       return;
     }
@@ -812,12 +840,18 @@ export class RecoveryPostingComponent implements OnInit, ViewWillEnter {
             ...poc,
             name: (poc.name || [poc.firstName, poc.middleName, poc.lastName].filter(Boolean).join(' ')).trim()
           }));
+        this.suppressPocChange = true;
         this.selectedPoc = '';
+        // Fallback reset in case ionChange doesn't fire for programmatic set.
+        setTimeout(() => { this.suppressPocChange = false; }, 0);
         this.loadData();
       },
       error: () => {
         this.pocs = [];
+        this.suppressPocChange = true;
         this.selectedPoc = '';
+        // Fallback reset in case ionChange doesn't fire for programmatic set.
+        setTimeout(() => { this.suppressPocChange = false; }, 0);
         this.loadData();
       }
     });
