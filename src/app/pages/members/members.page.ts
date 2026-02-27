@@ -32,8 +32,8 @@ export class MembersComponent implements OnInit, OnDestroy, ViewWillEnter, After
   pocs: Poc[] = [];
 
   // AG Grid
-  rowData: Member[] = [];
-  originalRowData: Member[] = [];
+  rowData: any[] = [];
+  originalRowData: any[] = [];
 
   columnDefs: ColDef[] = [
     { field: 'memberId', headerName: 'ID', width: 60, minWidth: 80 },
@@ -220,12 +220,10 @@ export class MembersComponent implements OnInit, OnDestroy, ViewWillEnter, After
     this.destroy$.complete();
   }
 
-  // Build center and POC lookup maps then re-map rows
+  // Re-map rows when centers/pocs arrive after members are already loaded
   private rebuildGrid(): void {
-    // Only rebuild if we already have members loaded
-    const current = (this.memberService as any).membersSubject?.getValue?.() ?? [];
-    if (current.length > 0) {
-      this.mapAndSetRows(current);
+    if (this.originalRowData.length > 0) {
+      this.mapAndSetRows(this.originalRowData as any[]);
     }
   }
 
@@ -255,8 +253,12 @@ export class MembersComponent implements OnInit, OnDestroy, ViewWillEnter, After
       return true;
     });
 
+    this.rowData = uniqueData;
+    this.originalRowData = [...uniqueData];
+
+    // Feed the grid if it is already ready; otherwise onGridReady will pick up rowData
     if (this.gridApi) {
-      this.gridApi.setRowData(uniqueData);
+      this.gridApi.setRowData(this.rowData);
     }
   }
 
@@ -289,6 +291,10 @@ export class MembersComponent implements OnInit, OnDestroy, ViewWillEnter, After
 
   onGridReady(params: GridReadyEvent): void {
     this.gridApi = params.api;
+    // ✅ If members already loaded before grid was ready, display them now
+    if (this.rowData.length > 0) {
+      this.gridApi.setRowData(this.rowData);
+    }
   }
 
   onCellClicked(_event: any): void { }
